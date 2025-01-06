@@ -37,9 +37,9 @@ However, there is still a case for using traditional providers such as morpholog
 Because I am writing this library to provide bulk/mass transliteration of subtitle files on my project langkit, LLMs are not suitable. However they already outperform traditional providers in some cases.
 
 
-Besides that, this library was extensively written by Claude Sonnet 24.10, which authored most of the code except for the elaborate parts of the design. For the ichiran.go bindings, which is involve just JSON parsing, it has authored probably 99% of the code under minimum supervision, most of it being zero-shot generation.
+Besides that, this library was extensively written by Claude Sonnet 24.10, which authored most of the code except for the most elaborate parts of the design. For the ichiran.go bindings, which involves just JSON parsing, it has authored probably 99% of the code under minimum supervision, most of it being zero-shot generation.
 
-The CEO of Anthropic said in a [very interesting interview](https://www.youtube.com/watch?v=ugvHCXCOmm4) back in November 24 there is no true roadblock and he speculates from the current curve AI smarter than human somewhere in one or two years.
+The CEO of Anthropic said in a [very interesting interview](https://www.youtube.com/watch?v=ugvHCXCOmm4) back in November 24 there is no true roadblocks in sight and he speculates from the current curve AIs smarter than humans will exist within one or two years.
 
 Dear professional programmers, you have a year or two before the job market becomes a sequel to Hunger Games. 🫡
 
