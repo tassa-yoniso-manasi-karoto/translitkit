@@ -1,18 +1,10 @@
-module translitkit
+module github.com/tassa-yoniso-manasi-karoto/translitkit
 
 go 1.23.2
-
-replace local.host/lib/translitkit/lang/jpn => /home/voiduser/go/src/translitkit/lang/jpn
-
-replace local.host/lib/ichiran => /home/voiduser/go/src/translitkit/pkg/go-ichiran
-
-replace local.host/lib/translitkit => /home/voiduser/go/src/translitkit
 
 require (
 	github.com/barbashov/iso639-3 v1.0.0
 	github.com/rivo/uniseg v0.4.7
-	local.host/lib/ichiran v0.0.0-00010101000000-000000000000
-	local.host/lib/translitkit v0.0.0-00010101000000-000000000000
 )
 
 require (

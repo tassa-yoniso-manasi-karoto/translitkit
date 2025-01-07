@@ -3,10 +3,10 @@ package jpn
 import (
 	"fmt"
 	
-	common "local.host/lib/translitkit"
-	ichiran "local.host/lib/ichiran"
-	iso "github.com/barbashov/iso639-3"
+	common "github.com/tassa-yoniso-manasi-karoto/translitkit"
+	"github.com/tassa-yoniso-manasi-karoto/go-ichiran"
 	
+	iso "github.com/barbashov/iso639-3"
 	"github.com/k0kubun/pp"
 	"github.com/gookit/color"
 )
