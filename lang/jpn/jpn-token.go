@@ -150,7 +150,7 @@ func ToJapaneseToken(it *ichiran.JSONToken) (jt Tkn) {
 // ToTokenSlice converts all ichiran.JSONTokens to JapaneseSliceTkns
 //
 //	NOTE: Golang limitation: the function's return type must explicitly be set to common.AnyTokenSlice.
-//	It CAN NOT be infered from JapaneseSliceTkns even if it implements the AnyTokenSlice interface.
+//	It CAN NOT be inferred from JapaneseSliceTkns even if it implements the AnyTokenSlice interface.
 func ToTokenSlice(JSONTokens *ichiran.JSONTokens) (tkns common.AnyTokenSlice) {
 	tkns = JapaneseSliceTkns{common.Tkns{Slice: make([]common.AnyToken, 0)}}
 

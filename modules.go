@@ -99,6 +99,9 @@ func (m BaseModule) Tokens(input string) (AnyTokenSlice, error) {
 			return nil, fmt.Errorf("tokenization failed: %v", err)
 		}
 		result, err = m.Transliterator.Process(m, intermediate)
+		if err != nil {
+			return nil, fmt.Errorf("transliteration failed: %v", err)
+		}
 	}
 	if err != nil {
 		return nil, err

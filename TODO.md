@@ -1,5 +1,8 @@
 *urgent:*
 
+- ichiran:  disable logs
+- ichiran:  README: mention OS.Specific path, possible to use running ichiran instance
+- ichiran:  update the methods to target *JSONTokens
 - testing testing testing testing testing
 - add basic usage to README
 
