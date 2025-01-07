@@ -4,7 +4,10 @@ go 1.23.2
 
 require (
 	github.com/barbashov/iso639-3 v1.0.0
+	github.com/gookit/color v1.5.4
+	github.com/k0kubun/pp v3.0.1+incompatible
 	github.com/rivo/uniseg v0.4.7
+	github.com/tassa-yoniso-manasi-karoto/go-ichiran v0.0.0-20250107051937-c47cf500e477
 )
 
 require (
@@ -82,7 +85,6 @@ require (
 	github.com/google/gofuzz v1.2.0 // indirect
 	github.com/google/shlex v0.0.0-20191202100458-e7afc7fbc510 // indirect
 	github.com/google/uuid v1.6.0 // indirect
-	github.com/gookit/color v1.5.4 // indirect
 	github.com/gorilla/mux v1.8.1 // indirect
 	github.com/gorilla/websocket v1.5.0 // indirect
 	github.com/grpc-ecosystem/grpc-gateway/v2 v2.23.0 // indirect
@@ -97,7 +99,6 @@ require (
 	github.com/jonboulle/clockwork v0.4.0 // indirect
 	github.com/josharian/intern v1.0.0 // indirect
 	github.com/json-iterator/go v1.1.12 // indirect
-	github.com/k0kubun/pp v3.0.1+incompatible // indirect
 	github.com/kballard/go-shellquote v0.0.0-20180428030007-95032a82bc51 // indirect
 	github.com/kevinburke/ssh_config v1.2.0 // indirect
 	github.com/klauspost/compress v1.17.11 // indirect

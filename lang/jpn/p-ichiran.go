@@ -2,22 +2,21 @@ package jpn
 
 import (
 	"fmt"
-	
-	common "github.com/tassa-yoniso-manasi-karoto/translitkit"
+
 	"github.com/tassa-yoniso-manasi-karoto/go-ichiran"
-	
+	common "github.com/tassa-yoniso-manasi-karoto/translitkit"
+
 	iso "github.com/barbashov/iso639-3"
-	"github.com/k0kubun/pp"
 	"github.com/gookit/color"
+	"github.com/k0kubun/pp"
 )
 
 // IchiranProvider satisfies the Provider interface
 type IchiranProvider struct {
-	config		map[string]interface{}
-	client		*ichiran.Client
-	docker		*ichiran.Docker
+	config map[string]interface{}
+	client *ichiran.Client
+	docker *ichiran.Docker
 }
-
 
 func (p *IchiranProvider) Init() (err error) {
 	p.docker, err = ichiran.NewDocker()
@@ -28,7 +27,7 @@ func (p *IchiranProvider) Init() (err error) {
 	if err = p.docker.Initialize(); err != nil {
 		return fmt.Errorf("failed to initialize: %v", err)
 	}
-	
+
 	p.client, err = ichiran.NewClient(ichiran.DefaultConfig())
 	if err != nil {
 		return fmt.Errorf("Failed to create client: %v", err)
@@ -44,16 +43,14 @@ func (p *IchiranProvider) GetType() common.ProviderType {
 	return common.CombinedType
 }
 
-
 func (p *IchiranProvider) Close() error {
 	p.client.Close()
 	return p.docker.Close()
 }
 
-
 func (p *IchiranProvider) Process(m common.Module, input common.AnyTokenSlice) (results common.AnyTokenSlice, err error) {
 	raw := input.GetRaw()
-	if input.Len() ==  0 && raw == "" {
+	if input.Len() == 0 && raw == "" {
 		return nil, fmt.Errorf("empty input was passed to processor")
 	}
 	ProviderType := p.GetType()
@@ -87,9 +84,8 @@ func (p *IchiranProvider) Process(m common.Module, input common.AnyTokenSlice) (
 	return nil, fmt.Errorf("handling not implemented for '%s' with ProviderType '%s'", p.Name(), ProviderType)
 }
 
-
 // process accepts a transformation function: the desired ichiran method to use
-func (p *IchiranProvider) process (transform func(*ichiran.JSONTokens) common.AnyTokenSlice, input string) (results common.AnyTokenSlice, err error) {
+func (p *IchiranProvider) process(transform func(*ichiran.JSONTokens) common.AnyTokenSlice, input string) (results common.AnyTokenSlice, err error) {
 	text, err := p.client.Analyze(input)
 	if err != nil {
 		return nil, fmt.Errorf("failed to analyse: %v", err)
@@ -97,16 +93,14 @@ func (p *IchiranProvider) process (transform func(*ichiran.JSONTokens) common.An
 	return transform(text), nil
 }
 
-
-
 func init() { // FIXME
 	ichiran := &IchiranProvider{}
 	ja := iso.FromAnyCode("ja")
-	
+
 	err := common.Register(ja, common.CombinedType, "ichiran", common.ProviderEntry{
 		Provider:     ichiran,
 		Capabilities: []string{"tokenization", "reading", "romaji"},
-		Type:        common.CombinedType,
+		Type:         common.CombinedType,
 	})
 	if err != nil {
 		panic(fmt.Sprintf("failed to register ichiran provider: %v", err))
@@ -118,7 +112,7 @@ func init() { // FIXME
 	err = common.SetDefault(ja, []common.ProviderEntry{
 		{
 			Provider: ichiran,
-			Type:    common.CombinedType,
+			Type:     common.CombinedType,
 		}, // TODO add robepike/nihongo to force romanization after
 	})
 	if err != nil {
@@ -170,13 +164,7 @@ func init() { // FIXME
 // 	}
 // }
 
-
-
-
-
-
 func placeholder() {
 	color.Redln(" 𝒻*** 𝓎ℴ𝓊 𝒸ℴ𝓂𝓅𝒾𝓁ℯ𝓇")
 	pp.Println("𝓯*** 𝔂𝓸𝓾 𝓬𝓸𝓶𝓹𝓲𝓵𝓮𝓻")
 }
-

@@ -1,20 +1,17 @@
-
 package translitkit
 
 import (
 	"fmt"
 	"strings"
-	
+
 	iso "github.com/barbashov/iso639-3"
 )
-
 
 type Module interface {
 	Init() error
 	RomanPostProcess(string, func(string) (string, error)) (string, error)
 	Close() error
 }
-
 
 // BaseModule satisfies the Module interface. It contains both Tokenization+Transliteration components.
 type BaseModule struct {
@@ -25,7 +22,6 @@ type BaseModule struct {
 	Combined       Provider[AnyTokenSlice, AnyTokenSlice]
 	MaxLenQuery    int
 }
-
 
 func (m BaseModule) Init() error {
 	if m.Combined != nil {
@@ -50,7 +46,7 @@ func (m BaseModule) Roman(input string) (string, error) {
 	if m.Transliterator == nil && m.ProviderType != CombinedType {
 		return "", fmt.Errorf("romanization requires either a transliterator or combined provider (got %s)", m.ProviderType)
 	}
-	
+
 	tkns, err := m.Tokens(input)
 	if err != nil {
 		return "", err
@@ -91,8 +87,6 @@ func (m BaseModule) TokenizedStr(input string) (string, error) {
 	return strings.Join(parts, " "), nil // FIXME ideally place space between word-words not word-punctuation or punct-punct
 }
 
-
-
 func (m BaseModule) Tokens(input string) (AnyTokenSlice, error) {
 	var result AnyTokenSlice
 	var err error
@@ -112,8 +106,6 @@ func (m BaseModule) Tokens(input string) (AnyTokenSlice, error) {
 	return result, nil
 }
 
-
-
 func (m BaseModule) Close() error {
 	if m.Combined != nil {
 		return m.Combined.Close()
@@ -127,8 +119,6 @@ func (m BaseModule) Close() error {
 	return nil
 }
 
-
-func (m BaseModule) RomanPostProcess(s string, f func(string)(string, error)) (string, error) {
+func (m BaseModule) RomanPostProcess(s string, f func(string) (string, error)) (string, error) {
 	return f(s)
 }
-

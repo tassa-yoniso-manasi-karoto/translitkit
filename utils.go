@@ -1,8 +1,8 @@
 package translitkit
 
 import (
-	"strings"
 	"github.com/rivo/uniseg"
+	"strings"
 	"unicode/utf8"
 )
 
@@ -40,7 +40,7 @@ func SplitSpace[T Stringer](str T) []T {
 
 func SplitSentences[T Stringer](text T) []T {
 	sentences := make([]string, 0)
-	
+
 	if len(text) == 0 {
 		return make([]T, 0)
 	}
@@ -61,7 +61,7 @@ func SplitSentences[T Stringer](text T) []T {
 
 func SplitWords[T Stringer](text T) []T {
 	words := make([]string, 0)
-	
+
 	if len(text) == 0 {
 		return make([]T, 0)
 	}
@@ -82,7 +82,7 @@ func SplitWords[T Stringer](text T) []T {
 
 func SplitGraphemes[T Stringer](text T) []T {
 	graphemes := make([]string, 0)
-	
+
 	if len(text) == 0 {
 		return make([]T, 0)
 	}

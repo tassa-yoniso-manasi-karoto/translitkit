@@ -1,13 +1,12 @@
-
 package translitkit
 
 import (
 	"fmt"
 	"sync"
-	
+
 	iso "github.com/barbashov/iso639-3"
-	"github.com/k0kubun/pp"
 	"github.com/gookit/color"
+	"github.com/k0kubun/pp"
 )
 
 var GlobalRegistry = &Registry{
@@ -15,8 +14,8 @@ var GlobalRegistry = &Registry{
 }
 
 type Registry struct {
-	mu		sync.RWMutex
-	Providers	map[*iso.Language]LanguageProviders
+	mu        sync.RWMutex
+	Providers map[*iso.Language]LanguageProviders
 }
 
 func Register(lang *iso.Language, provType ProviderType, name string, entry ProviderEntry) error {
@@ -87,7 +86,6 @@ func GetProvider(lang *iso.Language, provType ProviderType, name string) (Provid
 	return entry.Provider, nil
 }
 
-
 func GetDefault(lang *iso.Language) (*BaseModule, error) {
 	GlobalRegistry.mu.RLock()
 	defer GlobalRegistry.mu.RUnlock()
@@ -121,13 +119,12 @@ func GetDefault(lang *iso.Language) (*BaseModule, error) {
 	return module, nil
 }
 
-
 func ListProviders(lang *iso.Language) map[ProviderType][]string {
 	GlobalRegistry.mu.RLock()
 	defer GlobalRegistry.mu.RUnlock()
 
 	result := make(map[ProviderType][]string)
-	
+
 	if langProviders, exists := GlobalRegistry.Providers[lang]; exists {
 		result[TokenizerType] = make([]string, 0, len(langProviders.Tokenizers))
 		for name := range langProviders.Tokenizers {
@@ -211,13 +208,10 @@ valid:
 	return nil
 }
 
-
 func placeholder23456ui() {
 	color.Redln(" 𝒻*** 𝓎ℴ𝓊 𝒸ℴ𝓂𝓅𝒾𝓁ℯ𝓇")
 	pp.Println("𝓯*** 𝔂𝓸𝓾 𝓬𝓸𝓶𝓹𝓲𝓵𝓮𝓻")
 }
-
-
 
 /*
 func HasCapability(lang *iso.Language, provType ProviderType, name string, capability string) bool {

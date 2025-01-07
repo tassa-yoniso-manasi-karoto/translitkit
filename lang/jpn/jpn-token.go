@@ -1,9 +1,9 @@
 package jpn
 
 import (
-	common "github.com/tassa-yoniso-manasi-karoto/translitkit"
 	"github.com/tassa-yoniso-manasi-karoto/go-ichiran"
-	
+	common "github.com/tassa-yoniso-manasi-karoto/translitkit"
+
 	iso "github.com/barbashov/iso639-3"
 )
 
@@ -61,10 +61,6 @@ func (t Tkn) IsTokenType() bool {
 	return true
 }
 
-
-
-
-
 type JapaneseModule struct {
 	language       *iso.Language
 	providerType   common.ProviderType
@@ -82,14 +78,12 @@ type JapaneseModule struct {
 	return m.GetSlice(input) FIXME  m.GetSlice undefined (type *JapaneseModule has no field or method GetSlice)
 }*/
 
-
-
 // ToJapaneseToken converts an JSONToken to a Tkn
 func ToJapaneseToken(it *ichiran.JSONToken) (jt Tkn) {
 	// Fill common Tkn fields
 	jt.Surface = it.Surface
 	jt.IsToken = it.IsToken
-	
+
 	// If this is not a Japanese token, return early with minimal information
 	if !it.IsToken {
 		return jt
@@ -107,12 +101,12 @@ func ToJapaneseToken(it *ichiran.JSONToken) (jt Tkn) {
 	// Set Japanese-specific fields
 	jt.Kanji = it.Surface
 	jt.Hiragana = it.Kana
-	
+
 	// Process glosses
 	if len(it.Gloss) > 0 {
 		// Set part of speech from first gloss
 		jt.PartOfSpeech = it.Gloss[0].Pos
-		
+
 		// Store all glosses in metadata
 		glosses := make([]string, len(it.Gloss))
 		for i, g := range it.Gloss {
@@ -124,9 +118,9 @@ func ToJapaneseToken(it *ichiran.JSONToken) (jt Tkn) {
 	// Process conjugation information
 	if len(it.Conj) > 0 {
 		conj := it.Conj[0] // Take first conjugation
-		
+
 		jt.BaseForm = conj.Reading
-		
+
 		// Process properties
 		for _, prop := range conj.Prop {
 			switch {
@@ -135,7 +129,7 @@ func ToJapaneseToken(it *ichiran.JSONToken) (jt Tkn) {
 			case prop.Neg:
 				jt.Inflection.Negative = true
 			}
-			
+
 			// Store conjugation type
 			if prop.Type != "" {
 				jt.Inflection.Type = prop.Type
@@ -145,20 +139,21 @@ func ToJapaneseToken(it *ichiran.JSONToken) (jt Tkn) {
 
 	// Store original Ichiran data in metadata
 	jt.Metadata["ichiran"] = map[string]interface{}{
-		"score":	   it.Score,
+		"score":       it.Score,
 		"alternative": it.Alternative,
-		"raw":		string(it.Raw),
+		"raw":         string(it.Raw),
 	}
 
 	return jt
 }
 
 // ToTokenSlice converts all ichiran.JSONTokens to JapaneseSliceTkns
-// 	NOTE: Golang limitation: the function's return type must explicitly be set to common.AnyTokenSlice.
+//
+//	NOTE: Golang limitation: the function's return type must explicitly be set to common.AnyTokenSlice.
 //	It CAN NOT be infered from JapaneseSliceTkns even if it implements the AnyTokenSlice interface.
 func ToTokenSlice(JSONTokens *ichiran.JSONTokens) (tkns common.AnyTokenSlice) {
 	tkns = JapaneseSliceTkns{common.Tkns{Slice: make([]common.AnyToken, 0)}}
-	
+
 	for _, token := range *JSONTokens {
 		inter := ToJapaneseToken(token)
 		tkns = tkns.Append(inter)
@@ -174,17 +169,17 @@ func (t *Tkn) ToGeneric() common.Tkn {
 		"kanji":    t.Kanji,
 		"hiragana": t.Hiragana,
 		"katakana": t.Katakana,
-		
+
 		// Linguistic Features
 		"okurigana": t.Okurigana,
 		"pitch":     t.Pitch,
 		"moraCount": t.MoraCount,
-		
+
 		// Word Formation
 		"isKango":    t.IsKango,
 		"isWago":     t.IsWago,
 		"isGairaigo": t.IsGairaigo,
-		
+
 		// Conjugation
 		"baseForm": t.BaseForm,
 		"inflection": map[string]interface{}{
@@ -193,7 +188,7 @@ func (t *Tkn) ToGeneric() common.Tkn {
 			"polite":   t.Inflection.Polite,
 			"negative": t.Inflection.Negative,
 		},
-		
+
 		// Additional Features
 		"isHonorific": t.IsHonorific,
 		"isHumble":    t.IsHumble,
@@ -203,4 +198,3 @@ func (t *Tkn) ToGeneric() common.Tkn {
 
 	return t.Tkn
 }
-

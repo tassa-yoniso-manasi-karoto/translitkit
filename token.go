@@ -1,4 +1,3 @@
-
 package translitkit
 
 import (
@@ -10,15 +9,15 @@ func Serialize(input string) AnyTokenSlice {
 }
 
 type AnyTokenSlice interface {
-	GetFirst()		any
-	GetRaw()		string
-	ClearRaw()		AnyTokenSlice
-	Append(...AnyToken)	AnyTokenSlice
-	Len()			int
-	
-	GetRomanization()	string
-	GetRomanizationParts()	[]string
-	GetTokenizedParts()	[]string
+	GetFirst() any
+	GetRaw() string
+	ClearRaw() AnyTokenSlice
+	Append(...AnyToken) AnyTokenSlice
+	Len() int
+
+	GetRomanization() string
+	GetRomanizationParts() []string
+	GetTokenizedParts() []string
 }
 
 type AnyToken interface {
@@ -27,11 +26,11 @@ type AnyToken interface {
 	IsTokenType() bool
 }
 
-
 type Tkns struct {
 	Slice []AnyToken //alt.: Sentences [][]AnyToken
-	Raw string
+	Raw   string
 }
+
 func (tokens Tkns) GetFirst() any {
 	if len(tokens.Slice) == 0 {
 		return nil
@@ -65,17 +64,15 @@ func (tokens Tkns) GetTokenizedParts() []string {
 	return GetTokenizedParts(tokens.Slice)
 }
 
-
-
 // (common.)Tkn represents the common, generic Token containing basic linguistic annotations / features for all languages
 // Languages specific token types (ie. jpn.Tkn) all have Tkn as their embedded (unnamed) field
 // therefore the methods of Tkn are available for every token type regardless.
 type Tkn struct {
-	Surface    string    // The actual text segment
+	Surface    string // The actual text segment
 	IsToken    bool
-	Normalized string    // Normalized form (e.g., lowercase, trimmed)
+	Normalized string // Normalized form (e.g., lowercase, trimmed)
 	//TokenType  TokenType // Type of token (word, punctuation, etc.)
-	Position   struct {
+	Position struct {
 		Start     int // Start position in original text
 		End       int // End position in original text
 		Sentence  int // Index of containing sentence
@@ -99,7 +96,7 @@ type Tkn struct {
 
 	// Word Composition
 	Components []Tkn // For compound words or complex tokens
-	IsCompound bool    // Whether this is a compound token
+	IsCompound bool  // Whether this is a compound token
 
 	// Additional Information
 	Confidence float64                // Confidence score of the analysis
@@ -122,10 +119,6 @@ func (t Tkn) GetRomanization() string {
 func (t Tkn) IsTokenType() bool {
 	return true
 }
-
-
-
-
 
 // Generic functions that work with any TokenSlice
 func GetRomanization(tokens []AnyToken) string {
@@ -151,4 +144,3 @@ func GetTokenizedParts(tokens []AnyToken) []string {
 	}
 	return parts
 }
-

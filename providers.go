@@ -1,19 +1,16 @@
-
 package translitkit
-
 
 import (
 	"fmt"
 )
 
 type ProviderType string
+
 const (
-	TokenizerType		ProviderType = "tokenizer"
-	TransliteratorType	ProviderType = "transliterator"
-	CombinedType		ProviderType = "combined"
+	TokenizerType      ProviderType = "tokenizer"
+	TransliteratorType ProviderType = "transliterator"
+	CombinedType       ProviderType = "combined"
 )
-
-
 
 // Unified interface for all providers of any type
 type Provider[In AnyTokenSlice, Out AnyTokenSlice] interface {
@@ -35,7 +32,7 @@ type SeparateProviders struct {
 type LanguageProviders struct {
 	Defaults        DefaultProviders
 	Tokenizers      map[string]ProviderEntry
-	Transliterators map[string]ProviderEntry 
+	Transliterators map[string]ProviderEntry
 	Combined        map[string]ProviderEntry
 }
 
@@ -46,17 +43,16 @@ type ProviderEntry struct {
 }
 
 type ProviderConfig struct {
-	Name   string
-	ProviderType    ProviderType
-	Params map[string]interface{}
+	Name         string
+	ProviderType ProviderType
+	Params       map[string]interface{}
 }
 
 type DefaultProvider struct {
-	CombinedName		string
-	TokenizerName		string
-	TransliteratorName	string
+	CombinedName       string
+	TokenizerName      string
+	TransliteratorName string
 }
-
 
 // // FIXME WIP
 // func GenericQuerySplitter(input []MyString, max int) (QuerySliced [][]MyString, err error) {
@@ -116,7 +112,6 @@ type DefaultProvider struct {
 // 	return nil, fmt.Errorf("couldn't decompose string into smaller parts: →%s←" +
 // 		"SplitGraphemes did at most: %#v", s, chunks)
 // }
-
 
 // // FIXME WIP
 // func GenericTokenProcessor(p Provider[MyString, Tkn], Query []MyString, f Module) (results []Tkn, err error) {
