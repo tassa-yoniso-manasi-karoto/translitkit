@@ -91,8 +91,8 @@ func GetDefault(lang *iso.Language) (*BaseModule, error) {
 	defer GlobalRegistry.mu.RUnlock()
 
 	langProviders, exists := GlobalRegistry.Providers[lang]
-	color.Blueln("langProviders currently available:")
-	pp.Println(langProviders)
+	// color.Blueln("langProviders currently available:")
+	// pp.Println(langProviders)
 	if !exists {
 		return nil, fmt.Errorf("GetDefault: no Providers registered for language: %s", lang.Part3)
 	}

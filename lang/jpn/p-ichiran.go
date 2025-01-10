@@ -14,23 +14,17 @@ import (
 // IchiranProvider satisfies the Provider interface
 type IchiranProvider struct {
 	config map[string]interface{}
-	client *ichiran.Client
 	docker *ichiran.Docker
 }
 
 func (p *IchiranProvider) Init() (err error) {
 	p.docker, err = ichiran.NewDocker()
 	if err != nil {
-		return fmt.Errorf("Failed to create Ichiran Docker client: %v", err)
+		return fmt.Errorf("failed to create API client for Ichiran Docker: %v", err)
 	}
 
-	if err = p.docker.Initialize(); err != nil {
+	if err = p.docker.InitQuiet(); err != nil {
 		return fmt.Errorf("failed to initialize: %v", err)
-	}
-
-	p.client, err = ichiran.NewClient(ichiran.DefaultConfig())
-	if err != nil {
-		return fmt.Errorf("Failed to create client: %v", err)
 	}
 	return
 }
@@ -44,7 +38,6 @@ func (p *IchiranProvider) GetType() common.ProviderType {
 }
 
 func (p *IchiranProvider) Close() error {
-	p.client.Close()
 	return p.docker.Close()
 }
 
@@ -86,7 +79,7 @@ func (p *IchiranProvider) Process(m common.Module, input common.AnyTokenSlice) (
 
 // process accepts a transformation function: the desired ichiran method to use
 func (p *IchiranProvider) process(transform func(*ichiran.JSONTokens) common.AnyTokenSlice, input string) (results common.AnyTokenSlice, err error) {
-	text, err := p.client.Analyze(input)
+	text, err := ichiran.Analyze(input)
 	if err != nil {
 		return nil, fmt.Errorf("failed to analyse: %v", err)
 	}
