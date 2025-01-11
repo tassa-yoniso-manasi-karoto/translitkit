@@ -4,7 +4,7 @@ import (
 	"github.com/tassa-yoniso-manasi-karoto/go-ichiran"
 	common "github.com/tassa-yoniso-manasi-karoto/translitkit"
 
-	iso "github.com/barbashov/iso639-3"
+	//iso "github.com/barbashov/iso639-3"
 )
 
 type JapaneseSliceTkns struct {
@@ -62,7 +62,7 @@ func (t Tkn) IsTokenType() bool {
 }
 
 type JapaneseModule struct {
-	language       *iso.Language
+	language       string
 	providerType   common.ProviderType
 	tokenizer      common.Provider[common.AnyTokenSliceWrapper, common.AnyTokenSliceWrapper]
 	transliterator common.Provider[common.AnyTokenSliceWrapper, common.AnyTokenSliceWrapper]

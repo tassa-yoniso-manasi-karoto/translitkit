@@ -1,24 +1,25 @@
+
 package translitkit
 
 import (
 	"fmt"
 	"sync"
 
-	iso "github.com/barbashov/iso639-3"
+	//iso "github.com/barbashov/iso639-3"
 	"github.com/gookit/color"
 	"github.com/k0kubun/pp"
 )
 
 var GlobalRegistry = &Registry{
-	Providers: make(map[*iso.Language]LanguageProviders),
+	Providers: make(map[string]LanguageProviders),
 }
 
 type Registry struct {
 	mu        sync.RWMutex
-	Providers map[*iso.Language]LanguageProviders
+	Providers map[string]LanguageProviders
 }
 
-func Register(lang *iso.Language, provType ProviderType, name string, entry ProviderEntry) error {
+func Register(lang string, provType ProviderType, name string, entry ProviderEntry) error {
 	GlobalRegistry.mu.Lock()
 	defer GlobalRegistry.mu.Unlock()
 
@@ -56,13 +57,13 @@ func Register(lang *iso.Language, provType ProviderType, name string, entry Prov
 	return nil
 }
 
-func GetProvider(lang *iso.Language, provType ProviderType, name string) (Provider[AnyTokenSliceWrapper, AnyTokenSliceWrapper], error) {
+func GetProvider(lang string, provType ProviderType, name string) (Provider[AnyTokenSliceWrapper, AnyTokenSliceWrapper], error) {
 	GlobalRegistry.mu.RLock()
 	defer GlobalRegistry.mu.RUnlock()
 
 	langProviders, exists := GlobalRegistry.Providers[lang]
 	if !exists {
-		return nil, fmt.Errorf("GetProvider: no Providers registered for language: %s", lang.Part3)
+		return nil, fmt.Errorf("GetProvider: no Providers registered for language: %s", lang)
 	}
 
 	var entry ProviderEntry
@@ -86,19 +87,17 @@ func GetProvider(lang *iso.Language, provType ProviderType, name string) (Provid
 	return entry.Provider, nil
 }
 
-func GetDefault(lang *iso.Language) (*BaseModule, error) {
+func GetDefault(lang string) (*BaseModule, error) {
 	GlobalRegistry.mu.RLock()
 	defer GlobalRegistry.mu.RUnlock()
 
 	langProviders, exists := GlobalRegistry.Providers[lang]
-	// color.Blueln("langProviders currently available:")
-	// pp.Println(langProviders)
 	if !exists {
-		return nil, fmt.Errorf("GetDefault: no Providers registered for language: %s", lang.Part3)
+		return nil, fmt.Errorf("GetDefault: no Providers registered for language: %s", lang)
 	}
 
 	if len(langProviders.Defaults) == 0 {
-		return nil, fmt.Errorf("no default Providers set for language: %s", lang.Part3)
+		return nil, fmt.Errorf("no default Providers set for language: %s", lang)
 	}
 
 	module := &BaseModule{
@@ -119,7 +118,7 @@ func GetDefault(lang *iso.Language) (*BaseModule, error) {
 	return module, nil
 }
 
-func ListProviders(lang *iso.Language) map[ProviderType][]string {
+func ListProviders(lang string) map[ProviderType][]string {
 	GlobalRegistry.mu.RLock()
 	defer GlobalRegistry.mu.RUnlock()
 
@@ -145,13 +144,13 @@ func ListProviders(lang *iso.Language) map[ProviderType][]string {
 	return result
 }
 
-func SetDefault(lang *iso.Language, Providers []ProviderEntry) error {
-	GlobalRegistry.mu.RLock()
-	defer GlobalRegistry.mu.RUnlock()
+func SetDefault(lang string, Providers []ProviderEntry) error {
+	GlobalRegistry.mu.Lock()
+	defer GlobalRegistry.mu.Unlock()
 
 	langProviders, exists := GlobalRegistry.Providers[lang]
 	if !exists {
-		return fmt.Errorf("SetDefault: no Providers registered for language: %s", lang.Part3)
+		return fmt.Errorf("SetDefault: no Providers registered for language: %s", lang)
 	}
 
 	if len(Providers) == 0 {

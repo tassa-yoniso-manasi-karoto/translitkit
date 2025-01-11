@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"strings"
 
-	iso "github.com/barbashov/iso639-3"
+	//iso "github.com/barbashov/iso639-3"
 )
 
 type AnyModule interface {
@@ -15,7 +15,7 @@ type AnyModule interface {
 
 // BaseModule satisfies the AnyModule interface. It contains both Tokenization+Transliteration components.
 type BaseModule struct {
-	Lang           *iso.Language
+	Lang           string // ISO-639 Part 3: i.e. "eng", "zho", "jpn"...
 	ProviderType   ProviderType
 	Tokenizer      Provider[AnyTokenSliceWrapper, AnyTokenSliceWrapper]
 	Transliterator Provider[AnyTokenSliceWrapper, AnyTokenSliceWrapper]
