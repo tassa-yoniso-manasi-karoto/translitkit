@@ -4,32 +4,39 @@ import (
 	"strings"
 )
 
-func Serialize(input string) AnyTokenSlice {
+func Serialize(input string) AnyTokenSliceWrapper {
 	return Tkns{Raw: input}
 }
 
-type AnyTokenSlice interface {
-	GetFirst() any
-	GetRaw() string
-	ClearRaw() AnyTokenSlice
-	Append(...AnyToken) AnyTokenSlice
-	Len() int
+type AnyTokenSliceWrapper interface {
+	GetFirst()		any
+	GetRaw()		string
+	ClearRaw()		AnyTokenSliceWrapper
+	Append(...AnyToken)	AnyTokenSliceWrapper
+	Len()			int
 
-	GetRomanization() string
-	GetRomanizationParts() []string
-	GetTokenizedParts() []string
+	Roman()			string
+	RomanParts()		[]string
+	Tokenized()		string
+	TokenizedParts()	[]string
 }
 
 type AnyToken interface {
-	GetSurface() string
-	GetRomanization() string
-	IsTokenType() bool
+	GetSurface()	string
+	Roman()		string
+	IsTokenType()	bool
 }
+
+
+
+
+
 
 type Tkns struct {
 	Slice []AnyToken //alt.: Sentences [][]AnyToken
 	Raw   string
 }
+
 
 func (tokens Tkns) GetFirst() any {
 	if len(tokens.Slice) == 0 {
@@ -43,25 +50,34 @@ func (tokens Tkns) Len() int {
 func (tokens Tkns) GetRaw() string {
 	return tokens.Raw
 }
-func (tokens Tkns) ClearRaw() AnyTokenSlice {
+func (tokens Tkns) ClearRaw() AnyTokenSliceWrapper {
 	tokens.Raw = ""
 	return tokens
 }
-func (tokens Tkns) Append(tkn ...AnyToken) AnyTokenSlice {
+func (tokens Tkns) Append(tkn ...AnyToken) AnyTokenSliceWrapper {
 	if tokens.Slice == nil {
 		tokens.Slice = make([]AnyToken, len(tkn))
 	}
 	tokens.Slice = append(tokens.Slice, tkn...)
 	return tokens
 }
-func (tokens Tkns) GetRomanization() string {
-	return GetRomanization(tokens.Slice)
+
+
+
+
+func (tokens Tkns) Roman() string {
+	return Roman(tokens.Slice)
 }
-func (tokens Tkns) GetRomanizationParts() []string {
-	return GetRomanizationParts(tokens.Slice)
+func (tokens Tkns) RomanParts() []string {
+	return RomanParts(tokens.Slice)
 }
-func (tokens Tkns) GetTokenizedParts() []string {
-	return GetTokenizedParts(tokens.Slice)
+
+func (tokens Tkns) Tokenized() string {
+	return Tokenized(tokens.Slice)
+}
+
+func (tokens Tkns) TokenizedParts() []string {
+	return TokenizedParts(tokens.Slice)
 }
 
 // (common.)Tkn represents the common, generic Token containing basic linguistic annotations / features for all languages
@@ -109,7 +125,7 @@ func (t Tkn) GetSurface() string {
 	return t.Surface
 }
 
-func (t Tkn) GetRomanization() string {
+func (t Tkn) Roman() string {
 	if !t.IsToken || t.Surface == t.Romanization {
 		return ""
 	}
@@ -120,27 +136,36 @@ func (t Tkn) IsTokenType() bool {
 	return true
 }
 
+
+
+
+// ###########################################################################
+
+
+
 // Generic functions that work with any TokenSlice
-func GetRomanization(tokens []AnyToken) string {
-	var parts []string
-	for _, t := range tokens {
-		parts = append(parts, t.GetRomanization())
-	}
-	return strings.Join(parts, " ")
+func Roman(tokens []AnyToken) string {
+	return strings.Join(RomanParts(tokens), " ")
 }
 
-func GetRomanizationParts(tokens []AnyToken) []string {
+func RomanParts(tokens []AnyToken) []string {
 	parts := make([]string, len(tokens))
 	for i, t := range tokens {
-		parts[i] = t.GetRomanization()
+		parts[i] = t.Roman()
 	}
 	return parts
 }
 
-func GetTokenizedParts(tokens []AnyToken) []string {
+func Tokenized(tokens []AnyToken) string {
+	return strings.Join(TokenizedParts(tokens), " ")
+}
+
+
+func TokenizedParts(tokens []AnyToken) []string {
 	parts := make([]string, len(tokens))
 	for i, t := range tokens {
 		parts[i] = t.GetSurface()
 	}
 	return parts
 }
+

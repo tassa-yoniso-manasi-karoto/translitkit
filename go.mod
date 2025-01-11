@@ -7,7 +7,6 @@ require (
 	github.com/gookit/color v1.5.4
 	github.com/k0kubun/pp v3.0.1+incompatible
 	github.com/rivo/uniseg v0.4.7
-	github.com/tassa-yoniso-manasi-karoto/go-ichiran v0.0.0-20250107051937-c47cf500e477
 )
 
 require (

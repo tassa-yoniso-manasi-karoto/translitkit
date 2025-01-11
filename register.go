@@ -56,7 +56,7 @@ func Register(lang *iso.Language, provType ProviderType, name string, entry Prov
 	return nil
 }
 
-func GetProvider(lang *iso.Language, provType ProviderType, name string) (Provider[AnyTokenSlice, AnyTokenSlice], error) {
+func GetProvider(lang *iso.Language, provType ProviderType, name string) (Provider[AnyTokenSliceWrapper, AnyTokenSliceWrapper], error) {
 	GlobalRegistry.mu.RLock()
 	defer GlobalRegistry.mu.RUnlock()
 

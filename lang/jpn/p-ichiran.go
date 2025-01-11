@@ -6,7 +6,7 @@ import (
 	"github.com/tassa-yoniso-manasi-karoto/go-ichiran"
 	common "github.com/tassa-yoniso-manasi-karoto/translitkit"
 
-	iso "github.com/barbashov/iso639-3"
+	//iso "github.com/barbashov/iso639-3"
 	"github.com/gookit/color"
 	"github.com/k0kubun/pp"
 )
@@ -23,7 +23,7 @@ func (p *IchiranProvider) Init() (err error) {
 		return fmt.Errorf("failed to create API client for Ichiran Docker: %v", err)
 	}
 
-	if err = p.docker.InitQuiet(); err != nil {
+	if err = p.docker.Init(); err != nil {
 		return fmt.Errorf("failed to initialize: %v", err)
 	}
 	return
@@ -41,7 +41,7 @@ func (p *IchiranProvider) Close() error {
 	return p.docker.Close()
 }
 
-func (p *IchiranProvider) Process(m common.Module, input common.AnyTokenSlice) (results common.AnyTokenSlice, err error) {
+func (p *IchiranProvider) Process(m common.AnyModule, input common.AnyTokenSliceWrapper) (results common.AnyTokenSliceWrapper, err error) {
 	raw := input.GetRaw()
 	if input.Len() == 0 && raw == "" {
 		return nil, fmt.Errorf("empty input was passed to processor")
@@ -78,7 +78,7 @@ func (p *IchiranProvider) Process(m common.Module, input common.AnyTokenSlice) (
 }
 
 // process accepts a transformation function: the desired ichiran method to use
-func (p *IchiranProvider) process(transform func(*ichiran.JSONTokens) common.AnyTokenSlice, input string) (results common.AnyTokenSlice, err error) {
+func (p *IchiranProvider) process(transform func(*ichiran.JSONTokens) common.AnyTokenSliceWrapper, input string) (results common.AnyTokenSliceWrapper, err error) {
 	text, err := ichiran.Analyze(input)
 	if err != nil {
 		return nil, fmt.Errorf("failed to analyse: %v", err)
@@ -86,7 +86,7 @@ func (p *IchiranProvider) process(transform func(*ichiran.JSONTokens) common.Any
 	return transform(text), nil
 }
 
-func init() { // FIXME
+/*func init() { // FIXME
 	ichiran := &IchiranProvider{}
 	ja := iso.FromAnyCode("ja")
 
@@ -111,7 +111,7 @@ func init() { // FIXME
 	if err != nil {
 		panic(fmt.Sprintf("failed to set ichiran as default: %v", err))
 	}
-}
+}*/
 
 // // Example of registering separate providers:
 // func init() {

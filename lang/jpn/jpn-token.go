@@ -64,9 +64,9 @@ func (t Tkn) IsTokenType() bool {
 type JapaneseModule struct {
 	language       *iso.Language
 	providerType   common.ProviderType
-	tokenizer      common.Provider[common.AnyTokenSlice, common.AnyTokenSlice]
-	transliterator common.Provider[common.AnyTokenSlice, common.AnyTokenSlice]
-	combined       common.Provider[common.AnyTokenSlice, common.AnyTokenSlice]
+	tokenizer      common.Provider[common.AnyTokenSliceWrapper, common.AnyTokenSliceWrapper]
+	transliterator common.Provider[common.AnyTokenSliceWrapper, common.AnyTokenSliceWrapper]
+	combined       common.Provider[common.AnyTokenSliceWrapper, common.AnyTokenSliceWrapper]
 	MaxLenQuery    int
 }
 
@@ -149,9 +149,9 @@ func ToJapaneseToken(it *ichiran.JSONToken) (jt Tkn) {
 
 // ToTokenSlice converts all ichiran.JSONTokens to JapaneseSliceTkns
 //
-//	NOTE: Golang limitation: the function's return type must explicitly be set to common.AnyTokenSlice.
-//	It CAN NOT be inferred from JapaneseSliceTkns even if it implements the AnyTokenSlice interface.
-func ToTokenSlice(JSONTokens *ichiran.JSONTokens) (tkns common.AnyTokenSlice) {
+//	NOTE: Golang limitation: the function's return type must explicitly be set to common.AnyTokenSliceWrapper.
+//	It CAN NOT be inferred from JapaneseSliceTkns even if it implements the AnyTokenSliceWrapper interface.
+func ToTokenSlice(JSONTokens *ichiran.JSONTokens) (tkns common.AnyTokenSliceWrapper) {
 	tkns = JapaneseSliceTkns{common.Tkns{Slice: make([]common.AnyToken, 0)}}
 
 	for _, token := range *JSONTokens {
