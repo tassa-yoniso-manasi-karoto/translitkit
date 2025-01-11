@@ -11,6 +11,8 @@ import (
 	"github.com/k0kubun/pp"
 )
 
+const Lang = "jpn"
+
 // IchiranProvider satisfies the Provider interface
 type IchiranProvider struct {
 	config map[string]interface{}
@@ -86,11 +88,10 @@ func (p *IchiranProvider) process(transform func(*ichiran.JSONTokens) common.Any
 	return transform(text), nil
 }
 
-/*func init() { // FIXME
+func init() {
 	ichiran := &IchiranProvider{}
-	ja := iso.FromAnyCode("ja")
 
-	err := common.Register(ja, common.CombinedType, "ichiran", common.ProviderEntry{
+	err := common.Register(Lang, common.CombinedType, "ichiran", common.ProviderEntry{
 		Provider:     ichiran,
 		Capabilities: []string{"tokenization", "reading", "romaji"},
 		Type:         common.CombinedType,
@@ -98,11 +99,7 @@ func (p *IchiranProvider) process(transform func(*ichiran.JSONTokens) common.Any
 	if err != nil {
 		panic(fmt.Sprintf("failed to register ichiran provider: %v", err))
 	}
-
-	langProviders, _ := common.GlobalRegistry.Providers[ja]
-	pp.Println(langProviders)
-
-	err = common.SetDefault(ja, []common.ProviderEntry{
+	err = common.SetDefault(Lang, []common.ProviderEntry{
 		{
 			Provider: ichiran,
 			Type:     common.CombinedType,
@@ -111,7 +108,7 @@ func (p *IchiranProvider) process(transform func(*ichiran.JSONTokens) common.Any
 	if err != nil {
 		panic(fmt.Sprintf("failed to set ichiran as default: %v", err))
 	}
-}*/
+}
 
 // // Example of registering separate providers:
 // func init() {
