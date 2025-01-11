@@ -2,6 +2,8 @@
 
 This library primarily aims at **providing tokenization** and **phonetically-accurate transliteration**.
 
+Currently, neural network-oriented NLP tasks such as text classification, named entity recognition... are not supported because I don't have a need for it but I am open to iterating on the current implementation if people want to contribute. Hence, I will keep this as "pre-release" but the tokenization/romanization APIs should be pretty stable.
+
 I am not trying to reinvent the wheel therefore this library will leverage reputable implementations of (tokenizers+) romanizers for each language: either a go library or a ***dockerized component*** using the Docker Compose API (especially in the case of tokenizers or neural network based libraries).
 
 **This library does not perform any kind of natural language processing by itself**, it only serves as a gateway to the underlying tokenizers/transliterators/NLP libs.
