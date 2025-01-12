@@ -13,8 +13,8 @@ type AnyModule interface {
 	Close() error
 }
 
-// BaseModule satisfies the AnyModule interface. It contains both Tokenization+Transliteration components.
-type BaseModule struct {
+// Module satisfies the AnyModule interface. It contains both Tokenization+Transliteration components.
+type Module struct {
 	Lang           string // ISO-639 Part 3: i.e. "eng", "zho", "jpn"...
 	ProviderType   ProviderType
 	Tokenizer      Provider[AnyTokenSliceWrapper, AnyTokenSliceWrapper]
@@ -26,7 +26,7 @@ type BaseModule struct {
 // ProviderNames returns the names of the provider(s) contained in the module.
 // For combined providers, it returns a single name.
 // For separate providers, it returns both tokenizer and transliterator names.
-func (m BaseModule) ProviderNames() string {
+func (m Module) ProviderNames() string {
 	if m.Combined != nil {
 		return m.Combined.Name()
 	}
@@ -43,7 +43,7 @@ func (m BaseModule) ProviderNames() string {
 
 
 
-func (m BaseModule) Init() error {
+func (m Module) Init() error {
 	if m.Combined != nil {
 		return m.Combined.Init()
 	}
@@ -56,13 +56,13 @@ func (m BaseModule) Init() error {
 	return nil
 }
 
-func (m BaseModule) MustInit() {
+func (m Module) MustInit() {
 	if err := m.Init(); err != nil {
 		panic(err)
 	}
 }
 
-func (m BaseModule) Roman(input string) (string, error) {
+func (m Module) Roman(input string) (string, error) {
 	if m.Transliterator == nil && m.ProviderType != CombinedType {
 		return "", fmt.Errorf("romanization requires either a transliterator or combined provider (got %s)", m.ProviderType)
 	}
@@ -74,7 +74,7 @@ func (m BaseModule) Roman(input string) (string, error) {
 	return tkns.Roman(), nil
 }
 
-func (m BaseModule) RomanParts(input string) ([]string, error) {
+func (m Module) RomanParts(input string) ([]string, error) {
 	if m.Transliterator == nil && m.ProviderType != CombinedType {
 		return nil, fmt.Errorf("romanization requires either a transliterator or combined provider (got %s)", m.ProviderType)
 	}
@@ -85,7 +85,7 @@ func (m BaseModule) RomanParts(input string) ([]string, error) {
 	return tkns.RomanParts(), nil
 }
 
-func (m BaseModule) TokenizedParts(input string) ([]string, error) {
+func (m Module) TokenizedParts(input string) ([]string, error) {
 	if m.Tokenizer == nil && m.ProviderType != CombinedType {
 		return nil, fmt.Errorf("tokenization requires either a tokenizer or combined provider (got %s)", m.ProviderType)
 	}
@@ -96,7 +96,7 @@ func (m BaseModule) TokenizedParts(input string) ([]string, error) {
 	return tkns.TokenizedParts(), nil
 }
 
-func (m BaseModule) Tokenized(input string) (string, error) {
+func (m Module) Tokenized(input string) (string, error) {
 	if m.Tokenizer == nil && m.ProviderType != CombinedType {
 		return "", fmt.Errorf("tokenization requires either a tokenizer or combined provider (got %s)", m.ProviderType)
 	}
@@ -107,7 +107,7 @@ func (m BaseModule) Tokenized(input string) (string, error) {
 	return strings.Join(parts, " "), nil // FIXME ideally place space between word-words not word-punctuation or punct-punct
 }
 
-func (m BaseModule) Tokens(input string) (AnyTokenSliceWrapper, error) {
+func (m Module) Tokens(input string) (AnyTokenSliceWrapper, error) {
 	var result AnyTokenSliceWrapper
 	var err error
 
@@ -129,7 +129,7 @@ func (m BaseModule) Tokens(input string) (AnyTokenSliceWrapper, error) {
 	return result, nil
 }
 
-func (m BaseModule) Close() error {
+func (m Module) Close() error {
 	if m.Combined != nil {
 		return m.Combined.Close()
 	}
@@ -142,6 +142,6 @@ func (m BaseModule) Close() error {
 	return nil
 }
 
-func (m BaseModule) RomanPostProcess(s string, f func(string) (string)) (string) {
+func (m Module) RomanPostProcess(s string, f func(string) (string)) (string) {
 	return f(s)
 }

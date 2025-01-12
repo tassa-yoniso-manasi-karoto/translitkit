@@ -1,18 +1,12 @@
 *urgent:*
 
-- ichiran:  disable logs
-- ichiran:  README: mention OS.Specific path, possible to use running ichiran instance
-- ichiran:  update the methods to target *JSONTokens
+- implement lang specific checks using static.go
 - testing testing testing testing testing
 - add basic usage to README
 
 <hr>
 
-- fix init() of pkg jpn which register ichiran provider that somehow get voided in main.go (maybe there is 2 separated translitkit instance due to the replace directive in go.mod which each a globalRegister)
 - fix func (m *JapaneseModule) KanaParts
-- somehow separate IchiranProvider's Docker init and and config init in Init()
-- implement lang specific checks using data.go
-- godocs
 
 
 *later:*

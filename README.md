@@ -1,10 +1,4 @@
-### Status: pre-release [![Go Reference](https://pkg.go.dev/badge/github.com/tassa-yoniso-manasi-karoto/go-ichiran.svg)](https://pkg.go.dev/github.com/tassa-yoniso-manasi-karoto/go-ichiran) [![Go Report Card](https://goreportcard.com/badge/github.com/tassa-yoniso-manasi-karoto/translitkit)](https://goreportcard.com/report/github.com/tassa-yoniso-manasi-karoto/translitkit)
-
-<!--
-TODO:
-put static.go to use
-Implement thai provider
--->
+### Status: pre-release [![Go Reference](https://pkg.go.dev/badge/github.com/tassa-yoniso-manasi-karoto/translitkit.svg)](https://pkg.go.dev/github.com/tassa-yoniso-manasi-karoto/translitkit) [![Go Report Card](https://goreportcard.com/badge/github.com/tassa-yoniso-manasi-karoto/translitkit)](https://goreportcard.com/report/github.com/tassa-yoniso-manasi-karoto/translitkit)
 
 This library primarily aims at **providing tokenization** and **phonetically-accurate transliteration**.
 

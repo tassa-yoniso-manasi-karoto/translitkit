@@ -87,7 +87,7 @@ func GetProvider(lang string, provType ProviderType, name string) (Provider[AnyT
 	return entry.Provider, nil
 }
 
-func GetDefault(lang string) (*BaseModule, error) {
+func GetDefault(lang string) (*Module, error) {
 	GlobalRegistry.mu.RLock()
 	defer GlobalRegistry.mu.RUnlock()
 
@@ -100,7 +100,7 @@ func GetDefault(lang string) (*BaseModule, error) {
 		return nil, fmt.Errorf("no default Providers set for language: %s", lang)
 	}
 
-	module := &BaseModule{
+	module := &Module{
 		Lang: lang,
 	}
 

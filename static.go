@@ -1,7 +1,7 @@
 package translitkit
 
 var LangsNeedTokenization = []string{
-	"cmn", // Chinese (Mandarin) - 920 million
+	"zho", "cmn", // Chinese (Mandarin) - 920 million
 	"yue", // Chinese (Cantonese) - 85 million
 	"jpn", // Japanese - 125 million
 	// "kor", // Korean - 80 million - modern Korean typically uses spaces
@@ -21,7 +21,7 @@ var LangsNeedTokenization = []string{
 }
 
 var LangsNeedTransliteration = []string{
-	"cmn", // Chinese (Mandarin) - 920 million
+	"zho", "cmn", // Chinese (Mandarin) - 920 million
 	"hin", // Hindi (Devanagari script) - 600 million
 	"ara", // Arabic (Modern Standard) - 450 million
 	"ben", // Bengali - 265 million
