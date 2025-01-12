@@ -1,5 +1,11 @@
 ### Status: pre-release [![Go Reference](https://pkg.go.dev/badge/github.com/tassa-yoniso-manasi-karoto/go-ichiran.svg)](https://pkg.go.dev/github.com/tassa-yoniso-manasi-karoto/go-ichiran) [![Go Report Card](https://goreportcard.com/badge/github.com/tassa-yoniso-manasi-karoto/translitkit)](https://goreportcard.com/report/github.com/tassa-yoniso-manasi-karoto/translitkit)
 
+<!--
+TODO:
+put static.go to use
+Implement thai provider
+-->
+
 This library primarily aims at **providing tokenization** and **phonetically-accurate transliteration**.
 
 Currently, neural network-oriented NLP tasks such as text classification, named entity recognition... are not supported because I don't have a need for it but I am open to iterating on the current implementation if people want to contribute. Hence, I will keep this as "pre-release" but the tokenization/romanization APIs should be pretty stable.

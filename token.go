@@ -143,6 +143,7 @@ func (t Tkn) IsTokenType() bool {
 
 
 
+
 // Generic functions that work with any TokenSlice
 func Roman(tokens []AnyToken) string {
 	return strings.Join(RomanParts(tokens), " ")
@@ -151,7 +152,11 @@ func Roman(tokens []AnyToken) string {
 func RomanParts(tokens []AnyToken) []string {
 	parts := make([]string, len(tokens))
 	for i, t := range tokens {
-		parts[i] = t.Roman()
+		if r := t.Roman(); r != "" {
+			parts[i] = t.Roman()
+		} else {
+			parts[i] = t.GetSurface()
+		}
 	}
 	return parts
 }
