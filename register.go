@@ -25,10 +25,10 @@ type Registry struct {
 // Register adds a new Provider to the global registry for the specified language.
 // It performs capability validation and warns if the Provider's capabilities
 // don't match the language requirements.
-func Register(userLang string, provType ProviderType, name string, entry ProviderEntry) error {
-	lang, ok := IsValidISO639(userLang)
+func Register(languageCode string, provType ProviderType, name string, entry ProviderEntry) error {
+	lang, ok := IsValidISO639(languageCode)
 	if !ok {
-		return fmt.Errorf(errNotISO639, userLang)
+		return fmt.Errorf(errNotISO639, languageCode)
 	}
 	GlobalRegistry.mu.Lock()
 	defer GlobalRegistry.mu.Unlock()
@@ -91,10 +91,10 @@ func Register(userLang string, provType ProviderType, name string, entry Provide
 	return nil
 }
 
-func GetDefault(userLang string) (*Module, error) {
-	lang, ok := IsValidISO639(userLang)
+func GetDefault(languageCode string) (*Module, error) {
+	lang, ok := IsValidISO639(languageCode)
 	if !ok {
-		return nil, fmt.Errorf(errNotISO639, userLang)
+		return nil, fmt.Errorf(errNotISO639, languageCode)
 	}
 	GlobalRegistry.mu.RLock()
 	defer GlobalRegistry.mu.RUnlock()
@@ -128,10 +128,10 @@ func GetDefault(userLang string) (*Module, error) {
 
 // SetDefault configures the default Providers for a language in the global registry.
 // It validates that the Providers have the necessary capabilities for the language.
-func SetDefault(userLang string, Providers []ProviderEntry) error {
-	lang, ok := IsValidISO639(userLang)
+func SetDefault(languageCode string, Providers []ProviderEntry) error {
+	lang, ok := IsValidISO639(languageCode)
 	if !ok {
-		return fmt.Errorf(errNotISO639, userLang)
+		return fmt.Errorf(errNotISO639, languageCode)
 	}
 	GlobalRegistry.mu.Lock()
 	defer GlobalRegistry.mu.Unlock()

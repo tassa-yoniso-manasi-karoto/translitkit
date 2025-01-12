@@ -39,7 +39,11 @@ type Module struct {
 //	module, err := NewModule("jpn") // Use defaults
 //	module, err := NewModule("jpn", "ichiran") // Use combined Provider
 //	module, err := NewModule("jpn", "mecab", "kakasi") // Use separate Providers
-func NewModule(lang string, providerNames ...string) (*Module, error) {
+func NewModule(languageCode string, providerNames ...string) (*Module, error) {
+	lang, ok := IsValidISO639(languageCode)
+	if !ok {
+		return nil, fmt.Errorf(errNotISO639, languageCode)
+	}
 	if len(providerNames) == 0 {
 		return GetDefault(lang)
 	}
