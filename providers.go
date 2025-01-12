@@ -44,11 +44,6 @@ type Provider[In AnyTokenSliceWrapper, Out AnyTokenSliceWrapper] interface {
 
 type DefaultProviders []ProviderEntry
 
-type SeparateProviders struct {
-	Tokenizer      ProviderEntry
-	Transliterator ProviderEntry
-}
-
 type LanguageProviders struct {
 	Defaults        DefaultProviders
 	Tokenizers      map[string]ProviderEntry
@@ -62,17 +57,7 @@ type ProviderEntry struct {
 	Type         ProviderType
 }
 
-type ProviderConfig struct {
-	Name         string
-	ProviderType ProviderType
-	Params       map[string]interface{}
-}
 
-type DefaultProvider struct {
-	CombinedName       string
-	TokenizerName      string
-	TransliteratorName string
-}
 
 // // FIXME WIP
 // func GenericQuerySplitter(input []MyString, max int) (QuerySliced [][]MyString, err error) {
