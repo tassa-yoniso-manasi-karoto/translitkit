@@ -4,11 +4,14 @@ package translitkit
 import (
 	"fmt"
 	"sync"
-
-	//iso "github.com/barbashov/iso639-3"
+	"os"
+	
+	iso "github.com/barbashov/iso639-3"
 	"github.com/gookit/color"
 	"github.com/k0kubun/pp"
 )
+
+const errNotISO639 = "\"%s\" isn't a ISO-639 language code"
 
 var GlobalRegistry = &Registry{
 	Providers: make(map[string]LanguageProviders),
@@ -19,9 +22,40 @@ type Registry struct {
 	Providers map[string]LanguageProviders
 }
 
-func Register(lang string, provType ProviderType, name string, entry ProviderEntry) error {
+// Register adds a new Provider to the global registry for the specified language.
+// It performs capability validation and warns if the Provider's capabilities
+// don't match the language requirements.
+func Register(userLang string, provType ProviderType, name string, entry ProviderEntry) error {
+	lang, ok := IsValidISO639(userLang)
+	if !ok {
+		return fmt.Errorf(errNotISO639, userLang)
+	}
 	GlobalRegistry.mu.Lock()
 	defer GlobalRegistry.mu.Unlock()
+	
+	needsTokenization := NeedsTokenization(lang)
+	needsTransliteration := NeedsTransliteration(lang)
+
+	if needsTokenization || needsTransliteration {
+		hasTokenization := false
+		hasTransliteration := false
+		
+		for _, capability := range entry.Capabilities {
+			if capability == "tokenization" {
+				hasTokenization = true
+			}
+			if capability == "transliteration" {
+				hasTransliteration = true
+			}
+		}
+
+		if needsTokenization && !hasTokenization && (provType == TokenizerType || provType == CombinedType) {
+			fmt.Fprintf(os.Stderr, "Warning: Registering Provider %s for %s which requires tokenization but Provider doesn't declare this capability\n", name, lang)
+		}
+		if needsTransliteration && !hasTransliteration && (provType == TransliteratorType || provType == CombinedType) {
+			fmt.Fprintf(os.Stderr, "Warning: Registering Provider %s for %s which requires transliteration but Provider doesn't declare this capability\n", name, lang)
+		}
+	}
 
 	// Initialize language Providers if not exists
 	if _, exists := GlobalRegistry.Providers[lang]; !exists {
@@ -57,37 +91,11 @@ func Register(lang string, provType ProviderType, name string, entry ProviderEnt
 	return nil
 }
 
-func GetProvider(lang string, provType ProviderType, name string) (Provider[AnyTokenSliceWrapper, AnyTokenSliceWrapper], error) {
-	GlobalRegistry.mu.RLock()
-	defer GlobalRegistry.mu.RUnlock()
-
-	langProviders, exists := GlobalRegistry.Providers[lang]
-	if !exists {
-		return nil, fmt.Errorf("GetProvider: no Providers registered for language: %s", lang)
-	}
-
-	var entry ProviderEntry
-	var ok bool
-
-	switch provType {
-	case TokenizerType:
-		entry, ok = langProviders.Tokenizers[name]
-	case TransliteratorType:
-		entry, ok = langProviders.Transliterators[name]
-	case CombinedType:
-		entry, ok = langProviders.Combined[name]
-	default:
-		return nil, fmt.Errorf("unknown provider type: %s", provType)
-	}
-
+func GetDefault(userLang string) (*Module, error) {
+	lang, ok := IsValidISO639(userLang)
 	if !ok {
-		return nil, fmt.Errorf("provider not found: %s (%s)", name, provType)
+		return nil, fmt.Errorf(errNotISO639, userLang)
 	}
-
-	return entry.Provider, nil
-}
-
-func GetDefault(lang string) (*Module, error) {
 	GlobalRegistry.mu.RLock()
 	defer GlobalRegistry.mu.RUnlock()
 
@@ -118,35 +126,42 @@ func GetDefault(lang string) (*Module, error) {
 	return module, nil
 }
 
-func ListProviders(lang string) map[ProviderType][]string {
-	GlobalRegistry.mu.RLock()
-	defer GlobalRegistry.mu.RUnlock()
+// SetDefault configures the default Providers for a language in the global registry.
+// It validates that the Providers have the necessary capabilities for the language.
+func SetDefault(userLang string, Providers []ProviderEntry) error {
+	lang, ok := IsValidISO639(userLang)
+	if !ok {
+		return fmt.Errorf(errNotISO639, userLang)
+	}
+	GlobalRegistry.mu.Lock()
+	defer GlobalRegistry.mu.Unlock()
 
-	result := make(map[ProviderType][]string)
+	needsTokenization := NeedsTokenization(lang)
+	needsTransliteration := NeedsTransliteration(lang)
 
-	if langProviders, exists := GlobalRegistry.Providers[lang]; exists {
-		result[TokenizerType] = make([]string, 0, len(langProviders.Tokenizers))
-		for name := range langProviders.Tokenizers {
-			result[TokenizerType] = append(result[TokenizerType], name)
+	if needsTokenization || needsTransliteration {
+		hasTokenization := false
+		hasTransliteration := false
+		
+		for _, p := range Providers {
+			for _, capability := range p.Capabilities {
+				if capability == "tokenization" {
+					hasTokenization = true
+				}
+				if capability == "transliteration" {
+					hasTransliteration = true
+				}
+			}
 		}
 
-		result[TransliteratorType] = make([]string, 0, len(langProviders.Transliterators))
-		for name := range langProviders.Transliterators {
-			result[TransliteratorType] = append(result[TransliteratorType], name)
+		if needsTokenization && !hasTokenization {
+			fmt.Fprintf(os.Stderr, "Warning: Language %s requires tokenization but no Provider declares this capability\n", lang)
 		}
-
-		result[CombinedType] = make([]string, 0, len(langProviders.Combined))
-		for name := range langProviders.Combined {
-			result[CombinedType] = append(result[CombinedType], name)
+		if needsTransliteration && !hasTransliteration {
+			fmt.Fprintf(os.Stderr, "Warning: Language %s requires transliteration but no Provider declares this capability\n", lang)
 		}
 	}
 
-	return result
-}
-
-func SetDefault(lang string, Providers []ProviderEntry) error {
-	GlobalRegistry.mu.Lock()
-	defer GlobalRegistry.mu.Unlock()
 
 	langProviders, exists := GlobalRegistry.Providers[lang]
 	if !exists {
@@ -206,6 +221,71 @@ valid:
 	GlobalRegistry.Providers[lang] = langProviders
 	return nil
 }
+
+
+func getProvider(lang string, provType ProviderType, name string) (Provider[AnyTokenSliceWrapper, AnyTokenSliceWrapper], error) {
+	GlobalRegistry.mu.RLock()
+	defer GlobalRegistry.mu.RUnlock()
+
+	langProviders, exists := GlobalRegistry.Providers[lang]
+	if !exists {
+		return nil, fmt.Errorf("GetProvider: no Providers registered for language: %s", lang)
+	}
+
+	var entry ProviderEntry
+	var ok bool
+
+	switch provType {
+	case TokenizerType:
+		entry, ok = langProviders.Tokenizers[name]
+	case TransliteratorType:
+		entry, ok = langProviders.Transliterators[name]
+	case CombinedType:
+		entry, ok = langProviders.Combined[name]
+	default:
+		return nil, fmt.Errorf("unknown provider type: %s", provType)
+	}
+
+	if !ok {
+		return nil, fmt.Errorf("provider not found: %s (%s)", name, provType)
+	}
+
+	return entry.Provider, nil
+}
+
+
+
+func IsValidISO639(lang string) (stdLang string, ok bool) {
+	code := iso.FromAnyCode(lang)
+	if code == nil {
+		return
+	}
+	return code.Part3, true
+}
+
+
+// NeedsTokenization returns true if the given language requires tokenization
+func NeedsTokenization(lang string) bool {
+	for _, code := range LangsNeedTokenization {
+		if lang == code {
+			return true
+		}
+	}
+	return false
+}
+
+// NeedsTransliteration returns true if the given language requires transliteration
+func NeedsTransliteration(lang string) bool {
+	for _, code := range LangsNeedTransliteration {
+		if lang == code {
+			return true
+		}
+	}
+	return false
+}
+
+
+
 
 func placeholder23456ui() {
 	color.Redln(" 𝒻*** 𝓎ℴ𝓊 𝒸ℴ𝓂𝓅𝒾𝓁ℯ𝓇")

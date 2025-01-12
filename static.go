@@ -1,6 +1,6 @@
 package translitkit
 
-var LangsNeedTokenization = []string{
+var langsNeedTokenization = []string{
 	"zho", "cmn", // Chinese (Mandarin) - 920 million
 	"yue", // Chinese (Cantonese) - 85 million
 	"jpn", // Japanese - 125 million
@@ -20,7 +20,7 @@ var LangsNeedTokenization = []string{
 	"tib", // Tibetan - 1.2 million
 }
 
-var LangsNeedTransliteration = []string{
+var langsNeedTransliteration = []string{
 	"zho", "cmn", // Chinese (Mandarin) - 920 million
 	"hin", // Hindi (Devanagari script) - 600 million
 	"ara", // Arabic (Modern Standard) - 450 million

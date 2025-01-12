@@ -146,7 +146,7 @@ func (t Tkn) IsTokenType() bool {
 
 // Generic functions that work with any TokenSlice
 func roman(tokens []AnyToken) string {
-	return strings.Join(RomanParts(tokens), " ")
+	return strings.Join(romanParts(tokens), " ")
 }
 
 func romanParts(tokens []AnyToken) []string {
@@ -162,7 +162,7 @@ func romanParts(tokens []AnyToken) []string {
 }
 
 func tokenized(tokens []AnyToken) string {
-	return strings.Join(TokenizedParts(tokens), " ")
+	return strings.Join(tokenizedParts(tokens), " ")
 }
 
 

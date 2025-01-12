@@ -43,7 +43,10 @@ func (p *IchiranProvider) Close() error {
 	return p.docker.Close()
 }
 
-func (p *IchiranProvider) Process(m common.AnyModule, input common.AnyTokenSliceWrapper) (results common.AnyTokenSliceWrapper, err error) {
+// FIXME passing m *common.Module no longer useful?
+// this method should probably private at first glance
+
+func (p *IchiranProvider) Process(m *common.Module, input common.AnyTokenSliceWrapper) (results common.AnyTokenSliceWrapper, err error) {
 	raw := input.GetRaw()
 	if input.Len() == 0 && raw == "" {
 		return nil, fmt.Errorf("empty input was passed to processor")

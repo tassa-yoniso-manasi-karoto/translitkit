@@ -6,24 +6,6 @@ import (
 	"github.com/k0kubun/pp"
 )
 
-/* CLAUDE SUMMARY
-
-Core Requirements:
-	Modular design with common interface methods: Init(), Query(), PostProcess(), Close()
-	Metadata storage for each module (language, provider info, max query length etc.)
-	Support for multiple providers per language
-	Text processing with two main operations:
-		→ Tokenization (i.e. for ja supported by Mecab, Kagome)
-		→ Transliteration (i.e. for ja supported by Ichiran)
-	Ability to combine different providers (e.g., Mecab for tokenization + another one for transliteration)
-	
-Technical Considerations:
-	Need to handle cases where one provider can do both operations (Ichiran)
-	Need to handle cases where operations must be split between providers (Mecab+Ichiran)
-	Must maintain a clean interface while supporting different provider combinations
-	Should be extensible for adding new providers or capabilities
-*/
-
 type ProviderType string
 
 const (
@@ -35,7 +17,7 @@ const (
 // Unified interface for all providers of any type
 type Provider[In AnyTokenSliceWrapper, Out AnyTokenSliceWrapper] interface {
 	Init() error
-	Process(m AnyModule, input In) (Out, error)
+	Process(m *Module, input In) (Out, error)
 	Name() string
 	GetType() ProviderType
 	//GetCapabilities() []string
