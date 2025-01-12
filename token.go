@@ -37,6 +37,7 @@ type Tkns struct {
 	Raw   string
 }
 
+// TODO maybe make some of these methods private
 
 func (tokens Tkns) GetFirst() any {
 	if len(tokens.Slice) == 0 {

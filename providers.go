@@ -24,10 +24,8 @@ type Provider[In AnyTokenSliceWrapper, Out AnyTokenSliceWrapper] interface {
 	Close() error
 }
 
-type DefaultProviders []ProviderEntry
-
 type LanguageProviders struct {
-	Defaults        DefaultProviders
+	Defaults        []ProviderEntry
 	Tokenizers      map[string]ProviderEntry
 	Transliterators map[string]ProviderEntry
 	Combined        map[string]ProviderEntry

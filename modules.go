@@ -19,6 +19,7 @@ type anyModule interface {
 }
 
 // Module satisfies the AnyModule interface. It contains both Tokenization+Transliteration components.
+
 type Module struct {
 	Lang           string // ISO-639 Part 3: i.e. "eng", "zho", "jpn"...
 	ProviderType   ProviderType

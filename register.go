@@ -63,7 +63,7 @@ func Register(userLang string, provType ProviderType, name string, entry Provide
 			Tokenizers:      make(map[string]ProviderEntry),
 			Transliterators: make(map[string]ProviderEntry),
 			Combined:        make(map[string]ProviderEntry),
-			Defaults:        DefaultProviders(make([]ProviderEntry, 0)),
+			Defaults:        make([]ProviderEntry, 0),
 		}
 	}
 
@@ -266,7 +266,7 @@ func IsValidISO639(lang string) (stdLang string, ok bool) {
 
 // NeedsTokenization returns true if the given language requires tokenization
 func NeedsTokenization(lang string) bool {
-	for _, code := range LangsNeedTokenization {
+	for _, code := range langsNeedTokenization {
 		if lang == code {
 			return true
 		}
@@ -276,7 +276,7 @@ func NeedsTokenization(lang string) bool {
 
 // NeedsTransliteration returns true if the given language requires transliteration
 func NeedsTransliteration(lang string) bool {
-	for _, code := range LangsNeedTransliteration {
+	for _, code := range langsNeedTransliteration {
 		if lang == code {
 			return true
 		}

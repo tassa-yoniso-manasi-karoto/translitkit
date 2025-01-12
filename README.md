@@ -15,6 +15,67 @@ Thus there are linguistic annotations available following analysis such as part-
 > You may use [gosimple/slug](https://github.com/gosimple/slug) or [mozillazg/go-unidecode](https://github.com/mozillazg/go-unidecode) for these.<br>
 > go-unicode already ships a chinese tokenizer but other languages may benefit from using one of the tokenizer provided here though.
 
+## tldr
+
+```go
+import (
+	"fmt"
+	"github.com/tassa-yoniso-manasi-karoto/translitkit"
+        // ⚠️ language-specific pkg must be initialized for its providers to be available ⚠️
+	_ "github.com/tassa-yoniso-manasi-karoto/translitkit/lang/jpn"
+)
+
+func main() {
+	m, err := translitkit.GetDefault("jpn")
+	check(err)
+
+	m.MustInit()
+	defer m.Close()
+	
+	text := "日本語の例文です。"
+	result, err := m.Roman(text)
+	check(err)
+	fmt.Println(result)
+}
+```
+### Output
+
+```
+nihongo no reibun desu
+```
+
+<!-- <details>
+<summary> 
+        
+## Advanced usage
+</summary>
+
+
+```go
+func main() {
+	module, err := translitkit.GetDefault("jpn")
+	check(err)
+        // To access language specific methods you need to assert the language-specific nature of the module
+        m, ok = module.(jpn.Module)
+        if !ok {
+                panic("failed language-specific module assertion")
+        }
+	m.MustInit()
+	defer m.Close()
+	
+	text := "日本語の例文です"
+	result, err := m.Kana(text)
+	check(err)
+	fmt.Println("result)
+}
+```
+### Output
+
+```
+にほんご の れいぶん です
+```
+</details> -->
+
 
 ## Currently implemented tokenizers / transliterators
 "combined" means the provider implement both.
