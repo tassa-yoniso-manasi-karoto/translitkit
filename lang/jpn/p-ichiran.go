@@ -4,7 +4,7 @@ import (
 	"fmt"
 
 	"github.com/tassa-yoniso-manasi-karoto/go-ichiran"
-	common "github.com/tassa-yoniso-manasi-karoto/translitkit"
+	common "github.com/tassa-yoniso-manasi-karoto/translitkit/common"
 
 	//iso "github.com/barbashov/iso639-3"
 	"github.com/gookit/color"

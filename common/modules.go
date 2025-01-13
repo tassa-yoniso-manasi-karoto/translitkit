@@ -1,4 +1,4 @@
-package translitkit
+package common
 
 import (
 	"fmt"
@@ -45,7 +45,7 @@ func NewModule(languageCode string, providerNames ...string) (*Module, error) {
 		return nil, fmt.Errorf(errNotISO639, languageCode)
 	}
 	if len(providerNames) == 0 {
-		return GetDefault(lang)
+		return DefaultModule(lang)
 	}
 
 	module := &Module{

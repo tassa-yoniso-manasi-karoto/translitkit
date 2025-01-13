@@ -2,7 +2,7 @@ package jpn
 
 import (
 	"github.com/tassa-yoniso-manasi-karoto/go-ichiran"
-	common "github.com/tassa-yoniso-manasi-karoto/translitkit"
+	"github.com/tassa-yoniso-manasi-karoto/translitkit/common"
 
 	//iso "github.com/barbashov/iso639-3"
 )

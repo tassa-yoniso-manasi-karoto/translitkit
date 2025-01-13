@@ -1,4 +1,4 @@
-package translitkit
+package common
 
 var langsNeedTokenization = []string{
 	"zho", "cmn", // Chinese (Mandarin) - 920 million

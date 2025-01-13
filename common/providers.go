@@ -1,4 +1,4 @@
-package translitkit
+package common
 
 import (
 	"fmt"

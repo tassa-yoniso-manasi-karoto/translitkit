@@ -1,5 +1,5 @@
 
-package translitkit
+package common
 
 import (
 	"fmt"
@@ -91,7 +91,7 @@ func Register(languageCode string, provType ProviderType, name string, entry Pro
 	return nil
 }
 
-func GetDefault(languageCode string) (*Module, error) {
+func DefaultModule(languageCode string) (*Module, error) {
 	lang, ok := IsValidISO639(languageCode)
 	if !ok {
 		return nil, fmt.Errorf(errNotISO639, languageCode)
@@ -101,7 +101,7 @@ func GetDefault(languageCode string) (*Module, error) {
 
 	langProviders, exists := GlobalRegistry.Providers[lang]
 	if !exists {
-		return nil, fmt.Errorf("GetDefault: no Providers registered for language: %s", lang)
+		return nil, fmt.Errorf("DefaultModule: no Providers registered for language: %s", lang)
 	}
 
 	if len(langProviders.Defaults) == 0 {
@@ -264,7 +264,8 @@ func IsValidISO639(lang string) (stdLang string, ok bool) {
 }
 
 
-// NeedsTokenization returns true if the given language requires tokenization
+// NeedsTokenization returns true if the given language doesn't use space to
+// separate words and requires tokenization.
 func NeedsTokenization(lang string) bool {
 	for _, code := range langsNeedTokenization {
 		if lang == code {
@@ -274,7 +275,8 @@ func NeedsTokenization(lang string) bool {
 	return false
 }
 
-// NeedsTransliteration returns true if the given language requires transliteration
+// NeedsTransliteration returns true if the given language doesn't use the roman
+// script and requires transliteration.
 func NeedsTransliteration(lang string) bool {
 	for _, code := range langsNeedTransliteration {
 		if lang == code {

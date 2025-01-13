@@ -1,4 +1,4 @@
-package translitkit
+package common
 
 import (
 	"github.com/rivo/uniseg"
@@ -6,7 +6,7 @@ import (
 	"unicode/utf8"
 )
 
-// utils related to GenericQuerySplitter, WIP
+// utils related to GenericQuerySplitter, currently unused and obsolete but WIP
 
 type stringer interface {
 	~string
