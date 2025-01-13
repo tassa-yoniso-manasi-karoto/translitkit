@@ -57,7 +57,6 @@ func (p *IchiranProvider) Process(m *common.Module, input common.AnyTokenSliceWr
 		case common.TokenizerType:
 			//results = p.process(ToTokenSlice, input[i].Surface)
 		case common.TransliteratorType:
-			// note: the output format will be Tkns so due to the absence of tokenization everything will be stuffed into Tkns[0]
 			// results = []TokenContainer{new(common.Tkn)}
 			// results[0] = p.process((*ichiran.JSONTokens).Roman, input[i].Surface)
 		case common.CombinedType:

@@ -5,7 +5,7 @@ import (
 )
 
 func Serialize(input string) AnyTokenSliceWrapper {
-	return Tkns{Raw: input}
+	return TknSliceWrapper{Raw: input}
 }
 
 type AnyTokenSliceWrapper interface {
@@ -32,30 +32,30 @@ type AnyToken interface {
 
 
 
-type Tkns struct {
+type TknSliceWrapper struct {
 	Slice []AnyToken //alt.: Sentences [][]AnyToken
 	Raw   string
 }
 
 // TODO maybe make some of these methods private
 
-func (tokens Tkns) GetFirst() any {
+func (tokens TknSliceWrapper) GetFirst() any {
 	if len(tokens.Slice) == 0 {
 		return nil
 	}
 	return tokens.Slice[0]
 }
-func (tokens Tkns) Len() int {
+func (tokens TknSliceWrapper) Len() int {
 	return len(tokens.Slice)
 }
-func (tokens Tkns) GetRaw() string {
+func (tokens TknSliceWrapper) GetRaw() string {
 	return tokens.Raw
 }
-func (tokens Tkns) ClearRaw() AnyTokenSliceWrapper {
+func (tokens TknSliceWrapper) ClearRaw() AnyTokenSliceWrapper {
 	tokens.Raw = ""
 	return tokens
 }
-func (tokens Tkns) Append(tkn ...AnyToken) AnyTokenSliceWrapper {
+func (tokens TknSliceWrapper) Append(tkn ...AnyToken) AnyTokenSliceWrapper {
 	if tokens.Slice == nil {
 		tokens.Slice = make([]AnyToken, len(tkn))
 	}
@@ -66,24 +66,26 @@ func (tokens Tkns) Append(tkn ...AnyToken) AnyTokenSliceWrapper {
 
 
 
-func (tokens Tkns) Roman() string {
+func (tokens TknSliceWrapper) Roman() string {
 	return roman(tokens.Slice)
 }
-func (tokens Tkns) RomanParts() []string {
+func (tokens TknSliceWrapper) RomanParts() []string {
 	return romanParts(tokens.Slice)
 }
 
-func (tokens Tkns) Tokenized() string {
+func (tokens TknSliceWrapper) Tokenized() string {
 	return tokenized(tokens.Slice)
 }
 
-func (tokens Tkns) TokenizedParts() []string {
+func (tokens TknSliceWrapper) TokenizedParts() []string {
 	return tokenizedParts(tokens.Slice)
 }
 
-// (common.)Tkn represents the common, generic Token containing basic linguistic annotations / features for all languages
-// Languages specific token types (ie. jpn.Tkn) all have Tkn as their embedded (unnamed) field
-// therefore the methods of Tkn are available for every token type regardless.
+// (common.)Tkn represents the common, generic Token containing basic linguistic
+// annotations / features for all languages.
+// Languages specific token types (ie. jpn.Tkn) all have Tkn as their embedded
+// (unnamed) field therefore the methods of Tkn are available for every token
+// type regardless.
 type Tkn struct {
 	Surface    string // The actual text segment
 	IsToken    bool

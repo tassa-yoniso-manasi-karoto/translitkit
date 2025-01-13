@@ -7,8 +7,8 @@ import (
 	//iso "github.com/barbashov/iso639-3"
 )
 
-type JapaneseSliceTkns struct {
-	common.Tkns
+type TknSliceWrapper struct {
+	common.TknSliceWrapper
 }
 
 // Tkn extends common Token with Japanese-specific features
@@ -147,12 +147,12 @@ func ToJapaneseToken(it *ichiran.JSONToken) (jt Tkn) {
 	return jt
 }
 
-// ToTokenSlice converts all ichiran.JSONTokens to JapaneseSliceTkns
+// ToTokenSlice converts all ichiran.JSONTokens to jpn.TknSliceWrapper
 //
 //	NOTE: Golang limitation: the function's return type must explicitly be set to common.AnyTokenSliceWrapper.
-//	It CAN NOT be inferred from JapaneseSliceTkns even if it implements the AnyTokenSliceWrapper interface.
+//	It CAN NOT be inferred from jpn.TknSliceWrapper even if it implements the AnyTokenSliceWrapper interface.
 func ToTokenSlice(JSONTokens *ichiran.JSONTokens) (tkns common.AnyTokenSliceWrapper) {
-	tkns = JapaneseSliceTkns{common.Tkns{Slice: make([]common.AnyToken, 0)}}
+	tkns = TknSliceWrapper{common.TknSliceWrapper{Slice: make([]common.AnyToken, 0)}}
 
 	for _, token := range *JSONTokens {
 		inter := ToJapaneseToken(token)

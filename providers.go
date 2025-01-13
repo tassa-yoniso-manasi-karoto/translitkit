@@ -20,7 +20,6 @@ type Provider[In AnyTokenSliceWrapper, Out AnyTokenSliceWrapper] interface {
 	Process(m *Module, input In) (Out, error)
 	Name() string
 	GetType() ProviderType
-	//GetCapabilities() []string
 	Close() error
 }
 
