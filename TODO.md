@@ -1,7 +1,5 @@
 *urgent:*
 
-- finish jpn.KanaParts
-
 - reimplement provider.hasCapability(string) and simplify checking capability in register.go
 - maybe implement jpn.NewModules
 - for TokenizedStr ideally place space between word-words not word-punctuation or punct-punct

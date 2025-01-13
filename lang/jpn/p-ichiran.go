@@ -55,12 +55,12 @@ func (p *IchiranProvider) Process(m *common.Module, input common.AnyTokenSliceWr
 	if raw != "" {
 		switch ProviderType {
 		case common.TokenizerType:
-			//results = p.process(ToTokenSlice, input[i].Surface)
+			//results = p.process(ToAnyTokenSliceWrapper, input[i].Surface)
 		case common.TransliteratorType:
 			// results = []TokenContainer{new(common.Tkn)}
 			// results[0] = p.process((*ichiran.JSONTokens).Roman, input[i].Surface)
 		case common.CombinedType:
-			return p.process(ToTokenSlice, raw)
+			return p.process(ToAnyTokenSliceWrapper, raw)
 		}
 		input = input.ClearRaw()
 	} else { // generic token processor: take common.Tkn as well as lang-specic tokens that have common.Tkn as their embedded field

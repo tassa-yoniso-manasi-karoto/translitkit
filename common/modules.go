@@ -171,7 +171,7 @@ func (m *Module) Tokenized(input string) (string, error) {
 	return strings.Join(parts, " "), nil // FIXME ideally place space between word-words not word-punctuation or punct-punct
 }
 
-func (m *Module) Tokens(input string) (AnyTokenSliceWrapper, error) {
+func (m *Module) Tokens(input string) (TknSliceWrapper, error) {
 	var result AnyTokenSliceWrapper
 	var err error
 
@@ -180,17 +180,25 @@ func (m *Module) Tokens(input string) (AnyTokenSliceWrapper, error) {
 	} else {
 		intermediate, err := m.Tokenizer.Process(m, Serialize(input))
 		if err != nil {
-			return nil, fmt.Errorf("tokenization failed: %v", err)
+			return TknSliceWrapper{}, fmt.Errorf("tokenization failed: %v", err)
 		}
 		result, err = m.Transliterator.Process(m, intermediate)
 		if err != nil {
-			return nil, fmt.Errorf("transliteration failed: %v", err)
+			return TknSliceWrapper{}, fmt.Errorf("transliteration failed: %v", err)
 		}
 	}
 	if err != nil {
-		return nil, err
+		return TknSliceWrapper{}, err
 	}
-	return result, nil
+	
+	// not actually necessary as it offer the same method set than that of type
+	// AnyTknSliceWrapper returned by Process but it saves from repeating this
+	// assertion in lang-specific pkg.
+	wrapper, ok := result.(TknSliceWrapper)
+	if !ok {
+		return TknSliceWrapper{}, fmt.Errorf("failed assertion of TknSliceWrapper")
+	}
+	return wrapper, nil
 }
 
 func (m *Module) Close() error {

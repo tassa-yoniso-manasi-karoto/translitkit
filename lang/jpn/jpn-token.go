@@ -1,6 +1,9 @@
 package jpn
 
 import (
+	"fmt"
+	"strings"
+	
 	"github.com/tassa-yoniso-manasi-karoto/go-ichiran"
 	"github.com/tassa-yoniso-manasi-karoto/translitkit/common"
 
@@ -14,32 +17,83 @@ type Module struct {
 
 // DefaultModule returns a new Japanese-specific Module configured with the default providers.
 func DefaultModule() (*Module, error) {
-	cm, err := common.defaultModule("jpn")
+	m, err := common.DefaultModule("jpn")
 	if err != nil {
 		return nil, err
 	}
-	jm.Module = &Module{
-		Module: cm,
+	jm := &Module{
+		Module: m,
 	}
 	return jm, nil
 }
 
-/* FIXME obsolete implementation
-func (m *Module) KanaParts(input string) ([]string, error) {
-	if m.transliterator == nil && m.providerType != common.CombinedType {
-		return nil, fmt.Errorf("katakana requires either a transliterator or combined provider (got %s)", m.providerType)
+
+
+
+func (m *Module) Tokens(input string) (TknSliceWrapper, error) {
+	commonWrapper, err := m.Module.Tokens(input)
+	if err != nil {
+		return TknSliceWrapper{}, fmt.Errorf("lang/jpn: %v", err)
 	}
-	m.outputType = common.KanaType
-	return m.GetSlice(input) // FIXME  m.GetSlice undefined (type *JapaneseModule has no field or method GetSlice)
-}*/
+	
+	// takes []AnyToken, returns asserted []jpn.Token
+	// TODO mesure perf impact
+	tkns, err := convertTokensSafe(commonWrapper.Slice) 
+	if err != nil {
+		return TknSliceWrapper{}, fmt.Errorf("failed assertion of []jpn.Tkn: %v", err)
+	}
+	return TknSliceWrapper{commonWrapper, tkns}, nil
+}
 
+// TODO Maybe automatically return Katakana or Hiragan as fit
 
+// Returns a tokenized string of Hiragana readings
+func (m *Module) Kana(input string) (string, error) {
+	if m.Transliterator == nil && m.ProviderType != common.CombinedType {
+		return "", fmt.Errorf("Kana requires either a transliterator or combined provider (got %s)", m.ProviderType)
+	}
+	tkns, err := m.Tokens(input)
+	if err != nil {
+		return "", err
+	}
+	return tkns.Kana(), nil
+}
+
+// Returns a slice of string of Hiragana readings
+func (m *Module) KanaParts(input string) ([]string, error) {
+	if m.Transliterator == nil && m.ProviderType != common.CombinedType {
+		return []string{}, fmt.Errorf("KanaParts requires either a transliterator or combined provider (got %s)", m.ProviderType)
+	}
+	tkns, err := m.Tokens(input)
+	if err != nil {
+		return []string{}, err
+	}
+	return tkns.KanaParts(), nil
+}
 
 
 
 type TknSliceWrapper struct {
 	common.TknSliceWrapper
+	NativeSlice []Tkn
 }
+
+func (wrapper TknSliceWrapper) Kana() string {
+	return strings.Join(wrapper.KanaParts(), " ")
+}
+
+func (wrapper TknSliceWrapper) KanaParts() []string {
+	var parts []string
+	for _, token := range wrapper.NativeSlice {
+		if token.Tkn.IsToken && token.Hiragana != "" {
+			parts = append(parts, token.Hiragana)
+		} else {
+			parts = append(parts, token.Tkn.Surface)
+		}
+	}
+	return parts
+}
+
 
 // Tkn extends common Token with Japanese-specific features
 type Tkn struct {
@@ -169,13 +223,26 @@ func ToJapaneseToken(it *ichiran.JSONToken) (jt Tkn) {
 //	NOTE: Golang limitation: the function's return type must explicitly be set to common.AnyTokenSliceWrapper.
 //	It CAN NOT be inferred from jpn.TknSliceWrapper even if it implements the AnyTokenSliceWrapper interface.
 func ToAnyTokenSliceWrapper(JSONTokens *ichiran.JSONTokens) (tkns common.AnyTokenSliceWrapper) {
-	tkns = TknSliceWrapper{common.TknSliceWrapper{Slice: make([]common.AnyToken, 0)}}
+	tkns = TknSliceWrapper{common.TknSliceWrapper{Slice: make([]common.AnyToken, 0)}, []Tkn{}}
 
 	for _, token := range *JSONTokens {
 		inter := ToJapaneseToken(token)
 		tkns = tkns.Append(inter)
 	}
 	return
+}
+
+
+func convertTokensSafe(anyTokens []common.AnyToken) ([]Tkn, error) {
+	tokens := make([]Tkn, len(anyTokens))
+	for i, t := range anyTokens {
+		token, ok := t.(Tkn)
+		if !ok {
+			return nil, fmt.Errorf("token at index %d is not a jpn.Tkn", i) // add reflect type
+		}
+		tokens[i] = token
+	}
+	return tokens, nil
 }
 
 // ToGeneric converts the Japanese token to a generic token

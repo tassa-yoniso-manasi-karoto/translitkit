@@ -147,7 +147,7 @@ func (t Tkn) IsTokenType() bool {
 
 
 
-// Generic functions that work with any TokenSlice
+// due to common.Tkn.embedding and methods inheritance, interfaces are overkill here
 func roman(tokens []AnyToken) string {
 	return strings.Join(romanParts(tokens), " ")
 }
