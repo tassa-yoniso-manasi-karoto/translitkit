@@ -12,7 +12,7 @@ import (
 // Method set needs more iterations to be defined.
 type anyModule interface {
 	Init() error
-	MustInit() error
+	MustInit()
 	ProviderNames() string
 	RomanPostProcess(string, func(string) string) string
 	Close() error

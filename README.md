@@ -18,56 +18,43 @@ Thus there are linguistic annotations available following analysis such as part-
 ## tldr
 
 ```go
+import (
+	"fmt"
+	"github.com/tassa-yoniso-manasi-karoto/translitkit"
+	"github.com/tassa-yoniso-manasi-karoto/translitkit/lang/jpn"
+)
+
+const text = "日本語の例文です"
+
 func main() {
+	// Provides basic features for an arbitrary language of the ISO-639 set
 	m, err := translitkit.DefaultModule("jpn")
 	check(err)
 
 	m.MustInit()
 	defer m.Close()
 	
-	text := "日本語の例文です。"
-	result, err := m.Roman(text)
+	roman, err := m.Roman(text)
 	check(err)
-	fmt.Println(result)
-}
-```
-#### Output
 
-```
-nihongo no reibun desu
-```
+	// To access language-specific methods import the module of the dedicated pkg
+	jm := jpn.DefaultModule()
+	// No need to init/close again since it's the same underlying module
 
-<!-- <details>
-<summary> 
-        
-## Advanced usage
-</summary>
-
-
-```go
-func main() {
-	module, err := translitkit.GetDefault("jpn")
+	kana, err := jm.KanaParts(text)
 	check(err)
-        // To access language specific methods you need to assert the language-specific nature of the module
-        m, ok = module.(jpn.Module)
-        if !ok {
-                panic("failed language-specific module assertion")
-        }
-	m.MustInit()
-	defer m.Close()
-	
-	text := "日本語の例文です"
-	result, err := m.Kana(text)
-	check(err)
-	fmt.Println("result)
+
+	fmt.Println(roman)
+	fmt.Printf("%#v\n", kana)
 }
 ```
 ### Output
 
 ```
-にほんご の れいぶん です
+nihongo no reibun desu
+[]string{"にほんご", "の", "れいぶん", "です"}
 ```
-</details> -->
+See docs of sub package "common" for the basic methods set available across languages.
 
 
 ## Currently implemented tokenizers / transliterators
