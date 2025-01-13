@@ -92,21 +92,17 @@ func (p *IchiranProvider) process(transform func(*ichiran.JSONTokens) common.Any
 
 func init() {
 	ichiran := &IchiranProvider{}
-
-	err := common.Register(Lang, common.CombinedType, "ichiran", common.ProviderEntry{
+	IchiranEntry := common.ProviderEntry{
 		Provider:     ichiran,
-		Capabilities: []string{"tokenization", "reading", "romaji"},
+		Capabilities: []string{"tokenization", "transliteration", "romaji"},
 		Type:         common.CombinedType,
-	})
+	}
+	err := common.Register(Lang, common.CombinedType, "ichiran", IchiranEntry)
 	if err != nil {
 		panic(fmt.Sprintf("failed to register ichiran provider: %v", err))
 	}
-	err = common.SetDefault(Lang, []common.ProviderEntry{
-		{
-			Provider: ichiran,
-			Type:     common.CombinedType,
-		}, // TODO add robepike/nihongo to force romanization after
-	})
+	err = common.SetDefault(Lang, []common.ProviderEntry{IchiranEntry}) // TODO add robepike/nihongo to force romanization after
+	
 	if err != nil {
 		panic(fmt.Sprintf("failed to set ichiran as default: %v", err))
 	}
