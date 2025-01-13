@@ -1,8 +1,8 @@
 ### Status: pre-release [![Go Reference](https://pkg.go.dev/badge/github.com/tassa-yoniso-manasi-karoto/translitkit.svg)](https://pkg.go.dev/github.com/tassa-yoniso-manasi-karoto/translitkit) [![Go Report Card](https://goreportcard.com/badge/github.com/tassa-yoniso-manasi-karoto/translitkit)](https://goreportcard.com/report/github.com/tassa-yoniso-manasi-karoto/translitkit)
 
-This library primarily aims at **providing tokenization** and **phonetically-accurate transliteration**.
+This library primarily aims at **providing linguistic tokenization** and **phonetically-accurate transliteration**.
 
-Currently, neural network-oriented NLP tasks such as text classification, named entity recognition... are not supported because I don't have a need for it but I am open to iterating on the current implementation if people want to contribute. Hence, I will keep this as "pre-release" but the tokenization/romanization APIs should be pretty stable.
+Currently, neural network-oriented NLP tasks such as text classification, named entity recognition... are not supported because I don't have a need for it but I am open to iterating on the current implementation if people want to contribute. Hence, I will keep this as "pre-release" but the tokenization/romanization APIs should be pretty stable. 
 
 I am not trying to reinvent the wheel therefore this library will leverage reputable implementations of (tokenizers+) romanizers for each language: either a go library or a ***dockerized component*** using the Docker Compose API (especially in the case of tokenizers or neural network based libraries).
 
@@ -11,20 +11,13 @@ I am not trying to reinvent the wheel therefore this library will leverage reput
 Thus there are linguistic annotations available following analysis such as part-of-speech tagging, lemmatization... **only if the underlying provider offers it and to the extent it provides it**.
 
 > [!IMPORTANT]
-> This library is ***not meant to slugifiy or transform a string into ASCII*** (i.e. to generate URLs).<br>
-> You may use [gosimple/slug](https://github.com/gosimple/slug) or [mozillazg/go-unidecode](https://github.com/mozillazg/go-unidecode) for these.<br>
-> go-unicode already ships a chinese tokenizer but other languages may benefit from using one of the tokenizer provided here though.
+> This library is ***not meant***:
+> 	- ***to slugifiy or transform a string into ASCII*** (i.e. to generate URLs):<br>You may use [gosimple/slug](https://github.com/gosimple/slug) or [mozillazg/go-unidecode](https://github.com/mozillazg/go-unidecode) for these. go-unicode already ships a chinese tokenizer but other languages may benefit from using one of the tokenizer provided here though.
+> 	- ***for Model-Ready tokenization for a transformer neural network***: you may use [sugarme/tokenizer](https://github.com/sugarme/tokenizer) for that.
 
 ## tldr
 
 ```go
-import (
-	"fmt"
-	"github.com/tassa-yoniso-manasi-karoto/translitkit"
-        // ⚠️ language-specific pkg must be initialized for its providers to be available ⚠️
-	_ "github.com/tassa-yoniso-manasi-karoto/translitkit/lang/jpn"
-)
-
 func main() {
 	m, err := translitkit.GetDefault("jpn")
 	check(err)
@@ -38,7 +31,7 @@ func main() {
 	fmt.Println(result)
 }
 ```
-### Output
+#### Output
 
 ```
 nihongo no reibun desu
@@ -78,6 +71,10 @@ func main() {
 
 
 ## Currently implemented tokenizers / transliterators
+
+> [!NOTE]
+> Traditional NLP providers such as morphological analyzers are prioritized over neural network-based libraries as they can be run on any hardware. See note below.
+
 "combined" means the provider implement both.
 
 ### Japanese
