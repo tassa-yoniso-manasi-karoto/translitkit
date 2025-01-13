@@ -32,30 +32,8 @@ func Register(languageCode string, provType ProviderType, name string, entry Pro
 	}
 	GlobalRegistry.mu.Lock()
 	defer GlobalRegistry.mu.Unlock()
-	
-	needsTokenization := NeedsTokenization(lang)
-	needsTransliteration := NeedsTransliteration(lang)
 
-	if needsTokenization || needsTransliteration {
-		hasTokenization := false
-		hasTransliteration := false
-		
-		for _, capability := range entry.Capabilities {
-			if capability == "tokenization" {
-				hasTokenization = true
-			}
-			if capability == "transliteration" {
-				hasTransliteration = true
-			}
-		}
-
-		if needsTokenization && !hasTokenization && (provType == TokenizerType || provType == CombinedType) {
-			fmt.Fprintf(os.Stderr, "Warning: Registering Provider %s for %s which requires tokenization but Provider doesn't declare this capability\n", name, lang)
-		}
-		if needsTransliteration && !hasTransliteration && (provType == TransliteratorType || provType == CombinedType) {
-			fmt.Fprintf(os.Stderr, "Warning: Registering Provider %s for %s which requires transliteration but Provider doesn't declare this capability\n", name, lang)
-		}
-	}
+	checkCapabilities(lang, []ProviderEntry{entry}, provType, name)
 
 	// Initialize language Providers if not exists
 	if _, exists := GlobalRegistry.Providers[lang]; !exists {
@@ -143,32 +121,7 @@ func SetDefault(languageCode string, Providers []ProviderEntry) error {
 	GlobalRegistry.mu.Lock()
 	defer GlobalRegistry.mu.Unlock()
 
-	needsTokenization := NeedsTokenization(lang)
-	needsTransliteration := NeedsTransliteration(lang)
-
-	if needsTokenization || needsTransliteration {
-		hasTokenization := false
-		hasTransliteration := false
-		
-		for _, p := range Providers {
-			for _, capability := range p.Capabilities {
-				if capability == "tokenization" {
-					hasTokenization = true
-				}
-				if capability == "transliteration" {
-					hasTransliteration = true
-				}
-			}
-		}
-
-		if needsTokenization && !hasTokenization {
-			fmt.Fprintf(os.Stderr, "Warning: Language %s requires tokenization but no Provider declares this capability\n", lang)
-		}
-		if needsTransliteration && !hasTransliteration {
-			fmt.Fprintf(os.Stderr, "Warning: Language %s requires transliteration but no Provider declares this capability\n", lang)
-		}
-	}
-
+	checkCapabilities(lang, Providers, "", "")
 
 	langProviders, exists := GlobalRegistry.Providers[lang]
 	if !exists {
@@ -260,6 +213,58 @@ func getProvider(lang string, provType ProviderType, name string) (Provider[AnyT
 	return entry.Provider, nil
 }
 
+// checkCapabilities validates if providers have required capabilities for a language
+// and issues warnings if capabilities are missing
+func checkCapabilities(lang string, entries []ProviderEntry, provType ProviderType, name string) {
+	needsTokenization := NeedsTokenization(lang)
+	needsTransliteration := NeedsTransliteration(lang)
+
+	if !needsTokenization && !needsTransliteration {
+		return
+	}
+
+	hasTokenization := false
+	hasTransliteration := false
+
+	// For Register function, we check a single entry
+	if name != "" {
+		for _, capability := range entries[0].Capabilities {
+			if capability == "tokenization" {
+				hasTokenization = true
+			}
+			if capability == "transliteration" {
+				hasTransliteration = true
+			}
+		}
+
+		if needsTokenization && !hasTokenization && (provType == TokenizerType || provType == CombinedType) {
+			fmt.Fprintf(os.Stderr, "Warning: Registering Provider %s for %s which requires tokenization but Provider doesn't declare this capability\n", name, lang)
+		}
+		if needsTransliteration && !hasTransliteration && (provType == TransliteratorType || provType == CombinedType) {
+			fmt.Fprintf(os.Stderr, "Warning: Registering Provider %s for %s which requires transliteration but Provider doesn't declare this capability\n", name, lang)
+		}
+		return
+	}
+
+	// For SetDefault function, we check all entries
+	for _, p := range entries {
+		for _, capability := range p.Capabilities {
+			if capability == "tokenization" {
+				hasTokenization = true
+			}
+			if capability == "transliteration" {
+				hasTransliteration = true
+			}
+		}
+	}
+
+	if needsTokenization && !hasTokenization {
+		fmt.Fprintf(os.Stderr, "Warning: Language %s requires tokenization but no Provider declares this capability\n", lang)
+	}
+	if needsTransliteration && !hasTransliteration {
+		fmt.Fprintf(os.Stderr, "Warning: Language %s requires transliteration but no Provider declares this capability\n", lang)
+	}
+}
 
 
 func IsValidISO639(lang string) (stdLang string, ok bool) {
