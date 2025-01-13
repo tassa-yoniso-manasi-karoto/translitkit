@@ -14,11 +14,15 @@ type anyModule interface {
 	Init() error
 	MustInit() error
 	ProviderNames() string
-	RomanPostProcess(string, func(string) (string)) (string)
+	RomanPostProcess(string, func(string) string) string
 	Close() error
+	
+	setLang(string)
+	setProviders([]ProviderEntry) error
 }
 
-// Module satisfies the AnyModule interface. It contains both Tokenization+Transliteration components.
+// Module satisfies the anyModule interface.
+// It contains both Tokenization+Transliteration components.
 
 type Module struct {
 	Lang           string // ISO-639 Part 3: i.e. "eng", "zho", "jpn"...
@@ -204,4 +208,37 @@ func (m *Module) Close() error {
 
 func (m *Module) RomanPostProcess(s string, f func(string) (string)) (string) {
 	return f(s)
+}
+
+
+
+
+func (m *Module) setLang(lang string) {
+	m.Lang = lang
+}
+
+func (m *Module) setProviders(providers []ProviderEntry) error {
+	if len(providers) == 0 {
+		return fmt.Errorf("cannot set empty providers")
+	}
+
+	if providers[0].Type == CombinedType {
+		// For combined provider, only one entry is needed
+		if len(providers) > 1 {
+			return fmt.Errorf("combined provider cannot be used with other providers")
+		}
+		m.Combined = providers[0].Provider
+		m.ProviderType = CombinedType
+	} else {
+		// For separate providers, need both tokenizer and transliterator
+		if len(providers) != 2 {
+			return fmt.Errorf("separate mode requires exactly 2 providers (tokenizer + transliterator)")
+		}
+		if providers[0].Type != TokenizerType || providers[1].Type != TransliteratorType {
+			return fmt.Errorf("separate providers must be tokenizer + transliterator in that order")
+		}
+		m.Tokenizer = providers[0].Provider
+		m.Transliterator = providers[1].Provider
+	}
+	return nil
 }

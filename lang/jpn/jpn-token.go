@@ -7,6 +7,36 @@ import (
 	//iso "github.com/barbashov/iso639-3"
 )
 
+type Module struct {
+	*common.Module
+}
+
+
+// DefaultModule returns a new Japanese-specific Module configured with the default providers.
+func DefaultModule() (*Module, error) {
+	cm, err := common.defaultModule("jpn")
+	if err != nil {
+		return nil, err
+	}
+	jm.Module = &Module{
+		Module: cm,
+	}
+	return jm, nil
+}
+
+/* FIXME obsolete implementation
+func (m *Module) KanaParts(input string) ([]string, error) {
+	if m.transliterator == nil && m.providerType != common.CombinedType {
+		return nil, fmt.Errorf("katakana requires either a transliterator or combined provider (got %s)", m.providerType)
+	}
+	m.outputType = common.KanaType
+	return m.GetSlice(input) // FIXME  m.GetSlice undefined (type *JapaneseModule has no field or method GetSlice)
+}*/
+
+
+
+
+
 type TknSliceWrapper struct {
 	common.TknSliceWrapper
 }
@@ -61,22 +91,6 @@ func (t Tkn) IsTokenType() bool {
 	return true
 }
 
-type JapaneseModule struct {
-	language       string
-	providerType   common.ProviderType
-	tokenizer      common.Provider[common.AnyTokenSliceWrapper, common.AnyTokenSliceWrapper]
-	transliterator common.Provider[common.AnyTokenSliceWrapper, common.AnyTokenSliceWrapper]
-	combined       common.Provider[common.AnyTokenSliceWrapper, common.AnyTokenSliceWrapper]
-	MaxLenQuery    int
-}
-
-/*func (m *JapaneseModule) KanaParts(input string) ([]string, error) {
-	if m.transliterator == nil && m.providerType != common.CombinedType {
-		return nil, fmt.Errorf("katakana requires either a transliterator or combined provider (got %s)", m.providerType)
-	}
-	m.outputType = common.KanaType
-	return m.GetSlice(input) FIXME  m.GetSlice undefined (type *JapaneseModule has no field or method GetSlice)
-}*/
 
 // ToJapaneseToken converts an JSONToken to a Tkn
 func ToJapaneseToken(it *ichiran.JSONToken) (jt Tkn) {
@@ -147,11 +161,14 @@ func ToJapaneseToken(it *ichiran.JSONToken) (jt Tkn) {
 	return jt
 }
 
-// ToTokenSlice converts all ichiran.JSONTokens to jpn.TknSliceWrapper
+// FIXME could be merged with Serialize with Serialize(obj Data)
+// type Data interface { string | ichiran.JSONTokens }
+
+// ToAnyTokenSliceWrapper converts all ichiran.JSONTokens to jpn.TknSliceWrapper
 //
 //	NOTE: Golang limitation: the function's return type must explicitly be set to common.AnyTokenSliceWrapper.
 //	It CAN NOT be inferred from jpn.TknSliceWrapper even if it implements the AnyTokenSliceWrapper interface.
-func ToTokenSlice(JSONTokens *ichiran.JSONTokens) (tkns common.AnyTokenSliceWrapper) {
+func ToAnyTokenSliceWrapper(JSONTokens *ichiran.JSONTokens) (tkns common.AnyTokenSliceWrapper) {
 	tkns = TknSliceWrapper{common.TknSliceWrapper{Slice: make([]common.AnyToken, 0)}}
 
 	for _, token := range *JSONTokens {

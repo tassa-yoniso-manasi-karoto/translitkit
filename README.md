@@ -19,7 +19,7 @@ Thus there are linguistic annotations available following analysis such as part-
 
 ```go
 func main() {
-	m, err := translitkit.GetDefault("jpn")
+	m, err := translitkit.DefaultModule("jpn")
 	check(err)
 
 	m.MustInit()

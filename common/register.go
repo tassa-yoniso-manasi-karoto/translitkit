@@ -91,39 +91,46 @@ func Register(languageCode string, provType ProviderType, name string, entry Pro
 	return nil
 }
 
+
+// DefaultModule returns a new Module configured with the default providers
+// for the specified language.
 func DefaultModule(languageCode string) (*Module, error) {
 	lang, ok := IsValidISO639(languageCode)
 	if !ok {
 		return nil, fmt.Errorf(errNotISO639, languageCode)
 	}
+	result, err := defaultModule(lang)
+	if err != nil {
+		return nil, err
+	}
+	return result.(*Module), nil
+}
+
+// defaultModule is an internal function that configures any module type with default providers.
+// This interface-based implementation isn't needed anymore because jpn.Module embeds common.Module
+// therefore, common.Module's methods can be shared to jpn.Module without constructing jpn.Module
+// with defaultModule. Nonetheless I am keeping this design for now.
+func defaultModule(lang string) (anyModule, error) {
+	m := &Module{}
+	m.setLang(lang)
+
 	GlobalRegistry.mu.RLock()
 	defer GlobalRegistry.mu.RUnlock()
 
 	langProviders, exists := GlobalRegistry.Providers[lang]
 	if !exists {
-		return nil, fmt.Errorf("DefaultModule: no Providers registered for language: %s", lang)
+		return nil, fmt.Errorf("defaultModule: no providers registered for language: %s", lang)
 	}
 
 	if len(langProviders.Defaults) == 0 {
-		return nil, fmt.Errorf("no default Providers set for language: %s", lang)
+		return nil, fmt.Errorf("no default providers set for language: %s", lang)
 	}
 
-	module := &Module{
-		Lang: lang,
+	if err := m.setProviders(langProviders.Defaults); err != nil {
+		return nil, fmt.Errorf("failed to set providers: %v", err)
 	}
 
-	if langProviders.Defaults[0].Type == CombinedType {
-		module.Combined = langProviders.Defaults[0].Provider
-		module.ProviderType = CombinedType
-	} else {
-		if len(langProviders.Defaults) < 2 {
-			return nil, fmt.Errorf("insufficient default Providers for separate mode")
-		}
-		module.Tokenizer = langProviders.Defaults[0].Provider
-		module.Transliterator = langProviders.Defaults[1].Provider
-	}
-
-	return module, nil
+	return m, nil
 }
 
 // SetDefault configures the default Providers for a language in the global registry.
