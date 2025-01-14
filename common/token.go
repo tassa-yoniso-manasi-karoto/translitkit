@@ -2,17 +2,21 @@ package common
 
 import (
 	"strings"
+	
+	"github.com/gookit/color"
+	"github.com/k0kubun/pp"
 )
 
-func Serialize(input string) AnyTokenSliceWrapper {
-	return TknSliceWrapper{Raw: input}
+func serialize(input string, max int) (AnyTokenSliceWrapper, error) {
+	chunks, err := chunkify(input, max)
+	return &TknSliceWrapper{Raw: chunks}, err
 }
 
 type AnyTokenSliceWrapper interface {
 	GetFirst()		any
-	GetRaw()		string
-	ClearRaw()		AnyTokenSliceWrapper
-	Append(...AnyToken)	AnyTokenSliceWrapper
+	GetRaw()		[]string
+	ClearRaw()
+	Append(...AnyToken)
 	Len()			int
 
 	Roman()			string
@@ -33,38 +37,37 @@ type AnyToken interface {
 
 
 type TknSliceWrapper struct {
-	Slice []AnyToken //alt.: Sentences [][]AnyToken
-	Raw   string
+	Slice []AnyToken //alt.: Sentences [][]AnyToken ?
+	Raw   []string
 }
 
 // TODO maybe make some of these methods private
 
-func (tokens TknSliceWrapper) GetFirst() any {
+func (tokens *TknSliceWrapper) GetFirst() any {
 	if len(tokens.Slice) == 0 {
 		return nil
 	}
 	return tokens.Slice[0]
 }
-func (tokens TknSliceWrapper) Len() int {
+func (tokens *TknSliceWrapper) Len() int {
 	return len(tokens.Slice)
 }
-func (tokens TknSliceWrapper) GetRaw() string {
+func (tokens *TknSliceWrapper) GetRaw() []string {
 	return tokens.Raw
 }
-func (tokens TknSliceWrapper) ClearRaw() AnyTokenSliceWrapper {
-	tokens.Raw = ""
-	return tokens
+func (tokens *TknSliceWrapper) ClearRaw() {
+	tokens.Raw = []string{}
 }
-func (tokens TknSliceWrapper) Append(tkn ...AnyToken) AnyTokenSliceWrapper {
+func (tokens *TknSliceWrapper) Append(tkn ...AnyToken) {
 	if tokens.Slice == nil {
-		tokens.Slice = make([]AnyToken, len(tkn))
+		tokens.Slice = make([]AnyToken, 0)
 	}
 	tokens.Slice = append(tokens.Slice, tkn...)
-	return tokens
 }
 
 
-
+// return the unwrapped slice contained by the wrapper
+//func (tokens TknSliceWrapper) Slice() []AnyToken // FIXME may come in handy?
 
 func (tokens TknSliceWrapper) Roman() string {
 	return roman(tokens.Slice)
@@ -182,5 +185,13 @@ func tokenizedParts(tokens []AnyToken) []string {
 		parts[i] = t.GetSurface()
 	}
 	return parts
+}
+
+
+
+
+func placeholder() {
+	color.Redln(" 𝒻*** 𝓎ℴ𝓊 𝒸ℴ𝓂𝓅𝒾𝓁ℯ𝓇")
+	pp.Println("𝓯*** 𝔂𝓸𝓾 𝓬𝓸𝓶𝓹𝓲𝓵𝓮𝓻")
 }
 

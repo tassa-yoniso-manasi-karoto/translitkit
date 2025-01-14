@@ -22,6 +22,8 @@ type Registry struct {
 	Providers map[string]LanguageProviders
 }
 
+var BrowserAccessURL = ""
+
 // Register adds a new Provider to the global registry for the specified language.
 // It performs capability validation and warns if the Provider's capabilities
 // don't match the language requirements.

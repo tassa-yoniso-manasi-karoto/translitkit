@@ -2,7 +2,8 @@ package jpn
 
 import (
 	"fmt"
-
+	"math"
+	
 	"github.com/tassa-yoniso-manasi-karoto/go-ichiran"
 	"github.com/tassa-yoniso-manasi-karoto/translitkit/common"
 
@@ -39,40 +40,39 @@ func (p *IchiranProvider) GetType() common.ProviderType {
 	return common.CombinedType
 }
 
+// Returns a limit based on the max of a 32 bit integer.
+// Ichiran's developper doesn't know of a length limit to the input of the CLI
+// but I am setting this just in case. It could also be MaxInt64.
+func (p *IchiranProvider) GetMaxQueryLen() int {
+	return math.MaxInt32-2
+}
+
 func (p *IchiranProvider) Close() error {
 	return p.docker.Close()
 }
 
-// FIXME passing m *common.Module no longer useful?
-// this method should probably private at first glance
 
-func (p *IchiranProvider) Process(m *common.Module, input common.AnyTokenSliceWrapper) (results common.AnyTokenSliceWrapper, err error) {
+
+func (p *IchiranProvider) ProcessFlowController(input common.AnyTokenSliceWrapper) (results common.AnyTokenSliceWrapper, err error) {
 	raw := input.GetRaw()
-	if input.Len() == 0 && raw == "" {
+	if input.Len() == 0 && len(raw) == 0 {
 		return nil, fmt.Errorf("empty input was passed to processor")
 	}
 	ProviderType := p.GetType()
-	if raw != "" {
+	if len(raw) != 0 {
 		switch ProviderType {
 		case common.TokenizerType:
-			//results = p.process(ToAnyTokenSliceWrapper, input[i].Surface)
 		case common.TransliteratorType:
-			// results = []TokenContainer{new(common.Tkn)}
-			// results[0] = p.process((*ichiran.JSONTokens).Roman, input[i].Surface)
 		case common.CombinedType:
-			return p.process(ToAnyTokenSliceWrapper, raw)
+			return p.process(raw)
 		}
-		input = input.ClearRaw()
+		input.ClearRaw()
 	} else { // generic token processor: take common.Tkn as well as lang-specic tokens that have common.Tkn as their embedded field
 		switch ProviderType {
 		case common.TokenizerType:
 			// Either refuse or add linguistic annotations
 			return nil, fmt.Errorf("not implemented atm: Tokens is not accepted as input type for a tokenizer")
 		case common.TransliteratorType:
-			/*for i, _ := range input {
-				input[i].Romanization = p.process((*ichiran.JSONTokens).Roman, input[i].Surface)
-			}
-			results = input*/
 		case common.CombinedType:
 			// Refuse because it is already tokenized
 			return nil, fmt.Errorf("not implemented atm: Tokens is not accepted as input type for a provider that combines tokenizer+transliterator")
@@ -81,13 +81,17 @@ func (p *IchiranProvider) Process(m *common.Module, input common.AnyTokenSliceWr
 	return nil, fmt.Errorf("handling not implemented for '%s' with ProviderType '%s'", p.Name(), ProviderType)
 }
 
-// process accepts a transformation function: the desired ichiran method to use
-func (p *IchiranProvider) process(transform func(*ichiran.JSONTokens) common.AnyTokenSliceWrapper, input string) (results common.AnyTokenSliceWrapper, err error) {
-	text, err := ichiran.Analyze(input)
-	if err != nil {
-		return nil, fmt.Errorf("failed to analyse: %v", err)
+// returns jpn.TknSliceWrapper that satisfies AnyTokenSliceWrapper
+func (p *IchiranProvider) process(chunks []string) (common.AnyTokenSliceWrapper, error) {
+	tsw := &TknSliceWrapper{}
+	for idx, chunk := range chunks {
+		JSONTokens, err := ichiran.Analyze(chunk)
+		if err != nil {
+			return nil, fmt.Errorf("failed to analyse chunk %d of %d: %v\nraw_chunk=>>>%s<<<", idx, len(chunks), err, chunk)
+		}
+		tsw.Append(ToAnyTokenSlice(JSONTokens)...)
 	}
-	return transform(text), nil
+	return tsw, nil
 }
 
 func init() {

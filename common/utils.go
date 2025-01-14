@@ -1,102 +1,105 @@
 package common
 
 import (
-	"github.com/rivo/uniseg"
+	"fmt"
 	"strings"
 	"unicode/utf8"
+	
+	"github.com/rivo/uniseg"
 )
 
-// utils related to GenericQuerySplitter, currently unused and obsolete but WIP
-
-type stringer interface {
-	~string
-}
-
-func toString[T stringer](s T) string {
-	return string(s)
-}
-
-func toStringSlice[T stringer](s []string) []T {
-	result := make([]T, len(s))
-	for i, v := range s {
-		result[i] = T(v)
+func chunkify(s string, max int) (QuerySliced []string, err error) {
+	var chunks = []string{s}
+	if notTooBig(chunks, max) {
+		return chunks, nil
 	}
-	return result
+	// SplitSpace should do in most cases, the rest is just in case
+	chunks = splitSpace(s)
+	if notTooBig(chunks, max) {
+		return chunks, nil
+	}
+	chunks = splitSentences(s)
+	if notTooBig(chunks, max) {
+		return chunks, nil
+	}
+	chunks = splitWords(s)
+	if notTooBig(chunks, max) {
+		return chunks, nil
+	}
+	chunks = splitGraphemes(s)
+	if notTooBig(chunks, max) {
+		return chunks, nil
+	}
+	return nil, fmt.Errorf("couldn't decompose string into smaller parts: →%s←" +
+		"SplitGraphemes did at most: %#v", s, chunks)
 }
 
-func notTooBig[T stringer](arr []T, max int) bool {
+func notTooBig(arr []string, max int) bool {
 	for _, str := range arr {
-		if max > 0 && utf8.RuneCountInString(toString(str)) > max {
+		if max > 0 && utf8.RuneCountInString(str) > max {
 			return false
 		}
 	}
 	return true
 }
 
-func splitSpace[T stringer](str T) []T {
-	splits := strings.Split(toString(str), " ")
-	return toStringSlice[T](splits)
+func splitSpace(str string) []string {
+	return strings.Split(str, " ")
 }
 
-func splitSentences[T stringer](text T) []T {
-	sentences := make([]string, 0)
-
+func splitSentences(text string) (splitted []string) {
 	if len(text) == 0 {
-		return make([]T, 0)
+		return
 	}
 
-	remaining := toString(text)
+	remaining := text
 	state := -1
 	for len(remaining) > 0 {
 		sentence, rest, newState := uniseg.FirstSentenceInString(remaining, state)
 		if sentence != "" {
-			sentences = append(sentences, strings.TrimSpace(sentence))
+			splitted = append(splitted, strings.TrimSpace(sentence))
 		}
 		remaining = rest
 		state = newState
 	}
 
-	return toStringSlice[T](sentences)
+	return
 }
 
-func splitWords[T stringer](text T) []T {
-	words := make([]string, 0)
-
+func splitWords(text string) (splitted []string) {
 	if len(text) == 0 {
-		return make([]T, 0)
+		return
 	}
 
-	remaining := toString(text)
+	remaining := text
 	state := -1
 	for len(remaining) > 0 {
 		word, rest, newState := uniseg.FirstWordInString(remaining, state)
 		if word != "" {
-			words = append(words, strings.TrimSpace(word))
+			splitted = append(splitted, strings.TrimSpace(word))
 		}
 		remaining = rest
 		state = newState
 	}
 
-	return toStringSlice[T](words)
+	return
 }
 
-func splitGraphemes[T stringer](text T) []T {
-	graphemes := make([]string, 0)
-
+func splitGraphemes(text string) (splitted []string) {
 	if len(text) == 0 {
-		return make([]T, 0)
+		return
 	}
 
-	remaining := toString(text)
+	remaining := text
 	state := -1
 	for len(remaining) > 0 {
 		grapheme, rest, _, newState := uniseg.FirstGraphemeClusterInString(remaining, state)
 		if grapheme != "" {
-			graphemes = append(graphemes, grapheme)
+			splitted = append(splitted, grapheme)
 		}
 		remaining = rest
 		state = newState
 	}
 
-	return toStringSlice[T](graphemes)
+	return
 }

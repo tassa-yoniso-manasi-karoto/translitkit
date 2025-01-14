@@ -3,6 +3,7 @@ package common
 import (
 	"fmt"
 	"strings"
+	"math"
 
 	//iso "github.com/barbashov/iso639-3"
 )
@@ -18,6 +19,7 @@ type anyModule interface {
 	Close() error
 	
 	setLang(string)
+	// getMaxQueryLen() int ?
 	setProviders([]ProviderEntry) error
 }
 
@@ -30,7 +32,6 @@ type Module struct {
 	Tokenizer      Provider[AnyTokenSliceWrapper, AnyTokenSliceWrapper]
 	Transliterator Provider[AnyTokenSliceWrapper, AnyTokenSliceWrapper]
 	Combined       Provider[AnyTokenSliceWrapper, AnyTokenSliceWrapper]
-	MaxLenQuery    int
 }
 
 // NewModule creates a Module for the specified language using either default Providers
@@ -171,34 +172,28 @@ func (m *Module) Tokenized(input string) (string, error) {
 	return strings.Join(parts, " "), nil // FIXME ideally place space between word-words not word-punctuation or punct-punct
 }
 
-func (m *Module) Tokens(input string) (TknSliceWrapper, error) {
-	var result AnyTokenSliceWrapper
-	var err error
+func (m *Module) Tokens(input string) (AnyTokenSliceWrapper, error) {
+	tsw, err := serialize(input, m.getMaxQueryLen())
+	if err != nil {
+		fmt.Errorf("input serialization failed: len(input)=%d, %v", len(input), err)
+	}
 
 	if m.Combined != nil {
-		result, err = m.Combined.Process(m, Serialize(input))
+		tsw, err = m.Combined.ProcessFlowController(tsw)
+		if err != nil {
+			return &TknSliceWrapper{}, fmt.Errorf("combined processing failed: %v", err)
+		}
 	} else {
-		intermediate, err := m.Tokenizer.Process(m, Serialize(input))
+		tsw, err = m.Tokenizer.ProcessFlowController(tsw)
 		if err != nil {
-			return TknSliceWrapper{}, fmt.Errorf("tokenization failed: %v", err)
+			return &TknSliceWrapper{}, fmt.Errorf("tokenization failed: %v", err)
 		}
-		result, err = m.Transliterator.Process(m, intermediate)
+		tsw, err = m.Transliterator.ProcessFlowController(tsw)
 		if err != nil {
-			return TknSliceWrapper{}, fmt.Errorf("transliteration failed: %v", err)
+			return &TknSliceWrapper{}, fmt.Errorf("transliteration failed: %v", err)
 		}
 	}
-	if err != nil {
-		return TknSliceWrapper{}, err
-	}
-	
-	// not actually necessary as it offer the same method set than that of type
-	// AnyTknSliceWrapper returned by Process but it saves from repeating this
-	// assertion in lang-specific pkg.
-	wrapper, ok := result.(TknSliceWrapper)
-	if !ok {
-		return TknSliceWrapper{}, fmt.Errorf("failed assertion of TknSliceWrapper")
-	}
-	return wrapper, nil
+	return tsw, nil
 }
 
 func (m *Module) Close() error {
@@ -219,10 +214,21 @@ func (m *Module) RomanPostProcess(s string, f func(string) (string)) (string) {
 }
 
 
-
-
 func (m *Module) setLang(lang string) {
 	m.Lang = lang
+}
+
+// getMaxQueryLen returns the maximum query length that can be processed by the module.
+// For combined providers, it returns the provider's limit.
+// For separate providers, it returns the smallest limit between tokenizer and transliterator.
+// If MaxQueryLen is already set, returns that value instead of recalculating.
+func (m *Module) getMaxQueryLen() int {
+	providers, err := m.listProviders()
+	if err != nil {
+		return math.MaxInt64
+	}
+
+	return getQueryLenLimit(providers...)
 }
 
 func (m *Module) setProviders(providers []ProviderEntry) error {
@@ -250,3 +256,36 @@ func (m *Module) setProviders(providers []ProviderEntry) error {
 	}
 	return nil
 }
+
+func (m *Module) listProviders() (providers []ProviderEntry, err error) {
+	if m.Combined != nil {
+		// For combined provider, return single entry
+		providers = append(providers, ProviderEntry{
+			Provider: m.Combined,
+			Type:     CombinedType,
+		})
+		return providers, nil
+	}
+
+	// For separate providers, return both tokenizer and transliterator
+	if m.Tokenizer != nil {
+		providers = append(providers, ProviderEntry{
+			Provider: m.Tokenizer,
+			Type:     TokenizerType,
+		})
+	}
+
+	if m.Transliterator != nil {
+		providers = append(providers, ProviderEntry{
+			Provider: m.Transliterator,
+			Type:     TransliteratorType,
+		})
+	}
+
+	if len(providers) == 0 {
+		return nil, fmt.Errorf("no providers found in module")
+	}
+
+	return providers, nil
+}
+

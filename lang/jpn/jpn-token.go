@@ -3,6 +3,7 @@ package jpn
 import (
 	"fmt"
 	"strings"
+	"reflect"
 	
 	"github.com/tassa-yoniso-manasi-karoto/go-ichiran"
 	"github.com/tassa-yoniso-manasi-karoto/translitkit/common"
@@ -29,20 +30,24 @@ func DefaultModule() (*Module, error) {
 
 
 
-
-func (m *Module) Tokens(input string) (TknSliceWrapper, error) {
-	commonWrapper, err := m.Module.Tokens(input)
+func (m *Module) Tokens(input string) (*TknSliceWrapper, error) {
+	tsw, err := m.Module.Tokens(input)
 	if err != nil {
-		return TknSliceWrapper{}, fmt.Errorf("lang/jpn: %v", err)
+		return &TknSliceWrapper{}, fmt.Errorf("lang/jpn: %v", err)
+	}
+	jtsw, ok := tsw.(*TknSliceWrapper)
+	if !ok {
+		return &TknSliceWrapper{}, fmt.Errorf("failed assertion of jpn.TknSliceWrapper: real type is %s", reflect.TypeOf(tsw))
 	}
 	
 	// takes []AnyToken, returns asserted []jpn.Token
 	// TODO mesure perf impact
-	tkns, err := convertTokensSafe(commonWrapper.Slice) 
+	tkns, err := assertJPNTokens(jtsw.Slice)
 	if err != nil {
-		return TknSliceWrapper{}, fmt.Errorf("failed assertion of []jpn.Tkn: %v", err)
+		return &TknSliceWrapper{}, fmt.Errorf("failed assertion of []jpn.Tkn: %v", err)
 	}
-	return TknSliceWrapper{commonWrapper, tkns}, nil
+	jtsw.NativeSlice = tkns
+	return jtsw, nil
 }
 
 // TODO Maybe automatically return Katakana or Hiragan as fit
@@ -172,13 +177,13 @@ func ToJapaneseToken(it *ichiran.JSONToken) (jt Tkn) {
 
 	// Process glosses
 	if len(it.Gloss) > 0 {
-		// Set part of speech from first gloss
+		// Set part of speech from first gloss FIXME
 		jt.PartOfSpeech = it.Gloss[0].Pos
 
 		// Convert Ichiran glosses to common glosses
-		jt.Glosses = make([]Gloss, len(it.Gloss))
+		jt.Glosses = make([]common.Gloss, len(it.Gloss))
 		for i, g := range it.Gloss {
-			jt.Glosses[i] = Gloss{
+			jt.Glosses[i] = common.Gloss{
 				PartOfSpeech: g.Pos,
 				Definition:   g.Gloss,
 				Info:        g.Info,
@@ -218,25 +223,19 @@ func ToJapaneseToken(it *ichiran.JSONToken) (jt Tkn) {
 	return jt
 }
 
-// FIXME could be merged with Serialize with Serialize(obj Data)
-// type Data interface { string | ichiran.JSONTokens }
-
-// ToAnyTokenSliceWrapper converts all ichiran.JSONTokens to jpn.TknSliceWrapper
+// ToAnyTokenSlice converts all ichiran.JSONTokens to []common.AnyToken with underlying type []jpn.Tkn
 //
 //	NOTE: Golang limitation: the function's return type must explicitly be set to common.AnyTokenSliceWrapper.
 //	It CAN NOT be inferred from jpn.TknSliceWrapper even if it implements the AnyTokenSliceWrapper interface.
-func ToAnyTokenSliceWrapper(JSONTokens *ichiran.JSONTokens) (tkns common.AnyTokenSliceWrapper) {
-	tkns = TknSliceWrapper{common.TknSliceWrapper{Slice: make([]common.AnyToken, 0)}, []Tkn{}}
-
+func ToAnyTokenSlice(JSONTokens *ichiran.JSONTokens) (tkns []common.AnyToken) {
 	for _, token := range *JSONTokens {
-		inter := ToJapaneseToken(token)
-		tkns = tkns.Append(inter)
+		tkns = append(tkns, ToJapaneseToken(token))
 	}
 	return
 }
 
 
-func convertTokensSafe(anyTokens []common.AnyToken) ([]Tkn, error) {
+func assertJPNTokens(anyTokens []common.AnyToken) ([]Tkn, error) {
 	tokens := make([]Tkn, len(anyTokens))
 	for i, t := range anyTokens {
 		token, ok := t.(Tkn)
