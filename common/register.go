@@ -216,10 +216,10 @@ func getProvider(lang string, provType ProviderType, name string) (Provider[AnyT
 // checkCapabilities validates if providers have required capabilities for a language
 // and issues warnings if capabilities are missing
 func checkCapabilities(lang string, entries []ProviderEntry, provType ProviderType, name string) {
-	needsTokenization := NeedsTokenization(lang)
-	needsTransliteration := NeedsTransliteration(lang)
+	mustTokenize, _ := NeedsTokenization(lang)
+	mustTransliterate, _ := NeedsTransliteration(lang)
 
-	if !needsTokenization && !needsTransliteration {
+	if !mustTokenize && !mustTransliterate {
 		return
 	}
 
@@ -237,10 +237,10 @@ func checkCapabilities(lang string, entries []ProviderEntry, provType ProviderTy
 			}
 		}
 
-		if needsTokenization && !hasTokenization && (provType == TokenizerType || provType == CombinedType) {
+		if mustTokenize && !hasTokenization && (provType == TokenizerType || provType == CombinedType) {
 			fmt.Fprintf(os.Stderr, "Warning: Registering Provider %s for %s which requires tokenization but Provider doesn't declare this capability\n", name, lang)
 		}
-		if needsTransliteration && !hasTransliteration && (provType == TransliteratorType || provType == CombinedType) {
+		if mustTransliterate && !hasTransliteration && (provType == TransliteratorType || provType == CombinedType) {
 			fmt.Fprintf(os.Stderr, "Warning: Registering Provider %s for %s which requires transliteration but Provider doesn't declare this capability\n", name, lang)
 		}
 		return
@@ -258,10 +258,10 @@ func checkCapabilities(lang string, entries []ProviderEntry, provType ProviderTy
 		}
 	}
 
-	if needsTokenization && !hasTokenization {
+	if mustTokenize && !hasTokenization {
 		fmt.Fprintf(os.Stderr, "Warning: Language %s requires tokenization but no Provider declares this capability\n", lang)
 	}
-	if needsTransliteration && !hasTransliteration {
+	if mustTransliterate && !hasTransliteration {
 		fmt.Fprintf(os.Stderr, "Warning: Language %s requires transliteration but no Provider declares this capability\n", lang)
 	}
 }
@@ -278,24 +278,34 @@ func IsValidISO639(lang string) (stdLang string, ok bool) {
 
 // NeedsTokenization returns true if the given language doesn't use space to
 // separate words and requires tokenization.
-func NeedsTokenization(lang string) bool {
+// The language code can be in any ISO 639 code format.
+func NeedsTokenization(languageCode string) (bool, error) {
+	lang, ok := IsValidISO639(languageCode)
+	if !ok {
+		return false, fmt.Errorf(errNotISO639, languageCode)
+	}
 	for _, code := range langsNeedTokenization {
 		if lang == code {
-			return true
+			return true, nil
 		}
 	}
-	return false
+	return false, nil
 }
 
 // NeedsTransliteration returns true if the given language doesn't use the roman
 // script and requires transliteration.
-func NeedsTransliteration(lang string) bool {
+// The language code can be in any ISO 639 code format.
+func NeedsTransliteration(languageCode string) (bool, error) {
+	lang, ok := IsValidISO639(languageCode)
+	if !ok {
+		return false, fmt.Errorf(errNotISO639, languageCode)
+	}
 	for _, code := range langsNeedTransliteration {
 		if lang == code {
-			return true
+			return true, nil
 		}
 	}
-	return false
+	return false, nil
 }
 
 
@@ -306,7 +316,3 @@ func placeholder23456ui() {
 	pp.Println("𝓯*** 𝔂𝓸𝓾 𝓬𝓸𝓶𝓹𝓲𝓵𝓮𝓻")
 }
 
-/*
-func HasCapability(lang *iso.Language, provType ProviderType, name string, capability string) bool {
-	...
-}*/

@@ -33,20 +33,16 @@ func NewModule(lang string, providerNames ...string) (*common.Module, error) {
 
 // NeedsTokenization returns true if the given language doesn't use spaces
 // to separate words and requires tokenization.
-func NeedsTokenization(lang string) bool {
-	if stdLang, ok := common.IsValidISO639(lang); ok {
-		return common.NeedsTokenization(stdLang)
-	}
-	return false
+// The language code can be in any ISO 639 code format.
+func NeedsTokenization(lang string) (bool, error) {
+	return common.NeedsTokenization(lang)
 }
 
 // NeedsTransliteration returns true if the given language doesn't use
 // the roman script and requires transliteration.
-func NeedsTransliteration(lang string) bool {
-	if stdLang, ok := common.IsValidISO639(lang); ok {
-		return common.NeedsTransliteration(stdLang)
-	}
-	return false
+// The language code can be in any ISO 639 code format.
+func NeedsTransliteration(lang string) (bool, error) {
+	return common.NeedsTransliteration(lang)
 }
 
 // IsValidLanguage checks if the given language code is a valid ISO 639 code
