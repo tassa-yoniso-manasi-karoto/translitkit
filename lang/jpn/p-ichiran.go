@@ -4,7 +4,7 @@ import (
 	"fmt"
 
 	"github.com/tassa-yoniso-manasi-karoto/go-ichiran"
-	common "github.com/tassa-yoniso-manasi-karoto/translitkit/common"
+	"github.com/tassa-yoniso-manasi-karoto/translitkit/common"
 
 	//iso "github.com/barbashov/iso639-3"
 	"github.com/gookit/color"
@@ -91,9 +91,8 @@ func (p *IchiranProvider) process(transform func(*ichiran.JSONTokens) common.Any
 }
 
 func init() {
-	ichiran := &IchiranProvider{}
 	IchiranEntry := common.ProviderEntry{
-		Provider:     ichiran,
+		Provider:     &IchiranProvider{},
 		Capabilities: []string{"tokenization", "transliteration", "romaji"},
 		Type:         common.CombinedType,
 	}

@@ -175,12 +175,15 @@ func ToJapaneseToken(it *ichiran.JSONToken) (jt Tkn) {
 		// Set part of speech from first gloss
 		jt.PartOfSpeech = it.Gloss[0].Pos
 
-		// Store all glosses in metadata
-		glosses := make([]string, len(it.Gloss))
+		// Convert Ichiran glosses to common glosses
+		jt.Glosses = make([]Gloss, len(it.Gloss))
 		for i, g := range it.Gloss {
-			glosses[i] = g.Gloss
+			jt.Glosses[i] = Gloss{
+				PartOfSpeech: g.Pos,
+				Definition:   g.Gloss,
+				Info:        g.Info,
+			}
 		}
-		jt.Metadata["glosses"] = glosses
 	}
 
 	// Process conjugation information

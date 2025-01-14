@@ -99,11 +99,11 @@ type Tkn struct {
 	}
 
 	// Linguistic Features
-	//Reading       string            // How the token is read/pronounced
 	Romanization  string            // Latin alphabet representation
 	Lemma         string            // Base/dictionary form
 	PartOfSpeech  string            // Grammatical category (noun, verb, etc.)
 	MorphFeatures map[string]string // Morphological features (gender, number, tense, etc.)
+	Glosses       []Gloss           // Definitions/meanings with associated metadata
 
 	// Semantic Information
 	NamedEntity string  // Named entity type (if applicable)
@@ -123,6 +123,13 @@ type Tkn struct {
 	Language   string                 // ISO 639-3 code of the token's language
 	Metadata   map[string]interface{} // Provider-specific additional data
 }
+
+type Gloss struct {
+	PartOfSpeech	string  // Part of speech
+	Definition	string  // Definition/meaning
+	Info		string  // Additional information
+}
+
 
 func (t Tkn) GetSurface() string {
 	return t.Surface
