@@ -135,21 +135,6 @@ type Tkn struct {
 	Register    string // Language register (formal, casual, etc.)
 }
 
-func (t Tkn) GetSurface() string {
-	return t.Surface
-}
-
-func (t Tkn) GetRomanization() string {
-	if !t.IsToken || t.Surface == t.Romanization {
-		return ""
-	}
-	return t.Romanization
-}
-
-func (t Tkn) IsTokenType() bool {
-	return true
-}
-
 
 // ToJapaneseToken converts an JSONToken to a Tkn
 func ToJapaneseToken(it *ichiran.JSONToken) (jt Tkn) {
@@ -248,7 +233,7 @@ func assertJPNTokens(anyTokens []common.AnyToken) ([]Tkn, error) {
 }
 
 // ToGeneric converts the Japanese token to a generic token
-func (t *Tkn) ToGeneric() common.Tkn {
+func (t *Tkn) ToCommon() common.Tkn {
 	// Store Japanese-specific information in metadata
 	t.Metadata["japanese"] = map[string]interface{}{
 		// Writing Systems
