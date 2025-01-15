@@ -68,9 +68,9 @@ See docs of sub package "common" for the basic methods set available across lang
 
 - Ichiran [combined]
 
-<!--### Thai
+### Thai
 
- - thai2english.com scraper [combined] *(may be obsoleted in the future)* -->
+ - thai2english.com scraper [combined] *(may be obsolete in the future but currently is the best option since the docker img of pythainlp is broken)*
  
 ## AI Doomer note
 LLMs are perfectly suited for NLP.

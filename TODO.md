@@ -1,11 +1,13 @@
 *urgent:*
 
+- func (tokens TknSliceWrapper) Tokens() []AnyToken
+
 - for TokenizedStr ideally place space between word-words not word-punctuation or punct-punct
 
 - testing testing testing testing testing
 
 <hr>
-
+- mesure perf with pprof (impact of asserting every token in customModule notably)
 
 *later:*
 

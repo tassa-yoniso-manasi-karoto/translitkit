@@ -12,8 +12,6 @@ import (
 	"github.com/k0kubun/pp"
 )
 
-const Lang = "jpn"
-
 // IchiranProvider satisfies the Provider interface
 type IchiranProvider struct {
 	config map[string]interface{}

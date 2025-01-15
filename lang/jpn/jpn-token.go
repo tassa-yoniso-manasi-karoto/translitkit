@@ -11,21 +11,23 @@ import (
 	//iso "github.com/barbashov/iso639-3"
 )
 
+const Lang = "jpn"
+
 type Module struct {
 	*common.Module
 }
 
 
-// DefaultModule returns a new Japanese-specific Module configured with the default providers.
+// DefaultModule returns a new Module specific of this language configured with the default providers.
 func DefaultModule() (*Module, error) {
-	m, err := common.DefaultModule("jpn")
+	m, err := common.DefaultModule(Lang)
 	if err != nil {
 		return nil, err
 	}
-	jm := &Module{
+	customModule := &Module{
 		Module: m,
 	}
-	return jm, nil
+	return customModule, nil
 }
 
 
@@ -33,21 +35,19 @@ func DefaultModule() (*Module, error) {
 func (m *Module) Tokens(input string) (*TknSliceWrapper, error) {
 	tsw, err := m.Module.Tokens(input)
 	if err != nil {
-		return &TknSliceWrapper{}, fmt.Errorf("lang/jpn: %v", err)
+		return &TknSliceWrapper{}, fmt.Errorf("lang/%s: %v", Lang, err)
 	}
-	jtsw, ok := tsw.(*TknSliceWrapper)
+	customTsw, ok := tsw.(*TknSliceWrapper)
 	if !ok {
-		return &TknSliceWrapper{}, fmt.Errorf("failed assertion of jpn.TknSliceWrapper: real type is %s", reflect.TypeOf(tsw))
+		return &TknSliceWrapper{}, fmt.Errorf("failed assertion of %s.TknSliceWrapper: real type is %s", Lang, reflect.TypeOf(tsw))
 	}
 	
-	// takes []AnyToken, returns asserted []jpn.Token
-	// TODO mesure perf impact
-	tkns, err := assertJPNTokens(jtsw.Slice)
+	tkns, err := assertLangSpecificTokens(customTsw.Slice)
 	if err != nil {
-		return &TknSliceWrapper{}, fmt.Errorf("failed assertion of []jpn.Tkn: %v", err)
+		return &TknSliceWrapper{}, fmt.Errorf("failed assertion of []%s.Tkn: %v", Lang, err)
 	}
-	jtsw.NativeSlice = tkns
-	return jtsw, nil
+	customTsw.NativeSlice = tkns
+	return customTsw, nil
 }
 
 // TODO Maybe automatically return Katakana or Hiragan as fit
@@ -220,12 +220,12 @@ func ToAnyTokenSlice(JSONTokens *ichiran.JSONTokens) (tkns []common.AnyToken) {
 }
 
 
-func assertJPNTokens(anyTokens []common.AnyToken) ([]Tkn, error) {
+func assertLangSpecificTokens(anyTokens []common.AnyToken) ([]Tkn, error) {
 	tokens := make([]Tkn, len(anyTokens))
 	for i, t := range anyTokens {
 		token, ok := t.(Tkn)
 		if !ok {
-			return nil, fmt.Errorf("token at index %d is not a jpn.Tkn", i) // add reflect type
+			return nil, fmt.Errorf("token at index %d is not a %s.Tkn: real type is %s", Lang, i, reflect.TypeOf(token))
 		}
 		tokens[i] = token
 	}

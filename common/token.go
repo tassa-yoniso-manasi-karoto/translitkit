@@ -12,6 +12,7 @@ func serialize(input string, max int) (AnyTokenSliceWrapper, error) {
 	return &TknSliceWrapper{Raw: chunks}, err
 }
 
+
 type AnyTokenSliceWrapper interface {
 	GetFirst()		any
 	GetRaw()		[]string
@@ -67,7 +68,7 @@ func (tokens *TknSliceWrapper) Append(tkn ...AnyToken) {
 
 
 // return the unwrapped slice contained by the wrapper
-//func (tokens TknSliceWrapper) Slice() []AnyToken // FIXME may come in handy?
+//func (tokens TknSliceWrapper) Tokens() []AnyToken // FIXME may come in handy?
 
 func (tokens TknSliceWrapper) Roman() string {
 	return roman(tokens.Slice)

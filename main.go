@@ -4,6 +4,7 @@ import (
 	"github.com/tassa-yoniso-manasi-karoto/translitkit/common"
 	// language-specific pkg must be initialized for their providers to be available
 	_ "github.com/tassa-yoniso-manasi-karoto/translitkit/lang/jpn"
+	_ "github.com/tassa-yoniso-manasi-karoto/translitkit/lang/tha"
 )
 
 // DefaultModule returns a new Module configured with the default providers
