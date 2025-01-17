@@ -3,102 +3,10 @@ package jpn
 import (
 	"fmt"
 	"strings"
-	"reflect"
 	
 	"github.com/tassa-yoniso-manasi-karoto/go-ichiran"
 	"github.com/tassa-yoniso-manasi-karoto/translitkit/common"
-
-	//iso "github.com/barbashov/iso639-3"
 )
-
-const Lang = "jpn"
-
-type Module struct {
-	*common.Module
-}
-
-
-// DefaultModule returns a new Module specific of this language configured with the default providers.
-func DefaultModule() (*Module, error) {
-	m, err := common.DefaultModule(Lang)
-	if err != nil {
-		return nil, err
-	}
-	customModule := &Module{
-		Module: m,
-	}
-	return customModule, nil
-}
-
-
-
-func (m *Module) Tokens(input string) (*TknSliceWrapper, error) {
-	tsw, err := m.Module.Tokens(input)
-	if err != nil {
-		return &TknSliceWrapper{}, fmt.Errorf("lang/%s: %v", Lang, err)
-	}
-	customTsw, ok := tsw.(*TknSliceWrapper)
-	if !ok {
-		return &TknSliceWrapper{}, fmt.Errorf("failed assertion of %s.TknSliceWrapper: real type is %s", Lang, reflect.TypeOf(tsw))
-	}
-	
-	tkns, err := assertLangSpecificTokens(customTsw.Slice)
-	if err != nil {
-		return &TknSliceWrapper{}, fmt.Errorf("failed assertion of []%s.Tkn: %v", Lang, err)
-	}
-	customTsw.NativeSlice = tkns
-	return customTsw, nil
-}
-
-// TODO Maybe automatically return Katakana or Hiragan as fit
-
-// Returns a tokenized string of Hiragana readings
-func (m *Module) Kana(input string) (string, error) {
-	if m.Transliterator == nil && m.ProviderType != common.CombinedType {
-		return "", fmt.Errorf("Kana requires either a transliterator or combined provider (got %s)", m.ProviderType)
-	}
-	tkns, err := m.Tokens(input)
-	if err != nil {
-		return "", err
-	}
-	return tkns.Kana(), nil
-}
-
-// Returns a slice of string of Hiragana readings
-func (m *Module) KanaParts(input string) ([]string, error) {
-	if m.Transliterator == nil && m.ProviderType != common.CombinedType {
-		return []string{}, fmt.Errorf("KanaParts requires either a transliterator or combined provider (got %s)", m.ProviderType)
-	}
-	tkns, err := m.Tokens(input)
-	if err != nil {
-		return []string{}, err
-	}
-	return tkns.KanaParts(), nil
-}
-
-
-
-type TknSliceWrapper struct {
-	common.TknSliceWrapper
-	NativeSlice []Tkn
-}
-
-func (wrapper TknSliceWrapper) Kana() string {
-	return strings.Join(wrapper.KanaParts(), " ")
-}
-
-func (wrapper TknSliceWrapper) KanaParts() []string {
-	var parts []string
-	for _, token := range wrapper.NativeSlice {
-		if token.Tkn.IsToken && token.Hiragana != "" {
-			parts = append(parts, token.Hiragana)
-		} else {
-			parts = append(parts, token.Tkn.Surface)
-		}
-	}
-	return parts
-}
-
 
 // Tkn extends common Token with Japanese-specific features
 type Tkn struct {
@@ -133,6 +41,51 @@ type Tkn struct {
 	IsHumble    bool   // 謙譲語 (Humble form)
 	IsKeigo     bool   // General keigo flag
 	Register    string // Language register (formal, casual, etc.)
+}
+
+
+
+// TODO Maybe automatically return Katakana or Hiragana as fit
+
+// Returns a tokenized string of Hiragana readings
+func (m *Module) Kana(input string) (string, error) {
+	if m.Transliterator == nil && m.ProviderType != common.CombinedType {
+		return "", fmt.Errorf("Kana requires either a transliterator or combined provider (got %s)", m.ProviderType)
+	}
+	tkns, err := m.Tokens(input)
+	if err != nil {
+		return "", err
+	}
+	return tkns.Kana(), nil
+}
+
+// Returns a slice of string of Hiragana readings
+func (m *Module) KanaParts(input string) ([]string, error) {
+	if m.Transliterator == nil && m.ProviderType != common.CombinedType {
+		return []string{}, fmt.Errorf("KanaParts requires either a transliterator or combined provider (got %s)", m.ProviderType)
+	}
+	tkns, err := m.Tokens(input)
+	if err != nil {
+		return []string{}, err
+	}
+	return tkns.KanaParts(), nil
+}
+
+
+func (wrapper TknSliceWrapper) Kana() string {
+	return strings.Join(wrapper.KanaParts(), " ")
+}
+
+func (wrapper TknSliceWrapper) KanaParts() []string {
+	var parts []string
+	for _, token := range wrapper.NativeSlice {
+		if token.Tkn.IsToken && token.Hiragana != "" {
+			parts = append(parts, token.Hiragana)
+		} else {
+			parts = append(parts, token.Tkn.Surface)
+		}
+	}
+	return parts
 }
 
 
@@ -219,53 +172,3 @@ func ToAnyTokenSlice(JSONTokens *ichiran.JSONTokens) (tkns []common.AnyToken) {
 	return
 }
 
-
-func assertLangSpecificTokens(anyTokens []common.AnyToken) ([]Tkn, error) {
-	tokens := make([]Tkn, len(anyTokens))
-	for i, t := range anyTokens {
-		token, ok := t.(Tkn)
-		if !ok {
-			return nil, fmt.Errorf("token at index %d is not a %s.Tkn: real type is %s", Lang, i, reflect.TypeOf(token))
-		}
-		tokens[i] = token
-	}
-	return tokens, nil
-}
-
-// ToGeneric converts the Japanese token to a generic token
-func (t *Tkn) ToCommon() common.Tkn {
-	// Store Japanese-specific information in metadata
-	t.Metadata["japanese"] = map[string]interface{}{
-		// Writing Systems
-		"kanji":    t.Kanji,
-		"hiragana": t.Hiragana,
-		"katakana": t.Katakana,
-
-		// Linguistic Features
-		"okurigana": t.Okurigana,
-		"pitch":     t.Pitch,
-		"moraCount": t.MoraCount,
-
-		// Word Formation
-		"isKango":    t.IsKango,
-		"isWago":     t.IsWago,
-		"isGairaigo": t.IsGairaigo,
-
-		// Conjugation
-		"baseForm": t.BaseForm,
-		"inflection": map[string]interface{}{
-			"type":     t.Inflection.Type,
-			"form":     t.Inflection.Form,
-			"polite":   t.Inflection.Polite,
-			"negative": t.Inflection.Negative,
-		},
-
-		// Additional Features
-		"isHonorific": t.IsHonorific,
-		"isHumble":    t.IsHumble,
-		"isKeigo":     t.IsKeigo,
-		"register":    t.Register,
-	}
-
-	return t.Tkn
-}

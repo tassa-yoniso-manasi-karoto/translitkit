@@ -153,35 +153,7 @@ func removeEmptyStrings(strings []string) []string {
 	return result
 }
 
-// func (p *ThaiProvider) AnalyzeWord(word string) ThaiToken {
-// 	token := NewThaiToken()
 
-// 	// Example analysis (simplified)
-// 	token.Surface = word
-// 	token.TokenType = common.WordToken
-// 	token.Language = "tha"
-
-// 	// Thai-specific analysis
-// 	token.Tone = determineTone(word)
-// 	token.ConsonantClass = determineConsonantClass(word)
-// 	token.RegisterLevel = determineRegisterLevel(word)
-
-// 	// Set common fields
-// 	token.PartOfSpeech = determinePartOfSpeech(word)
-// 	token.Romanization = romanize(word)
-
-// 	return token
-// }
-
-
-
-
-// // Helper functions (to be implemented)
-// func determineTone(word string) int              { /* ... */ return 0 }
-// func determineConsonantClass(word string) string { /* ... */ return "" }
-// func determineRegisterLevel(word string) string  { /* ... */ return "" }
-// func determinePartOfSpeech(word string) string   { /* ... */ return "" }
-// func romanize(word string) string                { /* ... */ return "" }
 
 
 

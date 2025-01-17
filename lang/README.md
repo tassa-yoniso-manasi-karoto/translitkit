@@ -1,1 +1,0 @@
-lots of code duplication in these package... ~~lol no generics~~ lol no templating  ¯\\\_(ツ)\_/¯
