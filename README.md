@@ -66,11 +66,15 @@ See docs of sub package "common" for the basic methods set available across lang
 
 ### Japanese
 
-- Ichiran [combined]
+- [Ichiran](https://github.com/tshatrov/ichiran) [combined]
 
 ### Thai
 
- - thai2english.com scraper [combined] *(may be obsolete in the future but currently is the best option since the docker img of pythainlp is broken)*
+ - [thai2english.com](https://www.thai2english.com) scraper [combined] *(may be obsolete in the future but currently is the best option since the docker img of pythainlp is broken)*
+
+### Multilingual
+
+ - [Aksharamukha](https://github.com/virtualvinodh/aksharamukha) [transliterator]: support many languages of the Indic cultural sphere: Hindi, Bengali, Punjabi, Marathi, Telugu, Tamil, Persian, Urdu, Gujarati, Malayalam,... and many others.
  
 ## AI Doomer note
 LLMs are perfectly suited for NLP.
