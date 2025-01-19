@@ -5,6 +5,8 @@ import (
 	"strings"
 	"math"
 
+	"github.com/k0kubun/pp"
+	"github.com/gookit/color"
 	//iso "github.com/barbashov/iso639-3"
 )
 
@@ -175,7 +177,7 @@ func (m *Module) Tokenized(input string) (string, error) {
 func (m *Module) Tokens(input string) (AnyTokenSliceWrapper, error) {
 	tsw, err := serialize(input, m.getMaxQueryLen())
 	if err != nil {
-		fmt.Errorf("input serialization failed: len(input)=%d, %v", len(input), err)
+		return nil, fmt.Errorf("input serialization failed: len(input)=%d, %v", len(input), err)
 	}
 
 	if m.Combined != nil {
@@ -188,9 +190,14 @@ func (m *Module) Tokens(input string) (AnyTokenSliceWrapper, error) {
 		if err != nil {
 			return &TknSliceWrapper{}, fmt.Errorf("tokenization failed: %v", err)
 		}
-		tsw, err = m.Transliterator.ProcessFlowController(tsw)
-		if err != nil {
-			return &TknSliceWrapper{}, fmt.Errorf("transliteration failed: %v", err)
+		if m.Transliterator != nil {
+			if tsw, err = m.Transliterator.ProcessFlowController(tsw); err != nil {
+				logger.Warn().
+					Err(err).
+					Str("lang", m.Lang).
+					Str("provider", m.Transliterator.Name()).
+					Msg("Transliteration failed but continuing with untransliterated tokens")
+			}
 		}
 	}
 	return tsw, nil
@@ -244,16 +251,19 @@ func (m *Module) setProviders(providers []ProviderEntry) error {
 		m.Combined = providers[0].Provider
 		m.ProviderType = CombinedType
 	} else {
-		m.Tokenizer = providers[0].Provider
-		// For separate providers, need both tokenizer and transliterator
-		if len(providers) != 2 {
-			return fmt.Errorf("separate mode requires exactly 2 providers (tokenizer + transliterator)")
-		}
-		if providers[0].Type != TokenizerType || providers[1].Type != TransliteratorType {
-			return fmt.Errorf("separate providers must be tokenizer + transliterator in that order")
+		// For separate providers, tokenizer is required but transliterator is optional
+		if providers[0].Type != TokenizerType {
+			return fmt.Errorf("first provider must be a tokenizer")
 		}
 		m.Tokenizer = providers[0].Provider
-		m.Transliterator = providers[1].Provider
+
+		// Set transliterator if provided
+		if len(providers) > 1 {
+			if providers[1].Type != TransliteratorType {
+				return fmt.Errorf("second provider must be a transliterator")
+			}
+			m.Transliterator = providers[1].Provider
+		}
 	}
 	return nil
 }
@@ -290,3 +300,9 @@ func (m *Module) listProviders() (providers []ProviderEntry, err error) {
 	return providers, nil
 }
 
+
+func placeholder3456456543() {
+	fmt.Println("")
+	color.Redln(" 𝒻*** 𝓎ℴ𝓊 𝒸ℴ𝓂𝓅𝒾𝓁ℯ𝓇")
+	pp.Println("𝓯*** 𝔂𝓸𝓾 𝓬𝓸𝓶𝓹𝓲𝓵𝓮𝓻")
+}

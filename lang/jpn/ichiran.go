@@ -64,6 +64,7 @@ func (p *IchiranProvider) ProcessFlowController(input common.AnyTokenSliceWrappe
 		case common.CombinedType:
 			return p.process(raw)
 		}
+		// Important to clear the field Raw, otherwise Tkn would be ignored by next processor
 		input.ClearRaw()
 	} else { // generic token processor: take common.Tkn as well as lang-specic tokens that have common.Tkn as their embedded field
 		switch ProviderType {

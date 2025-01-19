@@ -111,7 +111,7 @@ func (p *TH2ENProvider) process(chunks []string) (common.AnyTokenSliceWrapper, e
 					Definition: gloss,
 				})
 			}
-			tsw.Append(Tkn{ Tkn: common.Tkn{
+			tsw.Append(&Tkn{ Tkn: common.Tkn{
 				Surface: th,
 				Romanization: tlit,
 				IsToken: true,

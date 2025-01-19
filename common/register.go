@@ -4,7 +4,6 @@ package common
 import (
 	"fmt"
 	"sync"
-	"os"
 	
 	iso "github.com/barbashov/iso639-3"
 	"github.com/gookit/color"
@@ -57,6 +56,7 @@ func Register(languageCode string, provType ProviderType, name string, entry Pro
 		return fmt.Errorf("provider cannot be nil")
 	}
 
+	// Register the provider
 	switch provType {
 	case TokenizerType:
 		GlobalRegistry.Providers[lang].Tokenizers[name] = entry
@@ -64,8 +64,6 @@ func Register(languageCode string, provType ProviderType, name string, entry Pro
 		GlobalRegistry.Providers[lang].Transliterators[name] = entry
 	case CombinedType:
 		GlobalRegistry.Providers[lang].Combined[name] = entry
-	default:
-		return fmt.Errorf("unknown provider type: %s", provType)
 	}
 
 	return nil
@@ -140,27 +138,33 @@ func SetDefault(languageCode string, providers []ProviderEntry) error {
 	}
 
 	// Validate providers
+	name := providers[0].Provider.Name()
 	if providers[0].Type == CombinedType {
 		if len(providers) > 1 {
 			return fmt.Errorf("combined provider cannot be used with other providers")
 		}
 		// Verify the provider exists
 		if _, ok := findProvider(lang, CombinedType, providers[0].Provider.Name()); !ok {
-			return fmt.Errorf("combined provider not found in registered providers")
+			return fmt.Errorf("combined provider \"%s\" not found in registered providers", name)
 		}
 	} else {
-		if len(providers) != 2 {
-			return fmt.Errorf("separate mode requires exactly 2 providers (tokenizer + transliterator)")
+		// Require tokenizer but make transliterator optional
+		if providers[0].Type != TokenizerType {
+			return fmt.Errorf("first provider must be a tokenizer")
 		}
-		if providers[0].Type != TokenizerType || providers[1].Type != TransliteratorType {
-			return fmt.Errorf("separate providers must be tokenizer + transliterator in that order")
+		if _, ok := findProvider(lang, TokenizerType, name); !ok {
+			return fmt.Errorf("tokenizer \"%s\" not found in registered providers", name)
 		}
-		// Verify both providers exist
-		if _, ok := findProvider(lang, TokenizerType, providers[0].Provider.Name()); !ok {
-			return fmt.Errorf("tokenizer not found in registered providers")
-		}
-		if _, ok := findProvider(lang, TransliteratorType, providers[1].Provider.Name()); !ok {
-			return fmt.Errorf("transliterator not found in registered providers")
+
+		// Check transliterator if provided
+		if len(providers) > 1 {
+			name := providers[1].Provider.Name()
+			if providers[1].Type != TransliteratorType {
+				return fmt.Errorf("second provider must be a transliterator")
+			}
+			if _, ok := findProvider(lang, TransliteratorType, name); !ok {
+				return fmt.Errorf("transliterator \"%s\" not found in registered providers", name)
+			}
 		}
 	}
 
@@ -246,10 +250,16 @@ func checkCapabilities(lang string, entries []ProviderEntry, provType ProviderTy
 		}
 
 		if mustTokenize && !hasTokenization && (provType == TokenizerType || provType == CombinedType) {
-			fmt.Fprintf(os.Stderr, "Warning: Registering Provider %s for %s which requires tokenization but Provider doesn't declare this capability\n", name, lang)
+			logger.Warn().
+				Str("provider", name).
+				Str("lang", lang).
+				Msg("Registering provider which requires tokenization but providerType doesn't declare this capability")
 		}
 		if mustTransliterate && !hasTransliteration && (provType == TransliteratorType || provType == CombinedType) {
-			fmt.Fprintf(os.Stderr, "Warning: Registering Provider %s for %s which requires transliteration but Provider doesn't declare this capability\n", name, lang)
+			logger.Warn().
+				Str("provider", name).
+				Str("lang", lang).
+				Msg("Registering provider which requires transliteration but providerType	 doesn't declare this capability")
 		}
 		return
 	}
@@ -267,10 +277,14 @@ func checkCapabilities(lang string, entries []ProviderEntry, provType ProviderTy
 	}
 
 	if mustTokenize && !hasTokenization {
-		fmt.Fprintf(os.Stderr, "Warning: Language %s requires tokenization but no Provider declares this capability\n", lang)
+		logger.Warn().
+			Str("lang", lang).
+			Msg("Language requires tokenization but no provider declares this capability")
 	}
 	if mustTransliterate && !hasTransliteration {
-		fmt.Fprintf(os.Stderr, "Warning: Language %s requires transliteration but no Provider declares this capability\n", lang)
+		logger.Warn().
+			Str("lang", lang).
+			Msg("Language requires transliteration but no provider declares this capability")
 	}
 }
 

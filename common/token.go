@@ -29,6 +29,7 @@ type AnyTokenSliceWrapper interface {
 type AnyToken interface {
 	GetSurface()	string
 	Roman()		string
+	SetRoman(string)
 	IsTokenType()	bool
 }
 
@@ -134,20 +135,23 @@ type Gloss struct {
 	Info		string  // Additional information
 }
 
-
-func (t Tkn) GetSurface() string {
+func (t *Tkn) GetSurface() string {
 	return t.Surface
 }
 
-func (t Tkn) Roman() string {
+func (t *Tkn) Roman() string {
 	if !t.IsToken || t.Surface == t.Romanization {
 		return ""
 	}
 	return t.Romanization
 }
 
-func (t Tkn) IsTokenType() bool {
-	return true
+func (t *Tkn) SetRoman(roman string) {
+	t.Romanization = roman
+}
+
+func (t *Tkn) IsTokenType() bool {
+	return t.IsToken
 }
 
 

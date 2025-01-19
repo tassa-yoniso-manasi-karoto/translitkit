@@ -89,17 +89,21 @@ func (wrapper TknSliceWrapper) KanaParts() []string {
 }
 
 
-// ToJapaneseToken converts an JSONToken to a Tkn
-func ToJapaneseToken(it *ichiran.JSONToken) (jt Tkn) {
-	// Fill common Tkn fields
-	jt.Surface = it.Surface
-	jt.IsToken = it.IsToken
+// ToJapaneseToken converts an JSONToken to a *Tkn
+func ToJapaneseToken(it *ichiran.JSONToken) *Tkn {
+	jt := &Tkn{ Tkn: common.Tkn {
+		Surface: it.Surface,
+		IsToken: it.IsToken,
+	}}
 
 	// If this is not a Japanese token, return early with minimal information
 	if !it.IsToken {
 		return jt
 	}
+
+	// Initialize maps
 	jt.Metadata = make(map[string]interface{})
+	jt.MorphFeatures = make(map[string]string)
 
 	// Continue with Japanese-specific token processing
 	jt.Normalized = it.Surface // Could be enhanced with actual normalization
@@ -108,10 +112,6 @@ func ToJapaneseToken(it *ichiran.JSONToken) (jt Tkn) {
 	jt.Language = "jpn"
 	jt.Script = "Jpan"
 	jt.Romanization = it.Romaji
-
-	// Set Japanese-specific fields
-	jt.Kanji = it.Surface
-	jt.Hiragana = it.Kana
 
 	// Process glosses
 	if len(it.Gloss) > 0 {

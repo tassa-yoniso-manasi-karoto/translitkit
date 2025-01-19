@@ -28,7 +28,7 @@ func DefaultModule() (*Module, error) {
 
 type TknSliceWrapper struct {
 	common.TknSliceWrapper
-	NativeSlice []Tkn
+	NativeSlice []*Tkn
 }
 
 func (m *Module) Tokens(input string) (*TknSliceWrapper, error) {
@@ -49,10 +49,10 @@ func (m *Module) Tokens(input string) (*TknSliceWrapper, error) {
 	return customTsw, nil
 }
 
-func assertLangSpecificTokens(anyTokens []common.AnyToken) ([]Tkn, error) {
-	tokens := make([]Tkn, len(anyTokens))
+func assertLangSpecificTokens(anyTokens []common.AnyToken) ([]*Tkn, error) {
+	tokens := make([]*Tkn, len(anyTokens))
 	for i, t := range anyTokens {
-		token, ok := t.(Tkn)
+		token, ok := t.(*Tkn)
 		if !ok {
 			return nil, fmt.Errorf("token at index %d is not a %s.Tkn: real type is %s", i, Lang, reflect.TypeOf(token))
 		}
