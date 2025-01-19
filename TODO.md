@@ -1,5 +1,7 @@
 *urgent:*
 
+- ichiran: implement partial kana transliteration with user-defined upper limit based on Kanji frequency
+
 - TH2EN: Use config to scrape & select desired romanization
 
 - func (tokens TknSliceWrapper) Tokens() []AnyToken

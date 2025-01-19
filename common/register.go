@@ -115,7 +115,7 @@ func defaultModule(lang string) (anyModule, error) {
 
 // SetDefault configures the default Providers for a language in the global registry.
 // It validates that the Providers have the necessary capabilities for the language.
-func SetDefault(languageCode string, Providers []ProviderEntry) error {
+func SetDefault(languageCode string, providers []ProviderEntry) error {
 	lang, ok := IsValidISO639(languageCode)
 	if !ok {
 		return fmt.Errorf(errNotISO639, languageCode)
@@ -123,63 +123,49 @@ func SetDefault(languageCode string, Providers []ProviderEntry) error {
 	GlobalRegistry.mu.Lock()
 	defer GlobalRegistry.mu.Unlock()
 
-	checkCapabilities(lang, Providers, "", "")
+	checkCapabilities(lang, providers, "", "")
 
-	langProviders, exists := GlobalRegistry.Providers[lang]
-	if !exists {
-		return fmt.Errorf("SetDefault: no Providers registered for language: %s", lang)
+	// Initialize language providers if not exists
+	if _, exists := GlobalRegistry.Providers[lang]; !exists {
+		GlobalRegistry.Providers[lang] = LanguageProviders{
+			Tokenizers:      make(map[string]ProviderEntry),
+			Transliterators: make(map[string]ProviderEntry),
+			Combined:        make(map[string]ProviderEntry),
+			Defaults:        make([]ProviderEntry, 0),
+		}
 	}
 
-	if len(Providers) == 0 {
-		return fmt.Errorf("cannot set empty default Providers")
+	if len(providers) == 0 {
+		return fmt.Errorf("cannot set empty default providers")
 	}
 
-	// Validate Providers
-	if Providers[0].Type == CombinedType {
-		// For combined provider, only one entry is needed
-		if len(Providers) > 1 {
-			return fmt.Errorf("combined provider cannot be used with other Providers")
+	// Validate providers
+	if providers[0].Type == CombinedType {
+		if len(providers) > 1 {
+			return fmt.Errorf("combined provider cannot be used with other providers")
 		}
-		// Verify the provider exists in combined map
-		for _, entry := range langProviders.Combined {
-			if entry.Provider == Providers[0].Provider {
-				goto valid
-			}
+		// Verify the provider exists
+		if _, ok := findProvider(lang, CombinedType, providers[0].Provider.Name()); !ok {
+			return fmt.Errorf("combined provider not found in registered providers")
 		}
-		return fmt.Errorf("combined provider not found in registered Providers")
 	} else {
-		// For separate Providers, need both tokenizer and transliterator
-		if len(Providers) != 2 {
-			return fmt.Errorf("separate mode requires exactly 2 Providers (tokenizer + transliterator)")
+		if len(providers) != 2 {
+			return fmt.Errorf("separate mode requires exactly 2 providers (tokenizer + transliterator)")
 		}
-		if Providers[0].Type != TokenizerType || Providers[1].Type != TransliteratorType {
-			return fmt.Errorf("separate Providers must be tokenizer + transliterator in that order")
+		if providers[0].Type != TokenizerType || providers[1].Type != TransliteratorType {
+			return fmt.Errorf("separate providers must be tokenizer + transliterator in that order")
 		}
-		// Verify both Providers exist in their respective maps
-		var found bool
-		for _, entry := range langProviders.Tokenizers {
-			if entry.Provider == Providers[0].Provider {
-				found = true
-				break
-			}
+		// Verify both providers exist
+		if _, ok := findProvider(lang, TokenizerType, providers[0].Provider.Name()); !ok {
+			return fmt.Errorf("tokenizer not found in registered providers")
 		}
-		if !found {
-			return fmt.Errorf("tokenizer not found in registered Providers")
-		}
-		found = false
-		for _, entry := range langProviders.Transliterators {
-			if entry.Provider == Providers[1].Provider {
-				found = true
-				break
-			}
-		}
-		if !found {
-			return fmt.Errorf("transliterator not found in registered Providers")
+		if _, ok := findProvider(lang, TransliteratorType, providers[1].Provider.Name()); !ok {
+			return fmt.Errorf("transliterator not found in registered providers")
 		}
 	}
 
-valid:
-	langProviders.Defaults = Providers
+	langProviders := GlobalRegistry.Providers[lang]
+	langProviders.Defaults = providers
 	GlobalRegistry.Providers[lang] = langProviders
 	return nil
 }
@@ -189,30 +175,50 @@ func getProvider(lang string, provType ProviderType, name string) (Provider[AnyT
 	GlobalRegistry.mu.RLock()
 	defer GlobalRegistry.mu.RUnlock()
 
-	langProviders, exists := GlobalRegistry.Providers[lang]
-	if !exists {
-		return nil, fmt.Errorf("GetProvider: no Providers registered for language: %s", lang)
-	}
-
-	var entry ProviderEntry
-	var ok bool
-
-	switch provType {
-	case TokenizerType:
-		entry, ok = langProviders.Tokenizers[name]
-	case TransliteratorType:
-		entry, ok = langProviders.Transliterators[name]
-	case CombinedType:
-		entry, ok = langProviders.Combined[name]
-	default:
-		return nil, fmt.Errorf("unknown provider type: %s", provType)
-	}
-
+	entry, ok := findProvider(lang, provType, name)
 	if !ok {
-		return nil, fmt.Errorf("provider not found: %s (%s)", name, provType)
+		return nil, fmt.Errorf("provider not found: %s (%s) for language %s or mul", name, provType, lang)
 	}
 
 	return entry.Provider, nil
+}
+
+
+// findProvider looks for a provider first in the specified language's registry,
+// then falls back to multilingual providers if not found
+func findProvider(lang string, provType ProviderType, name string) (ProviderEntry, bool) {
+	// Try language-specific provider first
+	if langProviders, exists := GlobalRegistry.Providers[lang]; exists {
+		if entry, ok := getProviderFromMap(langProviders, provType, name); ok {
+			return entry, true
+		}
+	}
+
+	// Fallback to multilingual provider if not found and not already looking for mul
+	if lang != "mul" {
+		if mulProviders, exists := GlobalRegistry.Providers["mul"]; exists {
+			return getProviderFromMap(mulProviders, provType, name)
+		}
+	}
+
+	return ProviderEntry{}, false
+}
+
+// getProviderFromMap retrieves a provider entry from the appropriate map based on type
+func getProviderFromMap(providers LanguageProviders, provType ProviderType, name string) (ProviderEntry, bool) {
+	switch provType {
+	case TokenizerType:
+		entry, ok := providers.Tokenizers[name]
+		return entry, ok
+	case TransliteratorType:
+		entry, ok := providers.Transliterators[name]
+		return entry, ok
+	case CombinedType:
+		entry, ok := providers.Combined[name]
+		return entry, ok
+	default:
+		return ProviderEntry{}, false
+	}
 }
 
 // checkCapabilities validates if providers have required capabilities for a language

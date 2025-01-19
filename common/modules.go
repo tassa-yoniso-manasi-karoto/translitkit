@@ -244,6 +244,7 @@ func (m *Module) setProviders(providers []ProviderEntry) error {
 		m.Combined = providers[0].Provider
 		m.ProviderType = CombinedType
 	} else {
+		m.Tokenizer = providers[0].Provider
 		// For separate providers, need both tokenizer and transliterator
 		if len(providers) != 2 {
 			return fmt.Errorf("separate mode requires exactly 2 providers (tokenizer + transliterator)")
