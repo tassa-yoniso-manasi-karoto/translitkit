@@ -1,6 +1,8 @@
 *urgent:*
 
-- for TokenizedStr ideally place space between word-words not word-punctuation or punct-punct
+- **for TokenizedStr ideally place space between word-words not word-punctuation or punct-punct**
+
+- get Aksharamukha docker outside of the client and into a pkg level var (docker client is very large and bloats debugging the GlobalRegister)
 
 - ichiran: implement partial kana transliteration with user-defined upper limit based on Kanji frequency
 
