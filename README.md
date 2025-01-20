@@ -59,10 +59,10 @@ See docs of sub package "common" for the basic methods set available across lang
 
 ## Currently implemented tokenizers / transliterators
 
-> [!NOTE]
-> Traditional NLP providers such as morphological analyzers are prioritized over neural network-based libraries as they can be run on any hardware. See note below.
+> [!WARNING]
+> **Japanese transliteration (Ichiran) and Indic transliteration (Aksharamukha) require to have Docker Desktop (windows/macos) or Docker Engine (linux) installed.**
 
-"combined" means the provider implement both.
+"combined" means the provider implement both transliteration and tokenization.
 
 ### Japanese
 
