@@ -9,6 +9,7 @@ import (
 	_ "github.com/tassa-yoniso-manasi-karoto/translitkit/lang/jpn"
 	_ "github.com/tassa-yoniso-manasi-karoto/translitkit/lang/tha"
 	_ "github.com/tassa-yoniso-manasi-karoto/translitkit/lang/hin"
+	_ "github.com/tassa-yoniso-manasi-karoto/translitkit/lang/rus"
 )
 
 // DefaultModule returns a new Module configured with the default providers

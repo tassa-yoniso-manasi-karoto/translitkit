@@ -7,6 +7,7 @@ import (
 	"github.com/tassa-yoniso-manasi-karoto/translitkit/common"
 )
 
+const Lang = "mul"
 
 func init() {
 	unisegEntry := common.ProviderEntry{
@@ -19,25 +20,25 @@ func init() {
 		Capabilities: []string{"transliteration"},
 		Type:        common.TransliteratorType,
 	}
+	iuliiaEntry := common.ProviderEntry{
+		Provider:     NewIuliiaProvider("rus"),
+		Capabilities: []string{"transliteration"},
+		Type:        common.TransliteratorType,
+	}
+	
 
 	err := common.Register("mul", common.TokenizerType, "uniseg", unisegEntry)
 	if err != nil {
 		panic(fmt.Sprintf("failed to register uniseg provider: %v", err))
 	}
+	
 	err = common.Register("mul", common.TransliteratorType, "aksharamukha", aksharamukhaEntry)
 	if err != nil {
 		panic(fmt.Sprintf("failed to register aksharamukha provider: %v", err))
 	}
-
-	// Set as default transliterator along with uniseg tokenizer
-	// TODO for this leverage aksharamukha script autodetection
-	// defaultProviders := []common.ProviderEntry{
-	// 	unisegEntry,
-	// 	aksharamukhaEntry,
-	// }
-
-	// err = common.SetDefault("mul", defaultProviders)
-	// if err != nil {
-	// 	panic(fmt.Sprintf("failed to set default providers: %v", err))
-	// }
+	
+	err = common.Register("mul", common.TransliteratorType, "iuliia", iuliiaEntry)
+	if err != nil {
+		panic(fmt.Sprintf("failed to register iuliia provider: %v", err))
+	}
 }

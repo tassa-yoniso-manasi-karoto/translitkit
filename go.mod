@@ -7,6 +7,7 @@ require (
 	github.com/go-rod/rod v0.116.2
 	github.com/gookit/color v1.5.4
 	github.com/k0kubun/pp v3.0.1+incompatible
+	github.com/mehanizm/iuliia-go v1.0.2
 	github.com/rivo/uniseg v0.4.7
 	github.com/rs/zerolog v1.33.0
 	github.com/tassa-yoniso-manasi-karoto/go-aksharamukha v0.0.0-20250119041459-d91450df40c3

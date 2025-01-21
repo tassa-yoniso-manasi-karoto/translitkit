@@ -19,6 +19,7 @@
 
 - mesure perf with pprof (impact of asserting every token in customModule notably)
 
+- for dealing with arbitrary languages either github.com/pemistahl/lingua-go or aksharamukha script autodetection and redirect at correct language
 
 *later:*
 
