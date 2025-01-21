@@ -8,7 +8,20 @@ import (
 	_ "github.com/tassa-yoniso-manasi-karoto/translitkit/lang/mul"
 	_ "github.com/tassa-yoniso-manasi-karoto/translitkit/lang/jpn"
 	_ "github.com/tassa-yoniso-manasi-karoto/translitkit/lang/tha"
+	
+	// Indic: Aksharamukha
 	_ "github.com/tassa-yoniso-manasi-karoto/translitkit/lang/hin"
+	_ "github.com/tassa-yoniso-manasi-karoto/translitkit/lang/ben"
+	_ "github.com/tassa-yoniso-manasi-karoto/translitkit/lang/fas"
+	_ "github.com/tassa-yoniso-manasi-karoto/translitkit/lang/guj"
+	_ "github.com/tassa-yoniso-manasi-karoto/translitkit/lang/mar"
+	_ "github.com/tassa-yoniso-manasi-karoto/translitkit/lang/pan"
+	_ "github.com/tassa-yoniso-manasi-karoto/translitkit/lang/sin"
+	_ "github.com/tassa-yoniso-manasi-karoto/translitkit/lang/urd"
+	_ "github.com/tassa-yoniso-manasi-karoto/translitkit/lang/tam"
+	_ "github.com/tassa-yoniso-manasi-karoto/translitkit/lang/tel"
+	
+	// Cyrillic: iuliia
 	_ "github.com/tassa-yoniso-manasi-karoto/translitkit/lang/rus"
 	_ "github.com/tassa-yoniso-manasi-karoto/translitkit/lang/uzb"
 )

@@ -12,6 +12,11 @@ import (
 type LanguageConfig struct {
 	Code string
 	Name string
+	IsIndic bool
+}
+
+var IndicLangs = []string{
+	"hin", "ben", "fas", "guj", "mar", "pan", "sin", "urd", "tam", "tel",
 }
 
 func main() {
@@ -21,34 +26,53 @@ func main() {
 		os.Exit(1)
 	}
 
-	tmpl, err := template.ParseFiles("generator/templates/token.go.tmpl")
+	// Load both templates
+	tmpl, err := template.ParseFiles(
+		"generator/templates/token.go.tmpl",
+		"generator/templates/init.go.tmpl",
+	)
 	if err != nil {
-		fmt.Printf("Error loading template: %v\n", err)
+		fmt.Printf("Error loading templates: %v\n", err)
 		os.Exit(1)
 	}
 
 	for lang, config := range configs {
-		if err := generateFile(tmpl, lang, config); err != nil {
+		if err := generateFiles(tmpl, lang, config); err != nil {
 			fmt.Printf("Error generating %s: %v\n", lang, err)
 			os.Exit(1)
 		}
 	}
 }
 
-func generateFile(tmpl *template.Template, lang string, config LanguageConfig) error {
+func generateFiles(tmpl *template.Template, lang string, config LanguageConfig) error {
 	outDir := filepath.Join("./lang", lang)
 	if err := os.MkdirAll(outDir, 0755); err != nil {
 		return err
 	}
 
-	outFile := filepath.Join(outDir, lang+"_gen.go")
+	// Generate token_gen.go
+	if err := generateFile(tmpl, "token.go.tmpl", filepath.Join(outDir, lang+"_gen.go"), config); err != nil {
+		return err
+	}
+
+	// Generate init_gen.go for Indic languages
+	if isIndicLanguage(lang) {
+		if err := generateFile(tmpl, "init.go.tmpl", filepath.Join(outDir, "init_gen.go"), config); err != nil {
+			return err
+		}
+	}
+
+	return nil
+}
+
+func generateFile(tmpl *template.Template, templateName, outFile string, config LanguageConfig) error {
 	f, err := os.Create(outFile)
 	if err != nil {
 		return err
 	}
 	defer f.Close()
 
-	return tmpl.Execute(f, config)
+	return tmpl.ExecuteTemplate(f, templateName, config)
 }
 
 func loadConfigs(configDir string) (map[string]LanguageConfig, error) {
@@ -77,6 +101,8 @@ func loadConfigs(configDir string) (map[string]LanguageConfig, error) {
 		}
 		
 		config.Code = langCode
+		config.IsIndic = isIndicLanguage(langCode)
+		
 		configs[langCode] = config
 	}
 	
@@ -85,4 +111,13 @@ func loadConfigs(configDir string) (map[string]LanguageConfig, error) {
 	}
 	
 	return configs, nil
+}
+
+func isIndicLanguage(lang string) bool {
+	for _, indicLang := range IndicLangs {
+		if lang == indicLang {
+			return true
+		}
+	}
+	return false
 }

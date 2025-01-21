@@ -62,20 +62,20 @@ See docs of sub package "common" for the basic methods set available across lang
 > [!WARNING]
 > **Japanese transliteration (Ichiran) and Indic transliteration (Aksharamukha) require to have Docker Desktop (windows/macos) or Docker Engine (linux) installed.**
 
-"combined" means the provider implement both transliteration and tokenization.
+"combined" means the provider implements both transliteration and tokenization.
 
 ### Japanese
 
-- [Ichiran](https://github.com/tshatrov/ichiran) [combined]
+- [Ichiran](https://github.com/tshatrov/ichiran) **[combined]**
 
 ### Thai
 
- - [thai2english.com](https://www.thai2english.com) scraper [combined] *(may be obsolete in the future but currently is the best option since the docker img of pythainlp is broken)*
+ - [thai2english.com](https://www.thai2english.com) scraper **[combined]** *(may be obsolete in the future but currently is the best option since the docker img of pythainlp is broken)*
 
 ### Multilingual
 
- - [Aksharamukha](https://github.com/virtualvinodh/aksharamukha) [transliterator]: supports many languages of the Indic cultural sphere: Hindi, Bengali, Punjabi, Marathi, Telugu, Tamil, Persian, Urdu, Gujarati, Malayalam,... and many others.
- - [Iuliia](https://github.com/mehanizm/iuliia-go) [transliterator]: supports Russian, Uzbek
+ - [Aksharamukha](https://github.com/virtualvinodh/aksharamukha) **[transliterator]**: supports many languages of the Indic cultural sphere: Hindi, Bengali, Punjabi, Marathi, Telugu, Tamil, Persian, Urdu, Gujarati, Malayalam,... and many others.
+ - [Iuliia](https://github.com/mehanizm/iuliia-go) **[transliterator]**: supports Russian, Uzbek
  
 ## AI Doomer note (Jan. '25)
 LLMs are perfectly suited for NLP.
