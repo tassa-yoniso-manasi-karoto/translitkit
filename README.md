@@ -74,9 +74,10 @@ See docs of sub package "common" for the basic methods set available across lang
 
 ### Multilingual
 
- - [Aksharamukha](https://github.com/virtualvinodh/aksharamukha) [transliterator]: support many languages of the Indic cultural sphere: Hindi, Bengali, Punjabi, Marathi, Telugu, Tamil, Persian, Urdu, Gujarati, Malayalam,... and many others.
+ - [Aksharamukha](https://github.com/virtualvinodh/aksharamukha) [transliterator]: supports many languages of the Indic cultural sphere: Hindi, Bengali, Punjabi, Marathi, Telugu, Tamil, Persian, Urdu, Gujarati, Malayalam,... and many others.
+ - [Iuliia](https://github.com/mehanizm/iuliia-go) [transliterator]: supports Russian, Uzbek
  
-## AI Doomer note
+## AI Doomer note (Jan. '25)
 LLMs are perfectly suited for NLP.
 
 Therefore all traditional NLP providers are on their way to becoming obsolete, included here under “traditional” are even the neural network libraries based on BERT and even those based on ELECTRA.

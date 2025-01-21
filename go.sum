@@ -340,6 +340,8 @@ github.com/mattn/go-sqlite3 v1.6.0/go.mod h1:FPy6KqzDD04eiIsT53CuJW3U88zkxoIYsOq
 github.com/matttproud/golang_protobuf_extensions v1.0.1/go.mod h1:D8He9yQNgCq6Z5Ld7szi9bcBfOoFv/3dc6xSMkL2PC0=
 github.com/mehanizm/iuliia-go v1.0.2 h1:bHfZZ+ymdt/m0deo0jcDgfWFSqxgV5aAgGeuecX6/oE=
 github.com/mehanizm/iuliia-go v1.0.2/go.mod h1:DwW+0FacfxBaTkMmy9RsxIsxmQzFEunORXw/QppQ1TY=
+github.com/mehanizm/iuliia-go v1.0.3-0.20250108063731-2a2e9aba9125 h1:2XVl+T3dJiVU9zqlEFFN2+3TfOhKDHX4UBQ0SMdW6a0=
+github.com/mehanizm/iuliia-go v1.0.3-0.20250108063731-2a2e9aba9125/go.mod h1:AX7GYAgNZzaJvqs2oRr6cXVJSLGr04sSkiN/e0Xh9fc=
 github.com/mgutz/ansi v0.0.0-20170206155736-9520e82c474b h1:j7+1HpAFS1zy5+Q4qx1fWh90gTKwiN4QCGoY9TWyyO4=
 github.com/mgutz/ansi v0.0.0-20170206155736-9520e82c474b/go.mod h1:01TrycV0kFyexm33Z7vhZRXopbI8J3TDReVlkTgMUxE=
 github.com/miekg/pkcs11 v1.0.2/go.mod h1:XsNlhZGX73bx86s2hdc/FuaLm2CPZJemRLMA+WTFxgs=

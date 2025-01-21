@@ -26,8 +26,14 @@ func NewIuliiaProvider(lang string) *IuliiaProvider {
 }
 
 func (p *IuliiaProvider) Init() error {
-	if p.Lang == "" {
+	switch p.Lang {
+	case "rus":
+	case "uzb":
+		p.Schema = iuliia.Uz
+	case "":
 		return fmt.Errorf("language code must be set before initialization")
+	default:
+		return fmt.Errorf("\"%s\" is not a language code supported by Iuliia", p.Lang)
 	}
 	return nil
 }

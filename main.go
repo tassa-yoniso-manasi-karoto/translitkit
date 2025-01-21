@@ -10,6 +10,7 @@ import (
 	_ "github.com/tassa-yoniso-manasi-karoto/translitkit/lang/tha"
 	_ "github.com/tassa-yoniso-manasi-karoto/translitkit/lang/hin"
 	_ "github.com/tassa-yoniso-manasi-karoto/translitkit/lang/rus"
+	_ "github.com/tassa-yoniso-manasi-karoto/translitkit/lang/uzb"
 )
 
 // DefaultModule returns a new Module configured with the default providers
