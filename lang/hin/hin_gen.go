@@ -9,7 +9,7 @@ import (
 	"github.com/tassa-yoniso-manasi-karoto/translitkit/common"
 )
 
-const Lang = "hin"
+const Lang = "hin" // Hindi
 
 type Module struct {
 	*common.Module

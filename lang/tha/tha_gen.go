@@ -9,7 +9,7 @@ import (
 	"github.com/tassa-yoniso-manasi-karoto/translitkit/common"
 )
 
-const Lang = "tha"
+const Lang = "tha" // Thai
 
 type Module struct {
 	*common.Module

@@ -9,7 +9,7 @@ import (
 	"github.com/tassa-yoniso-manasi-karoto/translitkit/common"
 )
 
-const Lang = "jpn"
+const Lang = "jpn" // Japanese
 
 type Module struct {
 	*common.Module
