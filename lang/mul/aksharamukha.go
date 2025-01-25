@@ -17,7 +17,6 @@ import (
 type AksharamukhaProvider struct {
 	Config map[string]interface{}
 	Lang   string // ISO 639-3 language code
-	docker *aksharamukha.Aksharamukha
 }
 
 // NewAksharamukhaProvider creates a new provider instance with the specified language
@@ -33,13 +32,8 @@ func (p *AksharamukhaProvider) Init() (err error) {
 		return fmt.Errorf("language code must be set before initialization")
 	}
 
-	p.docker, err = aksharamukha.NewAksharamukha()
-	if err != nil {
-		return fmt.Errorf("failed to create API client for Aksharamukha Docker: %v", err)
-	}
-
-	if err = p.docker.Init(); err != nil {
-		return fmt.Errorf("failed to initialize: %v", err)
+	if err = aksharamukha.Init(); err != nil {
+		return fmt.Errorf("failed to initialize aksharamukha: %v", err)
 	}
 	return
 }
@@ -57,7 +51,7 @@ func (p *AksharamukhaProvider) GetMaxQueryLen() int {
 }
 
 func (p *AksharamukhaProvider) Close() error {
-	return p.docker.Close()
+	return aksharamukha.Close()
 }
 
 func (p *AksharamukhaProvider) ProcessFlowController(input common.AnyTokenSliceWrapper) (results common.AnyTokenSliceWrapper, err error) {
@@ -131,7 +125,7 @@ func (p *AksharamukhaProvider) processTokens(input common.AnyTokenSliceWrapper) 
 }
 
 func (p *AksharamukhaProvider) romanize(text string) (string, error) {
-	return p.docker.Romanize(text, p.Lang)
+	return aksharamukha.Roman(text, p.Lang)
 }
 
 

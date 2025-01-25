@@ -15,17 +15,11 @@ import (
 // IchiranProvider satisfies the Provider interface
 type IchiranProvider struct {
 	config map[string]interface{}
-	docker *ichiran.Docker
 }
 
 func (p *IchiranProvider) Init() (err error) {
-	p.docker, err = ichiran.NewDocker()
-	if err != nil {
-		return fmt.Errorf("failed to create API client for Ichiran Docker: %v", err)
-	}
-
-	if err = p.docker.Init(); err != nil {
-		return fmt.Errorf("failed to initialize: %v", err)
+	if err = ichiran.Init(); err != nil {
+		return fmt.Errorf("failed to initialize ichiran: %v", err)
 	}
 	return
 }
@@ -46,7 +40,7 @@ func (p *IchiranProvider) GetMaxQueryLen() int {
 }
 
 func (p *IchiranProvider) Close() error {
-	return p.docker.Close()
+	return ichiran.Close()
 }
 
 
