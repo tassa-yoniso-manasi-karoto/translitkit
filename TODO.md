@@ -1,19 +1,16 @@
 *urgent:*
 
-- **for TokenizedStr ideally place space between word-words not word-punctuation or punct-punct**
+- TokenizedStr & TokenizedParts: **currently some tokenizers return spaces and some don't → Find a solution**
 
-- get Aksharamukha docker outside of the client and into a pkg level var (docker client is very large and bloats debugging the GlobalRegister)
+- **ichiran: implement PARTIAL KANA TRANSLITERATION** with user-defined upper limit based on Kanji frequency
 
-- ichiran: implement partial kana transliteration with user-defined upper limit based on Kanji frequency
-
-- TH2EN: Use config to scrape & select desired romanization
+- TH2EN:
+  - Use config to scrape & select desired romanization
+  - test behavior of rod when BrowserAccessURL is invalid
 
 - func (tokens TknSliceWrapper) Tokens() []AnyToken
 
-
-- TH2EN test behavior of rod when BrowserAccessURL is invalid
-
-- testing testing testing testing testing
+- write tests
 
 <hr>
 
