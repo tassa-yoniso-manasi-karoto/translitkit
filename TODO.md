@@ -1,5 +1,7 @@
 *urgent:*
 
+- ***fix translitkit after aksharamukha & ichiran API changes***
+
 - TokenizedStr & TokenizedParts: **currently some tokenizers return spaces and some don't → Find a solution**
 
 - **ichiran: implement PARTIAL KANA TRANSLITERATION** with user-defined upper limit based on Kanji frequency
