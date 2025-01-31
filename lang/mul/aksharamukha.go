@@ -17,6 +17,7 @@ import (
 type AksharamukhaProvider struct {
 	Config map[string]interface{}
 	Lang   string // ISO 639-3 language code
+	targetScript aksharamukha.Script
 }
 
 // NewAksharamukhaProvider creates a new provider instance with the specified language
@@ -33,6 +34,17 @@ func (p *AksharamukhaProvider) Init() (err error) {
 	}
 
 	if err = aksharamukha.Init(); err != nil {
+		return fmt.Errorf("failed to initialize aksharamukha: %v", err)
+	}
+	return
+}
+
+func (p *AksharamukhaProvider) InitRecreate(noCache bool) (err error) {
+	if p.Lang == "" {
+		return fmt.Errorf("language code must be set before initialization")
+	}
+
+	if err = aksharamukha.InitRecreate(noCache); err != nil {
 		return fmt.Errorf("failed to initialize aksharamukha: %v", err)
 	}
 	return
@@ -120,12 +132,63 @@ func (p *AksharamukhaProvider) processTokens(input common.AnyTokenSliceWrapper) 
 		tkn.SetRoman(romanized)
 		//fmt.Printf("TOKEN %s: %s\n\n\n", color.Bold.Sprint(idx), pp.Sprint(tkn))
 	}
-
 	return input, nil
 }
 
 func (p *AksharamukhaProvider) romanize(text string) (string, error) {
+	if p.targetScript != "" {
+		script, err := aksharamukha.DefaultScriptFor(p.Lang)
+		if err != nil {
+			return "", fmt.Errorf("DefaultScriptFor failed for lang \"%s\": %w", p.Lang, err)
+		}
+		romanized, err := aksharamukha.Translit(text, script, p.targetScript)
+		if err != nil {
+			return "", fmt.Errorf("romanization failed for token \"%s\" with scheme %s: %w", text, p.targetScript, err)
+		}
+		return romanized, err
+	}
+	// otherwise use default romanization
 	return aksharamukha.Roman(text, p.Lang)
+}
+
+// SetTranslitConfig configures the provider with transliteration-specific settings
+func (p *AksharamukhaProvider) SetConfig(config map[string]interface{}) error {
+
+	pp.Println(config)
+	
+	// Look for scheme name in config
+	schemeName, ok := config["scheme"].(string)
+	if !ok {
+		return fmt.Errorf("scheme name not provided in config")
+	}
+
+	lang, ok := config["lang"].(string)
+	if !ok {
+		return fmt.Errorf("lang not provided in config")
+	}
+	p.Lang = lang
+	
+	// Convert scheme name to target script
+	targetScript, ok := SchemeToScript[schemeName]
+	if !ok {
+		return fmt.Errorf("unsupported transliteration scheme: %s", schemeName)
+	}
+
+	p.targetScript = targetScript
+	return nil
+}
+
+var SchemeToScript = map[string]aksharamukha.Script{
+	"Harvard-Kyoto":    aksharamukha.HK,
+	"IAST":             aksharamukha.IAST,
+	"ITRANS":           aksharamukha.Itrans,
+	"Velthuis":         aksharamukha.Velthuis,
+	"ISO":              aksharamukha.ISO,
+	"Titus":            aksharamukha.Titus,
+	"SLP1":             aksharamukha.SLP1,
+	"WX":               aksharamukha.WX,
+	"Roman-Readable":   aksharamukha.RomanReadable,
+	"Roman-Colloquial": aksharamukha.RomanColloquial,
 }
 
 

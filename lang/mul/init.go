@@ -9,6 +9,10 @@ import (
 
 const Lang = "mul"
 
+var indicLangs = []string{
+	"hin", "ben", "fas", "guj", "mar", "pan", "sin", "urd", "tam", "tel",
+}
+
 func init() {
 	unisegEntry := common.ProviderEntry{
 		Provider:     &UnisegProvider{},
@@ -40,5 +44,20 @@ func init() {
 	err = common.Register("mul", common.TransliteratorType, "iuliia", iuliiaEntry)
 	if err != nil {
 		panic(fmt.Sprintf("failed to register iuliia provider: %v", err))
+	}
+	
+	// #### Schemes registration ####
+
+	for _, indicLang := range indicLangs {
+		for _, scheme := range indicSchemes {
+			scheme.Provider = "aksharamukha"
+			scheme.NeedsDocker = true
+			if err := common.RegisterScheme(indicLang, scheme); err != nil {
+				common.Log.Warn().
+					Str("pkg", Lang).
+					Str("lang", indicLang).
+					Msg("Failed to register scheme " + scheme.Name)
+			}
+		}
 	}
 }
