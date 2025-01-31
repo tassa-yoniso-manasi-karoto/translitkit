@@ -60,4 +60,21 @@ func init() {
 			}
 		}
 	}
+	
+	for _, scheme := range russianSchemes {
+		scheme.Provider = "iuliia"
+		if err := common.RegisterScheme("rus", scheme); err != nil {
+			common.Log.Warn().
+				Str("pkg", Lang).
+				Str("lang", "rus").
+				Msg("Failed to register scheme " + scheme.Name)
+		}
+	}
+
+	if err := common.RegisterScheme("uzb", uzbekScheme); err != nil {
+		common.Log.Warn().
+			Str("pkg", Lang).
+			Str("lang", "uzb").
+			Msg("Failed to register scheme " + uzbekScheme.Name)
+	}
 }

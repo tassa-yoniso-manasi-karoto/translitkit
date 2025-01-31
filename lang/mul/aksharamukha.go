@@ -17,7 +17,7 @@ import (
 type AksharamukhaProvider struct {
 	Config map[string]interface{}
 	Lang   string // ISO 639-3 language code
-	targetScript aksharamukha.Script
+	targetScheme aksharamukha.Script
 }
 
 // NewAksharamukhaProvider creates a new provider instance with the specified language
@@ -136,14 +136,14 @@ func (p *AksharamukhaProvider) processTokens(input common.AnyTokenSliceWrapper) 
 }
 
 func (p *AksharamukhaProvider) romanize(text string) (string, error) {
-	if p.targetScript != "" {
+	if p.targetScheme != "" {
 		script, err := aksharamukha.DefaultScriptFor(p.Lang)
 		if err != nil {
 			return "", fmt.Errorf("DefaultScriptFor failed for lang \"%s\": %w", p.Lang, err)
 		}
-		romanized, err := aksharamukha.Translit(text, script, p.targetScript)
+		romanized, err := aksharamukha.Translit(text, script, p.targetScheme)
 		if err != nil {
-			return "", fmt.Errorf("romanization failed for token \"%s\" with scheme %s: %w", text, p.targetScript, err)
+			return "", fmt.Errorf("romanization failed for token \"%s\" with scheme %s: %w", text, p.targetScheme, err)
 		}
 		return romanized, err
 	}
@@ -151,12 +151,7 @@ func (p *AksharamukhaProvider) romanize(text string) (string, error) {
 	return aksharamukha.Roman(text, p.Lang)
 }
 
-// SetTranslitConfig configures the provider with transliteration-specific settings
 func (p *AksharamukhaProvider) SetConfig(config map[string]interface{}) error {
-
-	pp.Println(config)
-	
-	// Look for scheme name in config
 	schemeName, ok := config["scheme"].(string)
 	if !ok {
 		return fmt.Errorf("scheme name not provided in config")
@@ -168,27 +163,14 @@ func (p *AksharamukhaProvider) SetConfig(config map[string]interface{}) error {
 	}
 	p.Lang = lang
 	
-	// Convert scheme name to target script
-	targetScript, ok := SchemeToScript[schemeName]
+	// Convert scheme name to target aksharamukha.Script
+	targetScheme, ok := indicSchemesToScript[schemeName]
 	if !ok {
 		return fmt.Errorf("unsupported transliteration scheme: %s", schemeName)
 	}
 
-	p.targetScript = targetScript
+	p.targetScheme = targetScheme
 	return nil
-}
-
-var SchemeToScript = map[string]aksharamukha.Script{
-	"Harvard-Kyoto":    aksharamukha.HK,
-	"IAST":             aksharamukha.IAST,
-	"ITRANS":           aksharamukha.Itrans,
-	"Velthuis":         aksharamukha.Velthuis,
-	"ISO":              aksharamukha.ISO,
-	"Titus":            aksharamukha.Titus,
-	"SLP1":             aksharamukha.SLP1,
-	"WX":               aksharamukha.WX,
-	"Roman-Readable":   aksharamukha.RomanReadable,
-	"Roman-Colloquial": aksharamukha.RomanColloquial,
 }
 
 

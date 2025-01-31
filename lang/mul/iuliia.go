@@ -13,7 +13,7 @@ import (
 type IuliiaProvider struct {
 	Config map[string]interface{}
 	Lang   string // ISO 639-3 language code
-	Schema *iuliia.Schema
+	targetScheme *iuliia.Schema
 }
 
 // NewIuliiaProvider creates a new provider instance
@@ -21,15 +21,12 @@ func NewIuliiaProvider(lang string) *IuliiaProvider {
 	return &IuliiaProvider{
 		Config: make(map[string]interface{}),
 		Lang:   lang,
-		Schema: iuliia.Gost_779, // Default Schema // TODO Make configurable
 	}
 }
 
 func (p *IuliiaProvider) Init() error {
 	switch p.Lang {
-	case "rus":
-	case "uzb":
-		p.Schema = iuliia.Uz
+	case "rus", "uzb":
 	case "":
 		return fmt.Errorf("language code must be set before initialization")
 	default:
@@ -58,8 +55,24 @@ func (p *IuliiaProvider) Close() error {
 	return nil
 }
 
-func (p *IuliiaProvider) SetConfig(map[string]interface{}) error {
-	// TODO
+func (p *IuliiaProvider) SetConfig(config map[string]interface{}) error {
+	schemeName, ok := config["scheme"].(string)
+	if !ok {
+		return fmt.Errorf("scheme name not provided in config")
+	}
+
+	lang, ok := config["lang"].(string)
+	if !ok {
+		return fmt.Errorf("lang not provided in config")
+	}
+	p.Lang = lang
+	
+	targetScheme, ok := russianSchemesToScript[schemeName]
+	if !ok {
+		return fmt.Errorf("unsupported transliteration scheme: %s", schemeName)
+	}
+
+	p.targetScheme = targetScheme
 	return nil
 }
 
@@ -99,7 +112,7 @@ func (p *IuliiaProvider) process(chunks []string) (common.AnyTokenSliceWrapper, 
 			IsToken: true,
 		}
 
-		romanized := p.Schema.Translate(chunk)
+		romanized := iuliia.Gost_779.Translate(chunk)
 		token.Romanization = romanized
 		tsw.Append(&token)
 	}
@@ -114,9 +127,20 @@ func (p *IuliiaProvider) processTokens(input common.AnyTokenSliceWrapper) (commo
 		if !tkn.IsTokenType() || s == "" || tkn.Roman() != "" {
 			continue
 		}
-		romanized := p.Schema.Translate(s)
-		tkn.SetRoman(romanized)
+		tkn.SetRoman(p.romanize(s))
 	}
 
 	return input, nil
+}
+
+
+func (p *IuliiaProvider) romanize(text string) string {
+	if p.targetScheme != nil {
+		return p.targetScheme.Translate(text)
+	}
+	// otherwise use default romanization
+	if p.Lang == "uzb" {
+		return iuliia.Uz.Translate(text)
+	}
+	return iuliia.Gost_779.Translate(text)
 }
