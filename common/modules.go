@@ -15,6 +15,7 @@ import (
 // Method set needs more iterations to be defined.
 type anyModule interface {
 	Init() error
+	InitRecreate(bool) error
 	MustInit()
 	ProviderNames() string
 	RomanPostProcess(string, func(string) string) string
@@ -123,8 +124,23 @@ func (m *Module) Init() error {
 	return nil
 }
 
+
+
+func (m *Module) InitRecreate(noCache bool) error {
+	if m.Combined != nil {
+		return m.Combined.InitRecreate(noCache)
+	}
+	if err := m.Tokenizer.InitRecreate(noCache); err != nil {
+		return fmt.Errorf("tokenizer InitRecreate failed: %v", err)
+	}
+	if err := m.Transliterator.InitRecreate(noCache); err != nil {
+		return fmt.Errorf("transliterator InitRecreate failed: %v", err)
+	}
+	return nil
+}
+
 func (m *Module) MustInit() {
-	if err := m.Init(); err != nil {
+	if err := m.InitRecreate(false); err != nil {
 		panic(err)
 	}
 }
@@ -192,13 +208,12 @@ func (m *Module) Tokens(input string) (AnyTokenSliceWrapper, error) {
 		}
 		if m.Transliterator != nil {
 			if tsw, err = m.Transliterator.ProcessFlowController(tsw); err != nil {
-				logger.Warn().
-					Err(err).
-					Str("lang", m.Lang).
-					Str("provider", m.Transliterator.Name()).
-					Msg("Transliteration failed but continuing with untransliterated tokens")
+				return &TknSliceWrapper{}, fmt.Errorf("transliteration failed: %v", err)
 			}
 		}
+	}
+	if tsw == nil {
+		return tsw, fmt.Errorf("fatal: nil tokens returned by module: %#v", m)
 	}
 	return tsw, nil
 }
