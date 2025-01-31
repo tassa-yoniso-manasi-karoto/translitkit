@@ -108,9 +108,17 @@ func init() {
 		panic(fmt.Sprintf("failed to register ichiran provider: %v", err))
 	}
 	err = common.SetDefault(Lang, []common.ProviderEntry{IchiranEntry}) // TODO add robepike/nihongo to force romanization after
-	
 	if err != nil {
 		panic(fmt.Sprintf("failed to set ichiran as default: %v", err))
+	}
+	
+	ichiranScheme := common.TranslitScheme{
+		Name: "Hepburn (Ichiran)",
+		Description: "Hepburn romanization (Ichiran)",
+		Provider: "ichiran",
+	}
+	if err := common.RegisterScheme(Lang, ichiranScheme); err != nil {
+		common.Log.Warn().Msg("Failed to register scheme " + ichiranScheme.Name)
 	}
 }
 
