@@ -2,20 +2,31 @@
 package common
 
 import (
+	"os"
+	"time"
+	"fmt"
+	
 	"github.com/rs/zerolog"
 )
 
-// logger is the package-level logger of common
-var logger zerolog.Logger
+var Log zerolog.Logger
 
 func init() {
-	//logger = zerolog.Nop()
+	//Log = zerolog.Nop()
+	w := zerolog.ConsoleWriter{
+		Out: os.Stdout,
+		TimeFormat: time.TimeOnly,
+	}
+	SetLoggerWriter(w)
 }
 
-func SetLogger(l zerolog.Logger) {
-	logger = l
+func SetLoggerWriter(w zerolog.ConsoleWriter) {
+	w.FormatMessage = func(i interface{}) string {
+		return fmt.Sprintf("[translitkit] %s", i)
+	}
+	Log = zerolog.New(w).With().Timestamp().Logger()
 }
 
-func GetLogger() zerolog.Logger {
-	return logger
+func DisableLogger(l zerolog.Logger) {
+       Log = zerolog.Nop()
 }

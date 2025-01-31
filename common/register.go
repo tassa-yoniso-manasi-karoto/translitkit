@@ -250,16 +250,16 @@ func checkCapabilities(lang string, entries []ProviderEntry, provType ProviderTy
 		}
 
 		if mustTokenize && !hasTokenization && (provType == TokenizerType || provType == CombinedType) {
-			logger.Warn().
+			Log.Warn().
 				Str("provider", name).
 				Str("lang", lang).
 				Msg("Registering provider which requires tokenization but providerType doesn't declare this capability")
 		}
 		if mustTransliterate && !hasTransliteration && (provType == TransliteratorType || provType == CombinedType) {
-			logger.Warn().
+			Log.Warn().
 				Str("provider", name).
 				Str("lang", lang).
-				Msg("Registering provider which requires transliteration but providerType	 doesn't declare this capability")
+				Msg("Registering provider which requires transliteration but providerType doesn't declare this capability")
 		}
 		return
 	}
@@ -277,12 +277,12 @@ func checkCapabilities(lang string, entries []ProviderEntry, provType ProviderTy
 	}
 
 	if mustTokenize && !hasTokenization {
-		logger.Warn().
+		Log.Warn().
 			Str("lang", lang).
 			Msg("Language requires tokenization but no provider declares this capability")
 	}
 	if mustTransliterate && !hasTransliteration {
-		logger.Warn().
+		Log.Warn().
 			Str("lang", lang).
 			Msg("Language requires transliteration but no provider declares this capability")
 	}
