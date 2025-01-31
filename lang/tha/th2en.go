@@ -27,6 +27,10 @@ func (p *TH2ENProvider) Init() (err error) {
 	return
 }
 
+func (p *TH2ENProvider) InitRecreate(bool) (err error) {
+	return p.Init()
+}
+
 func (p *TH2ENProvider) Name() string {
 	return "th2en"
 }
@@ -43,6 +47,10 @@ func (p *TH2ENProvider) Close() error {
 	return p.browser.Close()
 }
 
+func (p *TH2ENProvider) SetConfig(map[string]interface{}) error {
+	// TODO
+	return nil
+}
 
 func (p *TH2ENProvider) ProcessFlowController(input common.AnyTokenSliceWrapper) (results common.AnyTokenSliceWrapper, err error) {
 	raw := input.GetRaw()

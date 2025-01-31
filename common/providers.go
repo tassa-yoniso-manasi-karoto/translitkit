@@ -1,6 +1,7 @@
 package common
 
 import (
+	"fmt"
 	"math"
 )
 
@@ -15,7 +16,9 @@ const (
 // Unified interface for all providers of any type
 type Provider[In AnyTokenSliceWrapper, Out AnyTokenSliceWrapper] interface {
 	Init() error
+	InitRecreate(noCache bool) error
 	ProcessFlowController(input In) (Out, error)
+	SetConfig(map[string]interface{}) error
 	Name() string
 	GetType() ProviderType
 	GetMaxQueryLen() int
@@ -34,6 +37,8 @@ type ProviderEntry struct {
 	Capabilities []string
 	Type         ProviderType
 }
+
+
 
 // getQueryLenLimit returns the smallest query length limit among the provided providers.
 // If no providers are given, it returns math.MaxInt64.

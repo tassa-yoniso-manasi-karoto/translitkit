@@ -5,6 +5,9 @@ import (
 	"fmt"
 	"strings"
 	"unicode"
+	
+	"github.com/gookit/color"
+	"github.com/k0kubun/pp"
 
 	"github.com/rivo/uniseg"
 	"github.com/tassa-yoniso-manasi-karoto/translitkit/common"
@@ -15,7 +18,11 @@ type UnisegProvider struct {
 }
 
 func (p *UnisegProvider) Init() error {
-	return nil // No initialization needed
+	return nil
+}
+
+func (p *UnisegProvider) InitRecreate(bool) error {
+	return nil
 }
 
 func (p *UnisegProvider) Name() string {
@@ -31,6 +38,10 @@ func (p *UnisegProvider) GetMaxQueryLen() int {
 }
 
 func (p *UnisegProvider) Close() error {
+	return nil
+}
+
+func (p *UnisegProvider) SetConfig(map[string]interface{}) error {
 	return nil
 }
 
@@ -97,7 +108,6 @@ func (p *UnisegProvider) process(chunks []string) (common.AnyTokenSliceWrapper, 
 			state = newState
 		}
 	}
-
 	return tsw, nil
 }
 
@@ -121,3 +131,11 @@ func isSpaceOrPunct(s string) bool {
 // 	}
 // 	return true
 // }
+
+
+
+
+func placehold3445654er() {
+	color.Redln(" 𝒻*** 𝓎ℴ𝓊 𝒸ℴ𝓂𝓅𝒾𝓁ℯ𝓇")
+	pp.Println("𝓯*** 𝔂𝓸𝓾 𝓬𝓸𝓶𝓹𝓲𝓵𝓮𝓻")
+}

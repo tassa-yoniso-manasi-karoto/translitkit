@@ -38,6 +38,10 @@ func (p *IuliiaProvider) Init() error {
 	return nil
 }
 
+func (p *IuliiaProvider) InitRecreate(bool) error {
+	return p.Init()
+}
+
 func (p *IuliiaProvider) Name() string {
 	return "iuliia"
 }
@@ -51,6 +55,11 @@ func (p *IuliiaProvider) GetMaxQueryLen() int {
 }
 
 func (p *IuliiaProvider) Close() error {
+	return nil
+}
+
+func (p *IuliiaProvider) SetConfig(map[string]interface{}) error {
+	// TODO
 	return nil
 }
 

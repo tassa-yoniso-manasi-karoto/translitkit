@@ -24,6 +24,13 @@ func (p *IchiranProvider) Init() (err error) {
 	return
 }
 
+func (p *IchiranProvider) InitRecreate(noCache bool) (err error) {
+	if err = ichiran.InitRecreate(noCache); err != nil {
+		return fmt.Errorf("failed to initialize ichiran: %v", err)
+	}
+	return
+}
+
 func (p *IchiranProvider) Name() string {
 	return "ichiran"
 }
@@ -43,6 +50,9 @@ func (p *IchiranProvider) Close() error {
 	return ichiran.Close()
 }
 
+func (p *IchiranProvider) SetConfig(map[string]interface{}) error {
+	return nil
+}
 
 
 func (p *IchiranProvider) ProcessFlowController(input common.AnyTokenSliceWrapper) (results common.AnyTokenSliceWrapper, err error) {
