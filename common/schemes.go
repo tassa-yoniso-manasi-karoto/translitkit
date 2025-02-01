@@ -10,10 +10,11 @@ import (
 )
 
 type TranslitScheme struct {
-	Name        string // e.g., "IAST", "Harvard-Kyoto"
-	Description string
-	Provider    string
-	NeedsDocker bool
+	Name         string // e.g., "IAST", "Harvard-Kyoto"
+	Description  string
+	Provider     string
+	NeedsDocker  bool
+	NeedsScraper bool
 }
 
 // SchemeRegistry manages available transliteration schemes for languages
@@ -142,6 +143,14 @@ func GetSchemeModule(languageCode, schemeName string) (*Module, error) {
 	return module, nil
 }
 
+// GetSchemesNames returns a slice of strings with all Names of translit schemes
+func GetSchemesNames(schemes []TranslitScheme) []string {
+	var names []string
+	for _, scheme := range schemes {
+		names = append(names, scheme.Name)
+	}
+	return names
+}
 
 
 func placehold345654er() {

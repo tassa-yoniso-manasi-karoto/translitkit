@@ -1,14 +1,11 @@
 *urgent:*
 
-- ***fix translitkit after aksharamukha & ichiran API changes***
 
 - TokenizedStr & TokenizedParts: **currently some tokenizers return spaces and some don't → Find a solution**
 
-- **ichiran: implement PARTIAL KANA TRANSLITERATION** with user-defined upper limit based on Kanji frequency
+- change panic() in inits() into common.Log().Warn()
 
-- TH2EN:
-  - Use config to scrape & select desired romanization
-  - test behavior of rod when BrowserAccessURL is invalid
+- TH2EN: test behavior of rod when BrowserAccessURL is invalid
 
 - func (tokens TknSliceWrapper) Tokens() []AnyToken
 
