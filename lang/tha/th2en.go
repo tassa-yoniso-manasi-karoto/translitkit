@@ -17,7 +17,7 @@ import (
 	"github.com/tassa-yoniso-manasi-karoto/translitkit/common"
 )
 
-var logger = common.Log.With().Str("provider", "th2en").Logger()
+var logger = common.Log.With().Str("provider", "thai2english.com").Logger()
 
 // TH2ENProvider satisfies the Provider interface
 type TH2ENProvider struct {
@@ -51,7 +51,7 @@ func (p *TH2ENProvider) init() (err error) {
 }
 
 func (p *TH2ENProvider) Name() string {
-	return "th2en"
+	return "thai2english.com"
 }
 
 func (p *TH2ENProvider) GetType() common.ProviderType {
@@ -87,20 +87,9 @@ func (p *TH2ENProvider) selectTranslitScheme(scheme string) error {
 	
 	// Normalize the input scheme
 	scheme = strings.ToLower(strings.TrimSpace(scheme))
-	
-	// Handle alias
-	if scheme == "paiboon" {
-		scheme = "paiboon-esque"
-	}
 
 	// Validate the scheme
-	if !slices.Contains([]string{
-		"thai2english",
-		"rtgs",
-		"ipa",
-		"simplified-ipa",
-		"paiboon-esque",
-	}, scheme) {
+	if !slices.Contains(common.GetSchemesNames(translitSchemes), scheme) {
 		return fmt.Errorf("invalid transliteration scheme: %s", scheme)
 	}
 	
@@ -325,15 +314,14 @@ func (p *TH2ENProvider) process(chunks []string) (common.AnyTokenSliceWrapper, e
 
 
 var translitSchemes = []common.TranslitScheme{
+	{ Name:"paiboon", Description:"Paiboon-esque transliteration"},
 	{ Name:"thai2english", Description: "thai2english's custom transliteration system"},
 	{ Name:"rtgs", Description: "Royal Thai General System of transcription"},
 	{ Name: "ipa", Description:"International Phonetic Alphabet representation"},
 	{ Name:"simplified-ipa",Description:"Simplified phonetic notation"},
-	{ Name:"paiboon", Description:"Paiboon's transliteration method for learners"},
 }
 
 func init() {
-	
 	p := common.ProviderEntry{
 		Provider:     &TH2ENProvider{},
 		Capabilities: []string{"tokenization", "transliteration"},
