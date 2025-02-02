@@ -116,6 +116,7 @@ func init() {
 		Name: "Hepburn (Ichiran)",
 		Description: "Hepburn romanization (Ichiran)",
 		Provider: "ichiran",
+		NeedsDocker: true,
 	}
 	if err := common.RegisterScheme(Lang, ichiranScheme); err != nil {
 		common.Log.Warn().Msg("Failed to register scheme " + ichiranScheme.Name)
