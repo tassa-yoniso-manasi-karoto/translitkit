@@ -59,7 +59,7 @@ func (p *TH2ENProvider) GetType() common.ProviderType {
 }
 
 func (p *TH2ENProvider) GetMaxQueryLen() int {
-	return 999
+	return 499
 }
 
 func (p *TH2ENProvider) Close() error {
@@ -196,7 +196,6 @@ func (p *TH2ENProvider) ProcessFlowController(input common.AnyTokenSliceWrapper)
 
 func (p *TH2ENProvider) process(chunks []string) (common.AnyTokenSliceWrapper, error) {
 	tsw := &TknSliceWrapper{}
-	
 	for idx, chunk := range chunks {
 		logger.Trace().Msgf("Processing chunk %d: %s", idx, chunk)
 		
@@ -241,9 +240,6 @@ func (p *TH2ENProvider) process(chunks []string) (common.AnyTokenSliceWrapper, e
 
 		// Process each element
 		for elemIdx, element := range elements {
-			logger.Trace().Msgf("Processing element %d of chunk %d", elemIdx, idx)
-
-			// Get Thai text
 			thNode, err := element.Element(".thai")
 			if err != nil {
 				// seems to be caused by punctuation
