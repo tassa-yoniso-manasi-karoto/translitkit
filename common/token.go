@@ -35,9 +35,6 @@ type AnyToken interface {
 
 
 
-
-
-
 type TknSliceWrapper struct {
 	Slice []AnyToken //alt.: Sentences [][]AnyToken ?
 	Raw   []string
@@ -128,6 +125,7 @@ type Tkn struct {
 	Language   string                 // ISO 639-3 code of the token's language
 	Metadata   map[string]interface{} // Provider-specific additional data
 }
+
 
 type Gloss struct {
 	PartOfSpeech	string  // Part of speech

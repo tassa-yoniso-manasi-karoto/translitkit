@@ -3,6 +3,7 @@ package tha
 import (
 	"fmt"
 	"net/url"
+	"net/http"
 	"strings"
 	"slices"
 	"time"
@@ -27,6 +28,9 @@ type TH2ENProvider struct {
 }
 
 func (p *TH2ENProvider) Init() (err error) {
+	if err = checkWebsiteReachable(); err != nil {
+		return
+	}
 	if err = p.init(); err != nil {
 		return
 	}
@@ -239,7 +243,7 @@ func (p *TH2ENProvider) process(chunks []string) (common.AnyTokenSliceWrapper, e
 		}
 
 		// Process each element
-		for elemIdx, element := range elements {
+		for _, element := range elements {
 			thNode, err := element.Element(".thai")
 			if err != nil {
 				// seems to be caused by punctuation
@@ -251,8 +255,7 @@ func (p *TH2ENProvider) process(chunks []string) (common.AnyTokenSliceWrapper, e
 				logger.Warn().Err(err).Msg("failed to get Thai text, skipping")
 				continue
 			}
-
-			// Get transliteration
+			
 			tlitNode, err := element.Element(".tlit")
 			if err != nil {
 				logger.Warn().Err(err).Msg("no transliteration element exists, skipping")
@@ -344,6 +347,24 @@ func init() {
 
 }
 
+
+func checkWebsiteReachable() error {
+	client := &http.Client{
+		Timeout: 5 * time.Second,
+	}
+	
+	resp, err := client.Get("https://www.thai2english.com/")
+	if err != nil {
+		return fmt.Errorf("failed to reach th2en: %v", err)
+	}
+	defer resp.Body.Close()
+	
+	if resp.StatusCode != http.StatusOK {
+		return fmt.Errorf("website returned non-200 status code: %d", resp.StatusCode)
+	}
+	
+	return nil
+}
 
 func removeEmptyStrings(strings []string) []string {
 	result := make([]string, 0, len(strings))
