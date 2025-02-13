@@ -138,6 +138,46 @@ type Tkn struct {
 }
 
 
+// Some tokenization providers have a lossy tokenization that offers only the core, lexical content.
+// IntegrateProviderTokens combines the tokens produced by the provider with the
+// intervening text (such as punctuation, spaces, or other characters) that the provider
+// did not tokenize by tracking their positions and capturing any gaps as filler tokens.
+func IntegrateProviderTokens(original string, providerTokens []string) []*Tkn {
+	var result []*Tkn
+	pos := 0
+
+	for _, token := range providerTokens {
+		// Find the token starting from the current position.
+		idx := strings.Index(original[pos:], token)
+		if idx == -1 {
+			// If the token is not found, skip to the next token.
+			continue
+		}
+		// Adjust index relative to the whole string.
+		idx += pos
+
+		// Capture any text between the current position and the token's start as a fake token.
+		if pos < idx {
+			fake := original[pos:idx]
+			result = append(result, &Tkn{Surface: fake, IsLexical: false})
+		}
+
+		// Append the provider token.
+		result = append(result, &Tkn{Surface: token, IsLexical: true})
+
+		// Update the position after the token.
+		pos = idx + len(token)
+	}
+
+	// Capture any trailing characters as a fake token.
+	if pos < len(original) {
+		fake := original[pos:]
+		result = append(result, &Tkn{Surface: fake, IsLexical: false})
+	}
+	return result
+}
+
+
 type Gloss struct {
 	PartOfSpeech	string  // Part of speech
 	Definition	string  // Definition/meaning

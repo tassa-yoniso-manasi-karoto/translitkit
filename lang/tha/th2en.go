@@ -200,6 +200,10 @@ func (p *TH2ENProvider) ProcessFlowController(input common.AnyTokenSliceWrapper)
 
 func (p *TH2ENProvider) process(chunks []string) (common.AnyTokenSliceWrapper, error) {
 	tsw := &TknSliceWrapper{}
+	providerTokenSlice := []string{}
+	dicTlit := make(map[string]string)
+	dicGloss := make(map[string][]common.Gloss)
+	
 	for idx, chunk := range chunks {
 		logger.Trace().Msgf("Processing chunk %d: %s", idx, chunk)
 		
@@ -255,6 +259,7 @@ func (p *TH2ENProvider) process(chunks []string) (common.AnyTokenSliceWrapper, e
 				logger.Warn().Err(err).Msg("failed to get Thai text, skipping")
 				continue
 			}
+			providerTokenSlice = append(providerTokenSlice, th)
 			
 			tlitNode, err := element.Element(".tlit")
 			if err != nil {
@@ -266,7 +271,8 @@ func (p *TH2ENProvider) process(chunks []string) (common.AnyTokenSliceWrapper, e
 				logger.Warn().Err(err).Msg("failed to get transliteration text, skipping")
 				continue
 			}
-
+			dicTlit[th] = tlit
+			
 			// Get gloss
 			glossNode, err := element.Element(".meanings")
 			if err != nil {
@@ -283,20 +289,11 @@ func (p *TH2ENProvider) process(chunks []string) (common.AnyTokenSliceWrapper, e
 			glossRaw := strings.Split(glossText, "\n")
 			glossRaw = removeEmptyStrings(glossRaw)
 			
-			var glossSlice []common.Gloss
 			for _, gloss := range glossRaw {
-				glossSlice = append(glossSlice, common.Gloss{
+				dicGloss[th] = append(dicGloss[th], common.Gloss{
 					Definition: gloss,
 				})
 			}
-
-			tsw.Append(&Tkn{
-				Tkn: common.Tkn{
-					Surface:	th,
-					Romanization:	tlit,
-					Glosses:	glossSlice,
-				},
-			})
 		}
 
 		// Close page after processing
@@ -304,7 +301,16 @@ func (p *TH2ENProvider) process(chunks []string) (common.AnyTokenSliceWrapper, e
 			logger.Warn().Err(err).Msg("failed to close page")
 		}
 	}
+	// Simple interleaving of the strings (joined chunks) that
+	//	- allows to discriminate true lexical content from what isn't
+	//	- retain non-lexical content, properly tagged
+	tkns := common.IntegrateProviderTokens(strings.Join(chunks, ""), providerTokenSlice)
 
+	for _, tkn := range tkns {
+		tkn.Romanization = dicTlit[tkn.Surface]
+		tkn.Glosses = dicGloss[tkn.Surface]
+		tsw.Append(tkn)
+	}
 	return tsw, nil
 }
 
