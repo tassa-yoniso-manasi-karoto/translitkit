@@ -145,6 +145,44 @@ func (m *Module) MustInit() {
 	}
 }
 
+func (m *Module) TokensRaw(input string) (AnyTokenSliceWrapper, error) {
+	tsw, err := serialize(input, m.getMaxQueryLen())
+	if err != nil {
+		return nil, fmt.Errorf("input serialization failed: len(input)=%d, %v", len(input), err)
+	}
+
+	if m.Combined != nil {
+		tsw, err = m.Combined.ProcessFlowController(tsw)
+		if err != nil {
+			return &TknSliceWrapper{}, fmt.Errorf("combined processing failed: %v", err)
+		}
+	} else {
+		tsw, err = m.Tokenizer.ProcessFlowController(tsw)
+		if err != nil {
+			return &TknSliceWrapper{}, fmt.Errorf("tokenization failed: %v", err)
+		}
+		if m.Transliterator != nil {
+			if tsw, err = m.Transliterator.ProcessFlowController(tsw); err != nil {
+				return &TknSliceWrapper{}, fmt.Errorf("transliteration failed: %v", err)
+			}
+		}
+	}
+	if tsw == nil {
+		return tsw, fmt.Errorf("fatal: nil tokens returned by module: %#v", m)
+	}
+	return tsw, nil
+}
+
+
+func (m *Module) Tokens(input string) (AnyTokenSliceWrapper, error) {
+	raw, err := m.TokensRaw(input)
+	if err != nil {
+		return nil, err
+	}
+	return FilterAny(raw), nil
+}
+
+
 func (m *Module) Roman(input string) (string, error) {
 	if m.Transliterator == nil && m.ProviderType != CombinedType {
 		return "", fmt.Errorf("romanization requires either a transliterator or combined provider (got %s)", m.ProviderType)
@@ -188,34 +226,6 @@ func (m *Module) Tokenized(input string) (string, error) {
 		return "", err
 	}
 	return strings.Join(parts, " "), nil // FIXME ideally place space between word-words not word-punctuation or punct-punct
-}
-
-func (m *Module) Tokens(input string) (AnyTokenSliceWrapper, error) {
-	tsw, err := serialize(input, m.getMaxQueryLen())
-	if err != nil {
-		return nil, fmt.Errorf("input serialization failed: len(input)=%d, %v", len(input), err)
-	}
-
-	if m.Combined != nil {
-		tsw, err = m.Combined.ProcessFlowController(tsw)
-		if err != nil {
-			return &TknSliceWrapper{}, fmt.Errorf("combined processing failed: %v", err)
-		}
-	} else {
-		tsw, err = m.Tokenizer.ProcessFlowController(tsw)
-		if err != nil {
-			return &TknSliceWrapper{}, fmt.Errorf("tokenization failed: %v", err)
-		}
-		if m.Transliterator != nil {
-			if tsw, err = m.Transliterator.ProcessFlowController(tsw); err != nil {
-				return &TknSliceWrapper{}, fmt.Errorf("transliteration failed: %v", err)
-			}
-		}
-	}
-	if tsw == nil {
-		return tsw, fmt.Errorf("fatal: nil tokens returned by module: %#v", m)
-	}
-	return tsw, nil
 }
 
 func (m *Module) Close() error {

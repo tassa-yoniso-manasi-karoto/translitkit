@@ -33,7 +33,32 @@ type AnyToken interface {
 	IsLexicalContent()	bool
 }
 
+// FilterAny receives any token slice wrapper and returns a new wrapper
+// containing only tokens that contain lexical content (ie. it excludes space, punctuations...)
+func FilterAny(wrapper AnyTokenSliceWrapper) AnyTokenSliceWrapper {
+	filtered := &TknSliceWrapper{}
+	for i := 0; i < wrapper.Len(); i++ {
+		token := wrapper.GetIdx(i)
+		if token.IsLexicalContent() {
+			filtered.Append(token)
+		}
+	}
+	return filtered
+}
 
+
+// Filter receives *common.TknSliceWrapper and returns a new wrapper
+// containing only tokens that contain lexical content (ie. it excludes space, punctuations...)
+func Filter(wrapper *TknSliceWrapper) *TknSliceWrapper {
+	filtered := &TknSliceWrapper{}
+	for i := 0; i < wrapper.Len(); i++ {
+		token := wrapper.GetIdx(i)
+		if token.IsLexicalContent() {
+			filtered.Append(token)
+		}
+	}
+	return filtered
+}
 
 type TknSliceWrapper struct {
 	Slice []AnyToken //alt.: Sentences [][]AnyToken ?
@@ -82,6 +107,7 @@ func (tokens TknSliceWrapper) Tokenized() string {
 func (tokens TknSliceWrapper) TokenizedParts() []string {
 	return tokenizedParts(tokens.Slice)
 }
+
 
 // (common.)Tkn represents the common, generic Token containing basic linguistic
 // annotations / features for all languages.
