@@ -93,11 +93,11 @@ func (wrapper TknSliceWrapper) KanaParts() []string {
 func ToJapaneseToken(it *ichiran.JSONToken) *Tkn {
 	jt := &Tkn{ Tkn: common.Tkn {
 		Surface: it.Surface,
-		IsLexical: it.IsToken,
+		IsLexical: it.IsLexical,
 	}}
 
 	// If this is not a Japanese token, return early with minimal information
-	if !it.IsToken {
+	if !it.IsLexical {
 		return jt
 	}
 
