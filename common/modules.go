@@ -145,7 +145,7 @@ func (m *Module) MustInit() {
 	}
 }
 
-func (m *Module) TokensRaw(input string) (AnyTokenSliceWrapper, error) {
+func (m *Module) Tokens(input string) (AnyTokenSliceWrapper, error) {
 	tsw, err := serialize(input, m.getMaxQueryLen())
 	if err != nil {
 		return nil, fmt.Errorf("input serialization failed: len(input)=%d, %v", len(input), err)
@@ -174,8 +174,8 @@ func (m *Module) TokensRaw(input string) (AnyTokenSliceWrapper, error) {
 }
 
 
-func (m *Module) Tokens(input string) (AnyTokenSliceWrapper, error) {
-	raw, err := m.TokensRaw(input)
+func (m *Module) LexicalTokens(input string) (AnyTokenSliceWrapper, error) {
+	raw, err := m.Tokens(input)
 	if err != nil {
 		return nil, err
 	}
@@ -187,7 +187,6 @@ func (m *Module) Roman(input string) (string, error) {
 	if m.Transliterator == nil && m.ProviderType != CombinedType {
 		return "", fmt.Errorf("romanization requires either a transliterator or combined provider (got %s)", m.ProviderType)
 	}
-
 	tkns, err := m.Tokens(input)
 	if err != nil {
 		return "", err
@@ -199,33 +198,33 @@ func (m *Module) RomanParts(input string) ([]string, error) {
 	if m.Transliterator == nil && m.ProviderType != CombinedType {
 		return nil, fmt.Errorf("romanization requires either a transliterator or combined provider (got %s)", m.ProviderType)
 	}
-	tkns, err := m.Tokens(input)
+	tkns, err := m.LexicalTokens(input)
 	if err != nil {
 		return []string{}, err
 	}
 	return tkns.RomanParts(), nil
 }
 
-func (m *Module) TokenizedParts(input string) ([]string, error) {
-	if m.Tokenizer == nil && m.ProviderType != CombinedType {
-		return nil, fmt.Errorf("tokenization requires either a tokenizer or combined provider (got %s)", m.ProviderType)
-	}
-	tkns, err := m.Tokens(input)
-	if err != nil {
-		return []string{}, err
-	}
-	return tkns.TokenizedParts(), nil
-}
-
 func (m *Module) Tokenized(input string) (string, error) {
 	if m.Tokenizer == nil && m.ProviderType != CombinedType {
 		return "", fmt.Errorf("tokenization requires either a tokenizer or combined provider (got %s)", m.ProviderType)
 	}
-	parts, err := m.TokenizedParts(input)
+	tkns, err := m.Tokens(input)
 	if err != nil {
 		return "", err
 	}
-	return strings.Join(parts, " "), nil // FIXME ideally place space between word-words not word-punctuation or punct-punct
+	return tkns.Tokenized(), nil 
+}
+
+func (m *Module) TokenizedParts(input string) ([]string, error) {
+	if m.Tokenizer == nil && m.ProviderType != CombinedType {
+		return nil, fmt.Errorf("tokenization requires either a tokenizer or combined provider (got %s)", m.ProviderType)
+	}
+	tkns, err := m.LexicalTokens(input)
+	if err != nil {
+		return []string{}, err
+	}
+	return tkns.TokenizedParts(), nil
 }
 
 func (m *Module) Close() error {

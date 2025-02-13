@@ -64,7 +64,7 @@ func (m *Module) KanaParts(input string) ([]string, error) {
 	if m.Transliterator == nil && m.ProviderType != common.CombinedType {
 		return []string{}, fmt.Errorf("KanaParts requires either a transliterator or combined provider (got %s)", m.ProviderType)
 	}
-	tkns, err := m.Tokens(input)
+	tkns, err := m.LexicalTokens(input)
 	if err != nil {
 		return []string{}, err
 	}

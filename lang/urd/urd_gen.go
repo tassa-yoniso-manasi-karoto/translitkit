@@ -31,9 +31,9 @@ type TknSliceWrapper struct {
 	NativeSlice []*Tkn
 }
 
-// TokensRaw returns the token slice wrapper without filtering out non-lexical tokens.
-func (m *Module) TokensRaw(input string) (*TknSliceWrapper, error) {
-	tsw, err := m.Module.TokensRaw(input)
+// Tokens returns the token slice wrapper without filtering out non-lexical tokens.
+func (m *Module) Tokens(input string) (*TknSliceWrapper, error) {
+	tsw, err := m.Module.Tokens(input)
 	if err != nil {
 		return &TknSliceWrapper{}, fmt.Errorf("lang/%s: %v", Lang, err)
 	}
@@ -51,10 +51,10 @@ func (m *Module) TokensRaw(input string) (*TknSliceWrapper, error) {
 }
 
 // Tokens returns a filtered token slice wrapper containing only tokens with lexical content.
-// It calls TokensRaw() and then applies the Filter() method on its output,
+// It calls Tokens() and then applies the Filter() method on its output,
 // thereby avoiding re‑processing via additional module methods.
-func (m *Module) Tokens(input string) (*TknSliceWrapper, error) {
-	raw, err := m.TokensRaw(input)
+func (m *Module) LexicalTokens(input string) (*TknSliceWrapper, error) {
+	raw, err := m.Tokens(input)
 	if err != nil {
 		return &TknSliceWrapper{}, fmt.Errorf("lang/%s: %v", Lang, err)
 	}
@@ -62,9 +62,7 @@ func (m *Module) Tokens(input string) (*TknSliceWrapper, error) {
 }
 
 // Filter returns a new TknSliceWrapper containing only tokens that have lexical content.
-// It processes the TokensRaw output without invoking further module-level processing.
-//
-// It filters both common.TknSliceWrapper and NativeSlice []*Tkn.
+// It processes the Tokens output without invoking further module-level processing.
 func (w *TknSliceWrapper) Filter() *TknSliceWrapper {
 	filtered := &TknSliceWrapper{
 		TknSliceWrapper: common.TknSliceWrapper{},
