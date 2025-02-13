@@ -2,6 +2,7 @@ package common
 
 import (
 	"strings"
+	"unicode"
 	
 	"github.com/gookit/color"
 	"github.com/k0kubun/pp"
@@ -94,14 +95,14 @@ func (tokens *TknSliceWrapper) Append(tkn ...AnyToken) {
 //func (tokens TknSliceWrapper) Tokens() []AnyToken // FIXME may come in handy?
 
 func (tokens TknSliceWrapper) Roman() string {
-	return roman(tokens.Slice)
+	return defaultRoman(tokens.Slice)
 }
 func (tokens TknSliceWrapper) RomanParts() []string {
 	return romanParts(tokens.Slice)
 }
 
 func (tokens TknSliceWrapper) Tokenized() string {
-	return tokenized(tokens.Slice)
+	return defaultTokenized(tokens.Slice)
 }
 
 func (tokens TknSliceWrapper) TokenizedParts() []string {
@@ -236,12 +237,6 @@ func (t *Tkn) IsLexicalContent() bool {
 
 
 
-
-// due to common.Tkn.embedding and methods inheritance, interfaces are overkill here
-func roman(tokens []AnyToken) string {
-	return strings.Join(romanParts(tokens), " ")
-}
-
 func romanParts(tokens []AnyToken) []string {
 	parts := make([]string, len(tokens))
 	for i, t := range tokens {
@@ -254,11 +249,6 @@ func romanParts(tokens []AnyToken) []string {
 	return parts
 }
 
-func tokenized(tokens []AnyToken) string {
-	return strings.Join(tokenizedParts(tokens), " ")
-}
-
-
 func tokenizedParts(tokens []AnyToken) []string {
 	parts := make([]string, len(tokens))
 	for i, t := range tokens {
@@ -267,7 +257,88 @@ func tokenizedParts(tokens []AnyToken) []string {
 	return parts
 }
 
+// roman constructs the romanized string intelligently using the provided spacing rule.
+func defaultRoman(tokens []AnyToken) string {
+	spacingRule := defaultSpacingRule
+	var builder strings.Builder
+	var prev string
 
+	for i, token := range tokens {
+		var text string
+		// Use token.Roman() if available; otherwise, use token.GetSurface().
+		if r := token.Roman(); r != "" {
+			text = r
+		} else {
+			text = token.GetSurface()
+		}
+
+		if i > 0 && spacingRule(prev, text) {
+			builder.WriteRune(' ')
+		}
+		builder.WriteString(text)
+		prev = text
+	}
+	return builder.String()
+}
+
+// defaultTokenized constructs the tokenized string intelligently using the provided spacing rule.
+func defaultTokenized(tokens []AnyToken) string {
+	spacingRule := defaultSpacingRule
+	var builder strings.Builder
+	var prev string
+
+	for i, token := range tokens {
+		text := token.GetSurface()
+		if i > 0 && spacingRule(prev, text) {
+			builder.WriteRune(' ')
+		}
+		builder.WriteString(text)
+		prev = text
+	}
+	return builder.String()
+}
+
+
+// SpacingRule defines a function signature for deciding if a space is needed between tokens.
+type SpacingRule func(prev, current string) bool
+
+// defaultSpacingRule is our configurable rule for whether to insert a space between two tokens.
+func defaultSpacingRule(prev, current string) bool {
+	// If current token is empty, no space is needed.
+	if current == "" {
+		return false
+	}
+
+	// Do not add a space if the current token starts with punctuation
+	// that should attach to the previous token.
+	runes := []rune(current)
+	if len(runes) > 0 {
+		first := runes[0]
+		// Common punctuation marks that should not have a preceding space.
+		switch first {
+		case '.', ',', '!', '?', ':', ';', ')', ']', '}', '»':
+			return false
+		}
+		// Also, if Unicode categorizes the first rune as punctuation,
+		// we might decide not to insert a space.
+		if unicode.IsPunct(first) {
+			return false
+		}
+	}
+
+	// Do not add a space if the previous token ends with an opening punctuation.
+	if prev != "" {
+		runesPrev := []rune(prev)
+		last := runesPrev[len(runesPrev)-1]
+		switch last {
+		case '(', '[', '{', '«':
+			return false
+		}
+	}
+
+	// Otherwise, insert a space.
+	return true
+}
 
 
 func placeholder() {
