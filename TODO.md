@@ -1,8 +1,5 @@
 *urgent:*
 
-
-- TokenizedStr & TokenizedParts: **currently some tokenizers return spaces and some don't → Find a solution**
-
 - change panic() in inits() into common.Log().Warn()
 
 - TH2EN: test behavior of rod when BrowserAccessURL is invalid
