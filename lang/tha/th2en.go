@@ -22,13 +22,19 @@ var logger = common.Log.With().Str("provider", "thai2english.com").Logger()
 
 // TH2ENProvider satisfies the Provider interface
 type TH2ENProvider struct {
-	config map[string]interface{}
-	browser *rod.Browser
-	targetScheme string
+	ctx		context.Context
+	config		map[string]interface{}
+	browser		*rod.Browser
+	targetScheme	string
+}
+
+
+func (p *TH2ENProvider) WithContext(ctx context.Context) {
+	p.ctx = ctx
 }
 
 func (p *TH2ENProvider) Init() (err error) {
-	if err = checkWebsiteReachable(); err != nil {
+	if err = checkWebsiteReachable(p.ctx); err != nil {
 		return
 	}
 	if err = p.init(); err != nil {
@@ -75,7 +81,9 @@ func (p *TH2ENProvider) SetConfig(config map[string]interface{}) error {
 	if !ok {
 		return fmt.Errorf("scheme name not provided in config")
 	}
-	
+	if err := p.ctx.Err(); err != nil {
+		return err
+	}
 	if err := p.selectTranslitScheme(schemeName); err != nil {
 		return fmt.Errorf("error selecting translit scheme %s: %v", schemeName, err)
 	}
@@ -86,7 +94,7 @@ func (p *TH2ENProvider) SetConfig(config map[string]interface{}) error {
 
 func (p *TH2ENProvider) selectTranslitScheme(scheme string) error {
 	// Create context with timeout
-	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+	ctx, cancel := context.WithTimeout(p.ctx, 30*time.Second)
 	defer cancel()
 	
 	// Normalize the input scheme
@@ -205,6 +213,10 @@ func (p *TH2ENProvider) process(chunks []string) (common.AnyTokenSliceWrapper, e
 	dicGloss := make(map[string][]common.Gloss)
 	
 	for idx, chunk := range chunks {
+		if err := p.ctx.Err(); err != nil {
+			return nil, err
+		}
+
 		logger.Trace().Msgf("Processing chunk %d: %s", idx, chunk)
 		
 		page, err := p.browser.Page(proto.TargetCreateTarget{})
@@ -352,12 +364,18 @@ func init() {
 }
 
 
-func checkWebsiteReachable() error {
+func checkWebsiteReachable(ctx context.Context) error {
+	URL := "https://www.thai2english.com/"
 	client := &http.Client{
-		Timeout: 5 * time.Second,
+		Timeout: 3 * time.Second,
 	}
 	
-	resp, err := client.Get("https://www.thai2english.com/")
+	req, err := http.NewRequestWithContext(ctx, "GET", URL,  nil)
+	if err != nil {
+		return fmt.Errorf("failed to create request: %v", err)
+	}
+	
+	resp, err := client.Do(req)
 	if err != nil {
 		return fmt.Errorf("failed to reach th2en: %v", err)
 	}

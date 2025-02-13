@@ -4,6 +4,7 @@ package mul
 import (
 	"fmt"
 	"math"
+	"context"
 
 	iuliia "github.com/mehanizm/iuliia-go"
 	"github.com/tassa-yoniso-manasi-karoto/translitkit/common"
@@ -11,9 +12,10 @@ import (
 
 // IuliiaProvider satisfies the Provider interface
 type IuliiaProvider struct {
-	Config map[string]interface{}
-	Lang   string // ISO 639-3 language code
-	targetScheme *iuliia.Schema
+	ctx		context.Context
+	Config		map[string]interface{}
+	Lang 		string // ISO 639-3 language code
+	targetScheme	*iuliia.Schema
 }
 
 // NewIuliiaProvider creates a new provider instance
@@ -22,6 +24,11 @@ func NewIuliiaProvider(lang string) *IuliiaProvider {
 		Config: make(map[string]interface{}),
 		Lang:   lang,
 	}
+}
+
+
+func (p *IuliiaProvider) WithContext(ctx context.Context) {
+	p.ctx = ctx
 }
 
 func (p *IuliiaProvider) Init() error {

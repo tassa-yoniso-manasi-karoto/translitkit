@@ -3,6 +3,7 @@ package jpn
 import (
 	"fmt"
 	"math"
+	"context"
 	
 	"github.com/tassa-yoniso-manasi-karoto/go-ichiran"
 	"github.com/tassa-yoniso-manasi-karoto/translitkit/common"
@@ -14,7 +15,11 @@ import (
 
 // IchiranProvider satisfies the Provider interface
 type IchiranProvider struct {
-	config map[string]interface{}
+	config	map[string]interface{}
+}
+
+func (p *IchiranProvider) WithContext(ctx context.Context) {
+	ichiran.Ctx = ctx
 }
 
 func (p *IchiranProvider) Init() (err error) {

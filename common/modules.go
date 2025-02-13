@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"strings"
 	"math"
+	"context"
 
 	"github.com/k0kubun/pp"
 	"github.com/gookit/color"
@@ -14,6 +15,7 @@ import (
 // Could become needed of more sophisticated NLP providers are implemented.
 // Method set needs more iterations to be defined.
 type anyModule interface {
+	WithContext(context.Context)
 	Init() error
 	InitRecreate(bool) error
 	MustInit()
@@ -30,6 +32,7 @@ type anyModule interface {
 // It contains both Tokenization+Transliteration components.
 
 type Module struct {
+	ctx            context.Context
 	Lang           string // ISO-639 Part 3: i.e. "eng", "zho", "jpn"...
 	ProviderType   ProviderType
 	Tokenizer      Provider[AnyTokenSliceWrapper, AnyTokenSliceWrapper]
@@ -110,13 +113,26 @@ func (m *Module) ProviderNames() string {
 }
 
 
+func (m *Module) WithContext(ctx context.Context) {
+	m.ctx = ctx
+}
+
 
 func (m *Module) Init() error {
 	if m.Combined != nil {
+		if m.ctx != nil {
+			m.Combined.WithContext(m.ctx)
+		}
 		return m.Combined.Init()
+	}
+	if m.ctx != nil {
+		m.Tokenizer.WithContext(m.ctx)
 	}
 	if err := m.Tokenizer.Init(); err != nil {
 		return fmt.Errorf("tokenizer init failed: %v", err)
+	}
+	if m.ctx != nil {
+		m.Transliterator.WithContext(m.ctx)
 	}
 	if err := m.Transliterator.Init(); err != nil {
 		return fmt.Errorf("transliterator init failed: %v", err)
@@ -128,10 +144,19 @@ func (m *Module) Init() error {
 
 func (m *Module) InitRecreate(noCache bool) error {
 	if m.Combined != nil {
+		if m.ctx != nil {
+			m.Combined.WithContext(m.ctx)
+		}
 		return m.Combined.InitRecreate(noCache)
+	}
+	if m.ctx != nil {
+		m.Tokenizer.WithContext(m.ctx)
 	}
 	if err := m.Tokenizer.InitRecreate(noCache); err != nil {
 		return fmt.Errorf("tokenizer InitRecreate failed: %v", err)
+	}
+	if m.ctx != nil {
+		m.Transliterator.WithContext(m.ctx)
 	}
 	if err := m.Transliterator.InitRecreate(noCache); err != nil {
 		return fmt.Errorf("transliterator InitRecreate failed: %v", err)

@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"strings"
 	"unicode"
+	"context"
 	
 	"github.com/gookit/color"
 	"github.com/k0kubun/pp"
@@ -14,7 +15,13 @@ import (
 )
 
 type UnisegProvider struct {
-	config map[string]interface{}
+	ctx	context.Context
+	config	map[string]interface{}
+}
+
+
+func (p *UnisegProvider) WithContext(ctx context.Context) {
+	p.ctx = ctx
 }
 
 func (p *UnisegProvider) Init() error {

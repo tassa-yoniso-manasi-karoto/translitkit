@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"strings"
 	"math"
+	"context"
 
 	"github.com/tassa-yoniso-manasi-karoto/go-aksharamukha"
 	"github.com/tassa-yoniso-manasi-karoto/translitkit/common"
@@ -15,9 +16,15 @@ import (
 
 // AksharamukhaProvider satisfies the Provider interface
 type AksharamukhaProvider struct {
-	Config map[string]interface{}
-	Lang   string // ISO 639-3 language code
-	targetScheme aksharamukha.Script
+	ctx		context.Context
+	Config		map[string]interface{}
+	Lang		string // ISO 639-3 language code
+	targetScheme	aksharamukha.Script
+}
+
+
+func (p *AksharamukhaProvider) WithContext(ctx context.Context) {
+	aksharamukha.Ctx = ctx
 }
 
 // NewAksharamukhaProvider creates a new provider instance with the specified language

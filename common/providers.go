@@ -3,6 +3,7 @@ package common
 import (
 	"fmt"
 	"math"
+	"context"
 )
 
 type ProviderType string
@@ -15,6 +16,7 @@ const (
 
 // Unified interface for all providers of any type
 type Provider[In AnyTokenSliceWrapper, Out AnyTokenSliceWrapper] interface {
+	WithContext(ctx context.Context)
 	Init() error
 	InitRecreate(noCache bool) error
 	ProcessFlowController(input In) (Out, error)
