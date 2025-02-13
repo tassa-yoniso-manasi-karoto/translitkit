@@ -103,7 +103,7 @@ func (p *AksharamukhaProvider) process(chunks []string) (common.AnyTokenSliceWra
 
 		token := common.Tkn{
 			Surface: chunk,
-			IsToken: true,
+			IsLexical: false,
 		}
 
 		romanized, err := p.romanize(chunk)
@@ -112,6 +112,9 @@ func (p *AksharamukhaProvider) process(chunks []string) (common.AnyTokenSliceWra
 		}
 
 		token.Romanization = romanized
+		if chunk != romanized {
+			token.IsLexical = true
+		}
 		tsw.Append(&token)
 	}
 
@@ -122,7 +125,7 @@ func (p *AksharamukhaProvider) process(chunks []string) (common.AnyTokenSliceWra
 func (p *AksharamukhaProvider) processTokens(input common.AnyTokenSliceWrapper) (common.AnyTokenSliceWrapper, error) {
 	for _, tkn := range input.(*common.TknSliceWrapper).Slice {
 		s := tkn.GetSurface()
-		if !tkn.IsTokenType() || s == "" || tkn.Roman() != "" {
+		if !tkn.IsLexicalContent() || s == "" || tkn.Roman() != "" {
 			continue
 		}
 		romanized, err := p.romanize(s)

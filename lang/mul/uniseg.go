@@ -78,13 +78,8 @@ func (p *UnisegProvider) process(chunks []string) (common.AnyTokenSliceWrapper, 
 			word, rest, newState := uniseg.FirstWordInString(remaining, state)
 			
 			if word != "" {
-				trimmed := strings.TrimSpace(word)
-				isToken := len(trimmed) > 0 && !isSpaceOrPunct(trimmed)
-				
-				// Create token for the word
 				token := common.Tkn{
 					Surface:    strings.TrimSpace(word),
-					IsToken:    isToken,
 					Position: struct {
 						Start     int
 						End       int
@@ -95,11 +90,6 @@ func (p *UnisegProvider) process(chunks []string) (common.AnyTokenSliceWrapper, 
 						End:   len(chunk) - len(rest),
 					},
 				}
-
-				// For non-Latin scripts, the Surface becomes the romanization target
-				// if !isLatinScript(word) {
-				// 	token.Romanization = "" // Will be filled by transliterator
-				// }
 
 				tsw.Append(&token)
 			}
@@ -120,18 +110,6 @@ func isSpaceOrPunct(s string) bool {
 	}
 	return true
 }
-
-// isLatinScript is a basic check for Latin script
-// This should be enhanced with proper script detection
-// func isLatinScript(s string) bool {
-// 	for _, r := range s {
-// 		if r > 0x7F { // Basic Latin ends at 0x7F
-// 			return false
-// 		}
-// 	}
-// 	return true
-// }
-
 
 
 

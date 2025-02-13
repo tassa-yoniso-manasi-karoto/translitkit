@@ -61,7 +61,6 @@ func NewToken(surface string) *Tkn {
 	return &Tkn{
 		Tkn: common.Tkn{
 			Surface:   surface,
-			IsToken:   true,
 			Language:  Lang,
 			Script:	ScriptBengali,
 		},

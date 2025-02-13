@@ -109,11 +109,14 @@ func (p *IuliiaProvider) process(chunks []string) (common.AnyTokenSliceWrapper, 
 	for _, chunk := range chunks {
 		token := common.Tkn{
 			Surface: chunk,
-			IsToken: true,
+			IsLexical: false,
 		}
 
 		romanized := iuliia.Gost_779.Translate(chunk)
 		token.Romanization = romanized
+		if chunk != romanized {
+			token.IsLexical = true
+		}
 		tsw.Append(&token)
 	}
 
@@ -124,7 +127,7 @@ func (p *IuliiaProvider) process(chunks []string) (common.AnyTokenSliceWrapper, 
 func (p *IuliiaProvider) processTokens(input common.AnyTokenSliceWrapper) (common.AnyTokenSliceWrapper, error) {
 	for _, tkn := range input.(*common.TknSliceWrapper).Slice {
 		s := tkn.GetSurface()
-		if !tkn.IsTokenType() || s == "" || tkn.Roman() != "" {
+		if !tkn.IsLexicalContent() || s == "" || tkn.Roman() != "" {
 			continue
 		}
 		tkn.SetRoman(p.romanize(s))

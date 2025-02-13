@@ -27,10 +27,10 @@ type AnyTokenSliceWrapper interface {
 }
 
 type AnyToken interface {
-	GetSurface()	string
-	Roman()		string
+	GetSurface()		string
+	Roman()			string
 	SetRoman(string)
-	IsTokenType()	bool
+	IsLexicalContent()	bool
 }
 
 
@@ -89,10 +89,21 @@ func (tokens TknSliceWrapper) TokenizedParts() []string {
 // (unnamed) field therefore the methods of Tkn are available for every token
 // type regardless.
 type Tkn struct {
-	Surface    string // The actual text segment
-	IsToken    bool
-	Normalized string // Normalized form (e.g., lowercase, trimmed)
-	//TokenType  TokenType // Type of token (word, punctuation, etc.)
+	// The actual text segment
+	Surface    string 
+	
+	// IsLexicalToken indicates whether this token represents genuine linguistic content,
+	// such as a word or phrase recognized by the tokenization provider.
+	// A value of false means the token consists of non-lexical elements
+	// (e.g., punctuation, spaces, other filler characters...).
+	IsLexical    bool
+	
+	// Normalized form (e.g., lowercase, trimmed)
+	Normalized string
+	
+	// Type of token (word, punctuation, etc.)
+	// TokenType  TokenType 
+	
 	Position struct {
 		Start     int // Start position in original text
 		End       int // End position in original text
@@ -138,7 +149,7 @@ func (t *Tkn) GetSurface() string {
 }
 
 func (t *Tkn) Roman() string {
-	if !t.IsToken || t.Surface == t.Romanization {
+	if !t.IsLexical || t.Surface == t.Romanization {
 		return ""
 	}
 	return t.Romanization
@@ -148,8 +159,8 @@ func (t *Tkn) SetRoman(roman string) {
 	t.Romanization = roman
 }
 
-func (t *Tkn) IsTokenType() bool {
-	return t.IsToken
+func (t *Tkn) IsLexicalContent() bool {
+	return t.IsLexical
 }
 
 

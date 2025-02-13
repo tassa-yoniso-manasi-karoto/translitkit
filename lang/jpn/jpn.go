@@ -79,7 +79,7 @@ func (wrapper TknSliceWrapper) Kana() string {
 func (wrapper TknSliceWrapper) KanaParts() []string {
 	var parts []string
 	for _, token := range wrapper.NativeSlice {
-		if token.Tkn.IsToken && token.Hiragana != "" {
+		if token.Tkn.IsLexical && token.Hiragana != "" {
 			parts = append(parts, token.Hiragana)
 		} else {
 			parts = append(parts, token.Tkn.Surface)
@@ -93,7 +93,7 @@ func (wrapper TknSliceWrapper) KanaParts() []string {
 func ToJapaneseToken(it *ichiran.JSONToken) *Tkn {
 	jt := &Tkn{ Tkn: common.Tkn {
 		Surface: it.Surface,
-		IsToken: it.IsToken,
+		IsLexical: it.IsToken,
 	}}
 
 	// If this is not a Japanese token, return early with minimal information
