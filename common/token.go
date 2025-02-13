@@ -14,7 +14,7 @@ func serialize(input string, max int) (AnyTokenSliceWrapper, error) {
 
 
 type AnyTokenSliceWrapper interface {
-	GetFirst()		any
+	GetIdx(int)		AnyToken
 	GetRaw()		[]string
 	ClearRaw()
 	Append(...AnyToken)
@@ -42,11 +42,11 @@ type TknSliceWrapper struct {
 
 // TODO maybe make some of these methods private
 
-func (tokens *TknSliceWrapper) GetFirst() any {
+func (tokens *TknSliceWrapper) GetIdx(i int) AnyToken {
 	if len(tokens.Slice) == 0 {
 		return nil
 	}
-	return tokens.Slice[0]
+	return tokens.Slice[i]
 }
 func (tokens *TknSliceWrapper) Len() int {
 	return len(tokens.Slice)
