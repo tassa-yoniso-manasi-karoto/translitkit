@@ -113,16 +113,11 @@ func (p *TH2ENProvider) selectTranslitScheme(scheme string) error {
 		return fmt.Errorf("invalid transliteration scheme: %s", scheme)
 	}
 	
-	if err := p.init(); err != nil {
-		return fmt.Errorf("failed to init provider during applyConfig: %v", err)
-	}
-	
 	logger.Trace().Msg("Creating new page")
 	page, err := p.browser.Page(proto.TargetCreateTarget{})
 	if err != nil {
 		return fmt.Errorf("failed to create page: %v", err)
 	}
-	defer page.Close()
 	
 	// TODO
 	page = page.Context(ctx)
