@@ -29,7 +29,6 @@ func (p *AksharamukhaProvider) WithContext(ctx context.Context) {
 // NewAksharamukhaProvider creates a new provider instance with the specified language
 func NewAksharamukhaProvider(lang string) *AksharamukhaProvider {
 	return &AksharamukhaProvider{
-		config: make(map[string]interface{}),
 		Lang:   lang,
 	}
 }

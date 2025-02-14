@@ -22,7 +22,6 @@ type IuliiaProvider struct {
 func NewIuliiaProvider(lang string) *IuliiaProvider {
 	return &IuliiaProvider{
 		ctx: context.Background(),
-		config: make(map[string]interface{}),
 		Lang:   lang,
 	}
 }
