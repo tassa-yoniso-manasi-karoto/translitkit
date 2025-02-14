@@ -42,7 +42,7 @@ func main() {
 	check(err)
 
 	// To access language-specific methods import the module of the dedicated pkg
-	jm, _ := jpn.DefaultModule()
+	jm, err := jpn.DefaultModule()
 	check(err)
 	// No need to init/close again since it's the same underlying module
 
