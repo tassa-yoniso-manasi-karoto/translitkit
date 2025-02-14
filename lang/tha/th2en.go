@@ -81,9 +81,6 @@ func (p *TH2ENProvider) SetConfig(config map[string]interface{}) error {
 	if !ok {
 		return fmt.Errorf("scheme name not provided in config")
 	}
-	if err := p.ctx.Err(); err != nil {
-		return err
-	}
 	if err := p.selectTranslitScheme(schemeName); err != nil {
 		return fmt.Errorf("error selecting translit scheme %s: %v", schemeName, err)
 	}

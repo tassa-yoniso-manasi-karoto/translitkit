@@ -61,6 +61,7 @@ func NewModule(languageCode string, providerNames ...string) (*Module, error) {
 
 	module := &Module{
 		Lang: lang,
+		ctx:  context.Background(),
 	}
 
 	if len(providerNames) == 1 {
@@ -112,55 +113,53 @@ func (m *Module) ProviderNames() string {
 	return strings.Join(names, "→")
 }
 
-
-func (m *Module) WithContext(ctx context.Context) {
-	m.ctx = ctx
+// WithContext assigns the provided context to the module and returns the module
+// so that it can be chained.
+func (m *Module) WithContext(ctx context.Context) *Module {
+	if ctx != nil {
+		m.ctx = ctx
+	}
+	return m
 }
 
-
+// Init initializes the module (and its providers) using the stored context (if any).
 func (m *Module) Init() error {
 	if m.Combined != nil {
-		if m.ctx != nil {
-			m.Combined.WithContext(m.ctx)
-		}
+		m.Combined.WithContext(m.ctx)
 		return m.Combined.Init()
 	}
-	if m.ctx != nil {
-		m.Tokenizer.WithContext(m.ctx)
-	}
+
+	m.Tokenizer.WithContext(m.ctx)
 	if err := m.Tokenizer.Init(); err != nil {
 		return fmt.Errorf("tokenizer init failed: %v", err)
 	}
-	if m.ctx != nil {
-		m.Transliterator.WithContext(m.ctx)
-	}
+
+	m.Transliterator.WithContext(m.ctx)
 	if err := m.Transliterator.Init(); err != nil {
 		return fmt.Errorf("transliterator init failed: %v", err)
 	}
+
 	return nil
 }
 
-
-
+// InitRecreate forces reinitialization of providers, recreating containers
+// for Docker-based providers if needed. It may clear caches when noCache is true.
 func (m *Module) InitRecreate(noCache bool) error {
 	if m.Combined != nil {
-		if m.ctx != nil {
-			m.Combined.WithContext(m.ctx)
-		}
+		m.Combined.WithContext(m.ctx)
 		return m.Combined.InitRecreate(noCache)
 	}
-	if m.ctx != nil {
-		m.Tokenizer.WithContext(m.ctx)
-	}
+
+	m.Tokenizer.WithContext(m.ctx)
 	if err := m.Tokenizer.InitRecreate(noCache); err != nil {
 		return fmt.Errorf("tokenizer InitRecreate failed: %v", err)
 	}
-	if m.ctx != nil {
-		m.Transliterator.WithContext(m.ctx)
-	}
+
+	m.Transliterator.WithContext(m.ctx)
 	if err := m.Transliterator.InitRecreate(noCache); err != nil {
 		return fmt.Errorf("transliterator InitRecreate failed: %v", err)
 	}
+
 	return nil
 }
 
