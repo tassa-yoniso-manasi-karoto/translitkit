@@ -104,22 +104,22 @@ func GetSchemeModule(languageCode, schemeName string) (*Module, error) {
 		Lang: lang,
 	}
 
-	// Try to get as combined provider first
+	// Try to get a combined provider first.
 	if provider, err := getProvider(lang, CombinedType, targetScheme.Provider); err == nil {
 		module.Combined = provider
 		module.ProviderType = CombinedType
-		// Configure the provider
-		if err := provider.SetConfig(map[string]interface{}{
-			"lang": lang,
+		// Save configuration for later application during provider initialization.
+		if err := provider.SaveConfig(map[string]interface{}{
+			"lang":   lang,
 			"scheme": schemeName,
 		}); err != nil {
-			return nil, fmt.Errorf("failed to configure combined provider: %w", err)
+			return nil, fmt.Errorf("failed to save configuration for combined provider: %w", err)
 		}
-		
+
 		return module, nil
 	}
 
-	// If no combined provider, try separate providers
+	// If no combined provider, try separate providers.
 	tokenizer, err := getProvider(lang, TokenizerType, "uniseg")
 	if err != nil {
 		return nil, fmt.Errorf("failed to get tokenizer: %w", err)
@@ -132,16 +132,17 @@ func GetSchemeModule(languageCode, schemeName string) (*Module, error) {
 	}
 	module.Transliterator = transliterator
 
-	// Configure the transliterator
-	if err := transliterator.SetConfig(map[string]interface{}{
-		"lang": lang,
+	// Save configuration for the transliterator.
+	if err := transliterator.SaveConfig(map[string]interface{}{
+		"lang":   lang,
 		"scheme": schemeName,
 	}); err != nil {
-		return nil, fmt.Errorf("failed to configure transliterator: %w", err)
+		return nil, fmt.Errorf("failed to save configuration for transliterator: %w", err)
 	}
 
 	return module, nil
 }
+
 
 // GetSchemesNames returns a slice of strings with all Names of translit schemes
 func GetSchemesNames(schemes []TranslitScheme) []string {

@@ -13,7 +13,7 @@ import (
 // IuliiaProvider satisfies the Provider interface
 type IuliiaProvider struct {
 	ctx		context.Context
-	Config		map[string]interface{}
+	config		map[string]interface{}
 	Lang 		string // ISO 639-3 language code
 	targetScheme	*iuliia.Schema
 }
@@ -21,14 +21,19 @@ type IuliiaProvider struct {
 // NewIuliiaProvider creates a new provider instance
 func NewIuliiaProvider(lang string) *IuliiaProvider {
 	return &IuliiaProvider{
-		Config: make(map[string]interface{}),
+		config: make(map[string]interface{}),
 		Lang:   lang,
 	}
 }
 
-
 func (p *IuliiaProvider) WithContext(ctx context.Context) {
 	p.ctx = ctx
+}
+
+// SaveConfig merely stores the config to apply after init
+func (p *IuliiaProvider) SaveConfig(cfg map[string]interface{}) error {
+	p.config = cfg
+	return nil
 }
 
 func (p *IuliiaProvider) Init() error {
@@ -39,11 +44,40 @@ func (p *IuliiaProvider) Init() error {
 	default:
 		return fmt.Errorf("\"%s\" is not a language code supported by Iuliia", p.Lang)
 	}
+	p.applyConfig()
 	return nil
 }
 
 func (p *IuliiaProvider) InitRecreate(bool) error {
-	return p.Init()
+	if err := p.Init(); err != nil {
+		return err
+	}
+	p.applyConfig()
+	return nil
+}
+
+func (p *IuliiaProvider) applyConfig() error {
+	if p.config == nil {
+		return nil
+	}
+	schemeName, ok := p.config["scheme"].(string)
+	if !ok {
+		return fmt.Errorf("scheme name not provided in config")
+	}
+
+	lang, ok := p.config["lang"].(string)
+	if !ok {
+		return fmt.Errorf("lang not provided in config")
+	}
+	p.Lang = lang
+	
+	targetScheme, ok := russianSchemesToScript[schemeName]
+	if !ok {
+		return fmt.Errorf("unsupported transliteration scheme: %s", schemeName)
+	}
+
+	p.targetScheme = targetScheme
+	return nil
 }
 
 func (p *IuliiaProvider) Name() string {
@@ -59,27 +93,6 @@ func (p *IuliiaProvider) GetMaxQueryLen() int {
 }
 
 func (p *IuliiaProvider) Close() error {
-	return nil
-}
-
-func (p *IuliiaProvider) SetConfig(config map[string]interface{}) error {
-	schemeName, ok := config["scheme"].(string)
-	if !ok {
-		return fmt.Errorf("scheme name not provided in config")
-	}
-
-	lang, ok := config["lang"].(string)
-	if !ok {
-		return fmt.Errorf("lang not provided in config")
-	}
-	p.Lang = lang
-	
-	targetScheme, ok := russianSchemesToScript[schemeName]
-	if !ok {
-		return fmt.Errorf("unsupported transliteration scheme: %s", schemeName)
-	}
-
-	p.targetScheme = targetScheme
 	return nil
 }
 

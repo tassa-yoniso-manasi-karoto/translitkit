@@ -17,10 +17,14 @@ const (
 // Unified interface for all providers of any type
 type Provider[In AnyTokenSliceWrapper, Out AnyTokenSliceWrapper] interface {
 	WithContext(ctx context.Context)
+	// SaveConfig just stores the config for later usage, so that
+	// when we actually do .Init(), the provider can safely apply them.
+	SaveConfig(cfg map[string]interface{}) error
+	
 	Init() error
 	InitRecreate(noCache bool) error
 	ProcessFlowController(input In) (Out, error)
-	SetConfig(map[string]interface{}) error
+	
 	Name() string
 	GetType() ProviderType
 	GetMaxQueryLen() int

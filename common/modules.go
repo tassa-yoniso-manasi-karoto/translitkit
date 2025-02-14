@@ -11,11 +11,11 @@ import (
 	//iso "github.com/barbashov/iso639-3"
 )
 
-// Private because not needed at this point.
+// Private because NOT NEEDED/IN USE AT THIS POINT.
 // Could become needed of more sophisticated NLP providers are implemented.
 // Method set needs more iterations to be defined.
 type anyModule interface {
-	WithContext(context.Context)
+	WithContext(context.Context) anyModule //?
 	Init() error
 	InitRecreate(bool) error
 	MustInit()

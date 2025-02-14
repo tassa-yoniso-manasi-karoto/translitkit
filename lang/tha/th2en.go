@@ -33,6 +33,13 @@ func (p *TH2ENProvider) WithContext(ctx context.Context) {
 	p.ctx = ctx
 }
 
+// SaveConfig merely stores the config to apply after init
+func (p *TH2ENProvider) SaveConfig(cfg map[string]interface{}) error {
+	p.config = cfg
+	return nil
+}
+
+
 func (p *TH2ENProvider) Init() (err error) {
 	if err = checkWebsiteReachable(p.ctx); err != nil {
 		return
@@ -57,7 +64,24 @@ func (p *TH2ENProvider) init() (err error) {
 	if err = p.browser.ControlURL(common.BrowserAccessURL).Connect(); err != nil {
 		return fmt.Errorf("go-rod failed to connect to a browser instance for scraping: %v", err)
 	}
+	p.applyConfig()
 	return
+}
+
+func (p *TH2ENProvider) applyConfig() error {
+	if p.config == nil {
+		return nil
+	}
+	targetScheme, ok := p.config["scheme"].(string)
+	if !ok {
+		return fmt.Errorf("scheme name not provided in config")
+	}
+	if err := p.selectTranslitScheme(targetScheme); err != nil {
+		return fmt.Errorf("error selecting translit scheme %s: %v", targetScheme, err)
+	}
+
+	p.targetScheme = targetScheme
+	return nil
 }
 
 func (p *TH2ENProvider) Name() string {
@@ -76,19 +100,6 @@ func (p *TH2ENProvider) Close() error {
 	return p.browser.Close()
 }
 
-func (p *TH2ENProvider) SetConfig(config map[string]interface{}) error {
-	schemeName, ok := config["scheme"].(string)
-	if !ok {
-		return fmt.Errorf("scheme name not provided in config")
-	}
-	if err := p.selectTranslitScheme(schemeName); err != nil {
-		return fmt.Errorf("error selecting translit scheme %s: %v", schemeName, err)
-	}
-
-	p.targetScheme = schemeName
-	return nil
-}
-
 func (p *TH2ENProvider) selectTranslitScheme(scheme string) error {
 	// Create context with timeout
 	ctx, cancel := context.WithTimeout(p.ctx, 30*time.Second)
@@ -103,7 +114,7 @@ func (p *TH2ENProvider) selectTranslitScheme(scheme string) error {
 	}
 	
 	if err := p.init(); err != nil {
-		return fmt.Errorf("failed to init provider during SetConfig: %v", err)
+		return fmt.Errorf("failed to init provider during applyConfig: %v", err)
 	}
 	
 	logger.Trace().Msg("Creating new page")

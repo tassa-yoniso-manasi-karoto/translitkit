@@ -16,7 +16,7 @@ import (
 
 // AksharamukhaProvider satisfies the Provider interface
 type AksharamukhaProvider struct {
-	Config		map[string]interface{}
+	config		map[string]interface{}
 	Lang		string // ISO 639-3 language code
 	targetScheme	aksharamukha.Script
 }
@@ -29,9 +29,15 @@ func (p *AksharamukhaProvider) WithContext(ctx context.Context) {
 // NewAksharamukhaProvider creates a new provider instance with the specified language
 func NewAksharamukhaProvider(lang string) *AksharamukhaProvider {
 	return &AksharamukhaProvider{
-		Config: make(map[string]interface{}),
+		config: make(map[string]interface{}),
 		Lang:   lang,
 	}
+}
+
+// SaveConfig merely stores the config to apply after init
+func (p *AksharamukhaProvider) SaveConfig(cfg map[string]interface{}) error {
+	p.config = cfg
+	return nil
 }
 
 func (p *AksharamukhaProvider) Init() (err error) {
@@ -42,6 +48,7 @@ func (p *AksharamukhaProvider) Init() (err error) {
 	if err = aksharamukha.Init(); err != nil {
 		return fmt.Errorf("failed to initialize aksharamukha: %v", err)
 	}
+	p.applyConfig()
 	return
 }
 
@@ -53,8 +60,36 @@ func (p *AksharamukhaProvider) InitRecreate(noCache bool) (err error) {
 	if err = aksharamukha.InitRecreate(noCache); err != nil {
 		return fmt.Errorf("failed to initialize aksharamukha: %v", err)
 	}
+	p.applyConfig()
 	return
 }
+
+
+func (p *AksharamukhaProvider) applyConfig() error {
+	if p.config == nil {
+		return nil
+	}
+	schemeName, ok := p.config["scheme"].(string)
+	if !ok {
+		return fmt.Errorf("scheme name not provided in config")
+	}
+
+	lang, ok := p.config["lang"].(string)
+	if !ok {
+		return fmt.Errorf("lang not provided in config")
+	}
+	p.Lang = lang
+	
+	// Convert scheme name to target aksharamukha.Script
+	targetScheme, ok := indicSchemesToScript[schemeName]
+	if !ok {
+		return fmt.Errorf("unsupported transliteration scheme: %s", schemeName)
+	}
+
+	p.targetScheme = targetScheme
+	return nil
+}
+
 
 func (p *AksharamukhaProvider) Name() string {
 	return "aksharamukha"
@@ -158,28 +193,6 @@ func (p *AksharamukhaProvider) romanize(text string) (string, error) {
 	}
 	// otherwise use default romanization
 	return aksharamukha.Roman(text, p.Lang)
-}
-
-func (p *AksharamukhaProvider) SetConfig(config map[string]interface{}) error {
-	schemeName, ok := config["scheme"].(string)
-	if !ok {
-		return fmt.Errorf("scheme name not provided in config")
-	}
-
-	lang, ok := config["lang"].(string)
-	if !ok {
-		return fmt.Errorf("lang not provided in config")
-	}
-	p.Lang = lang
-	
-	// Convert scheme name to target aksharamukha.Script
-	targetScheme, ok := indicSchemesToScript[schemeName]
-	if !ok {
-		return fmt.Errorf("unsupported transliteration scheme: %s", schemeName)
-	}
-
-	p.targetScheme = targetScheme
-	return nil
 }
 
 

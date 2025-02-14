@@ -81,14 +81,11 @@ func DefaultModule(languageCode string) (*Module, error) {
 	if err != nil {
 		return nil, err
 	}
-	return result.(*Module), nil
+	return result, nil
 }
 
-// defaultModule is an internal function that configures any module type with default providers.
-// This interface-based implementation isn't needed anymore because jpn.Module embeds common.Module
-// therefore, common.Module's methods can be shared to jpn.Module without constructing jpn.Module
-// with defaultModule. Nonetheless I am keeping this design for now.
-func defaultModule(lang string) (anyModule, error) {
+// defaultModule is an internal function that configures a common with default providers for a given language.
+func defaultModule(lang string) (*Module, error) {
 	m := &Module{}
 	m.setLang(lang)
 

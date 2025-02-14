@@ -24,6 +24,12 @@ func (p *UnisegProvider) WithContext(ctx context.Context) {
 	p.ctx = ctx
 }
 
+// SaveConfig merely stores the config to apply after init
+func (p *UnisegProvider) SaveConfig(cfg map[string]interface{}) error {
+	p.config = cfg
+	return nil
+}
+
 func (p *UnisegProvider) Init() error {
 	return nil
 }
@@ -45,10 +51,6 @@ func (p *UnisegProvider) GetMaxQueryLen() int {
 }
 
 func (p *UnisegProvider) Close() error {
-	return nil
-}
-
-func (p *UnisegProvider) SetConfig(map[string]interface{}) error {
 	return nil
 }
 
