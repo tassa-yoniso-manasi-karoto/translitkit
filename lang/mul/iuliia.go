@@ -21,6 +21,7 @@ type IuliiaProvider struct {
 // NewIuliiaProvider creates a new provider instance
 func NewIuliiaProvider(lang string) *IuliiaProvider {
 	return &IuliiaProvider{
+		ctx: context.Background(),
 		config: make(map[string]interface{}),
 		Lang:   lang,
 	}

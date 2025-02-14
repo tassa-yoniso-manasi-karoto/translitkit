@@ -346,7 +346,7 @@ var translitSchemes = []common.TranslitScheme{
 
 func init() {
 	p := common.ProviderEntry{
-		Provider:     &TH2ENProvider{},
+		Provider:     &TH2ENProvider{ ctx: context.Background() },
 		Capabilities: []string{"tokenization", "transliteration"},
 		Type:         common.CombinedType,
 	}
