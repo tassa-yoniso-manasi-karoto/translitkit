@@ -14,6 +14,7 @@ type Tkn struct {
 
 	// Japanese Writing Systems
 	Kanji    string // 漢字 representation
+	Kana     string
 	Hiragana string // ひらがな representation
 	Katakana string // カタカナ representation
 
@@ -79,8 +80,8 @@ func (wrapper TknSliceWrapper) Kana() string {
 func (wrapper TknSliceWrapper) KanaParts() []string {
 	var parts []string
 	for _, token := range wrapper.NativeSlice {
-		if token.Tkn.IsLexical && token.Hiragana != "" {
-			parts = append(parts, token.Hiragana)
+		if token.Tkn.IsLexical && token.Kana != "" {
+			parts = append(parts, token.Kana)
 		} else {
 			parts = append(parts, token.Tkn.Surface)
 		}
@@ -112,6 +113,7 @@ func ToJapaneseToken(it *ichiran.JSONToken) *Tkn {
 	jt.Language = "jpn"
 	jt.Script = "Jpan"
 	jt.Romanization = it.Romaji
+	jt.Kana = it.Kana
 
 	// Process glosses
 	if len(it.Gloss) > 0 {
