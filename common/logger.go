@@ -17,16 +17,21 @@ func init() {
 		Out: os.Stdout,
 		TimeFormat: time.TimeOnly,
 	}
-	SetLoggerWriter(w)
+	SetLogger(zerolog.New(w).With().Timestamp().Logger())
 }
 
-func SetLoggerWriter(w zerolog.ConsoleWriter) {
-	w.FormatMessage = func(i interface{}) string {
+func SetLogger(baseLogger zerolog.Logger) {
+	writer := zerolog.ConsoleWriter{
+		Out:        os.Stdout,
+		TimeFormat: time.TimeOnly,
+	}
+	writer.FormatMessage = func(i interface{}) string {
 		return fmt.Sprintf("[translitkit] %s", i)
 	}
-	Log = zerolog.New(w).With().Timestamp().Logger()
+	Log =  baseLogger.Output(writer)
 }
 
-func DisableLogger(l zerolog.Logger) {
+
+func DisableLogger() {
        Log = zerolog.Nop()
 }
