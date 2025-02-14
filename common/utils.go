@@ -29,7 +29,7 @@ func chunkify(s string, max int) (chunks []string, err error) {
 	}{
 		{splitFn: splitSpace, joiner: " "},
 		{splitFn: splitSentences, joiner: " "},
-		//{splitFn: splitWords, joiner: " "}, // too problematic with writing systems that don't use spaces
+		{splitFn: splitWords, joiner: ""}, // too problematic with writing systems that don't use spaces
 		//{splitFn: splitGraphemes, joiner: ""}, // risk of truncating words
 	}
 

@@ -41,6 +41,8 @@ func (p *TH2ENProvider) SaveConfig(cfg map[string]interface{}) error {
 
 
 func (p *TH2ENProvider) Init() (err error) {
+	// force refresh logger
+	logger = common.Log.With().Str("provider", "thai2english.com").Logger()
 	if err = checkWebsiteReachable(p.ctx); err != nil {
 		return
 	}
