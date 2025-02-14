@@ -16,7 +16,6 @@ import (
 
 // AksharamukhaProvider satisfies the Provider interface
 type AksharamukhaProvider struct {
-	ctx		context.Context
 	Config		map[string]interface{}
 	Lang		string // ISO 639-3 language code
 	targetScheme	aksharamukha.Script

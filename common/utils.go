@@ -144,7 +144,7 @@ func splitSentences(text string) (splitted []string) {
 		// and a new state.
 		sentence, rest, newState := uniseg.FirstSentenceInString(remaining, state)
 		if sentence != "" {
-			splitted = append(splitted, strings.TrimSpace(sentence))
+			splitted = append(splitted, sentence)
 		}
 		remaining = rest
 		state = newState
@@ -166,7 +166,7 @@ func splitWords(text string) (splitted []string) {
 		// and a new state.
 		word, rest, newState := uniseg.FirstWordInString(remaining, state)
 		if word != "" {
-			splitted = append(splitted, strings.TrimSpace(word))
+			splitted = append(splitted, word)
 		}
 		remaining = rest
 		state = newState

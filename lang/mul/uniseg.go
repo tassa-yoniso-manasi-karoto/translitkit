@@ -86,7 +86,7 @@ func (p *UnisegProvider) process(chunks []string) (common.AnyTokenSliceWrapper, 
 			
 			if word != "" {
 				token := common.Tkn{
-					Surface:    strings.TrimSpace(word),
+					Surface:  word,
 					Position: struct {
 						Start     int
 						End       int
