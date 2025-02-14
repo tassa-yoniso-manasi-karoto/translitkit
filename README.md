@@ -20,6 +20,7 @@ Thus there are linguistic annotations available following analysis such as part-
 ```go
 import (
 	"fmt"
+	"context"
 	"github.com/tassa-yoniso-manasi-karoto/translitkit"
 	"github.com/tassa-yoniso-manasi-karoto/translitkit/lang/jpn"
 )
@@ -30,6 +31,9 @@ func main() {
 	// Provides basic features for an arbitrary language of the ISO-639 set
 	m, err := translitkit.DefaultModule("jpn")
 	check(err)
+	
+	// Optional
+	m.WithContext(context.TODO())
 
 	m.MustInit()
 	defer m.Close()
@@ -38,7 +42,8 @@ func main() {
 	check(err)
 
 	// To access language-specific methods import the module of the dedicated pkg
-	jm := jpn.DefaultModule()
+	jm, _ := jpn.DefaultModule()
+	check(err)
 	// No need to init/close again since it's the same underlying module
 
 	kana, err := jm.KanaParts(text)
