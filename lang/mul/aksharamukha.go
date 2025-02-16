@@ -36,6 +36,11 @@ func NewAksharamukhaProvider(lang string) *AksharamukhaProvider {
 // SaveConfig merely stores the config to apply after init
 func (p *AksharamukhaProvider) SaveConfig(cfg map[string]interface{}) error {
 	p.config = cfg
+	lang, ok := p.config["lang"].(string)
+	if !ok {
+		return fmt.Errorf("lang not provided in config")
+	}
+	p.Lang = lang
 	return nil
 }
 
@@ -72,12 +77,6 @@ func (p *AksharamukhaProvider) applyConfig() error {
 	if !ok {
 		return fmt.Errorf("scheme name not provided in config")
 	}
-
-	lang, ok := p.config["lang"].(string)
-	if !ok {
-		return fmt.Errorf("lang not provided in config")
-	}
-	p.Lang = lang
 	
 	// Convert scheme name to target aksharamukha.Script
 	targetScheme, ok := indicSchemesToScript[schemeName]
@@ -147,6 +146,7 @@ func (p *AksharamukhaProvider) process(chunks []string) (common.AnyTokenSliceWra
 		}
 
 		romanized, err := p.romanize(chunk)
+		
 		if err != nil {
 			return nil, fmt.Errorf("romanization failed: %w", err)
 		}

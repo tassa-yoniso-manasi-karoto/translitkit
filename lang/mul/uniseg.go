@@ -4,8 +4,8 @@ package mul
 import (
 	"fmt"
 	"strings"
-	"unicode"
 	"context"
+	"unicode"
 	
 	"github.com/gookit/color"
 	"github.com/k0kubun/pp"
@@ -15,8 +15,10 @@ import (
 )
 
 type UnisegProvider struct {
-	ctx	context.Context
-	config	map[string]interface{}
+	ctx          context.Context
+	config       map[string]interface{}
+	lang         string
+	scriptRanges []*unicode.RangeTable
 }
 
 
@@ -24,9 +26,17 @@ func (p *UnisegProvider) WithContext(ctx context.Context) {
 	p.ctx = ctx
 }
 
-// SaveConfig merely stores the config to apply after init
+// SaveConfig stores the config and extracts the language code.
+// It then retrieves the expected Unicode script ranges for that language.
 func (p *UnisegProvider) SaveConfig(cfg map[string]interface{}) error {
 	p.config = cfg
+
+	if langVal, ok := cfg["lang"].(string); ok && langVal != "" {
+		p.lang = langVal
+		p.scriptRanges, _ = common.GetUnicodeRangesFromLang(p.lang)
+	} else {
+		p.lang = "" // TODO FIXME
+	}
 	return nil
 }
 
@@ -69,40 +79,41 @@ func (p *UnisegProvider) ProcessFlowController(input common.AnyTokenSliceWrapper
 	return nil, fmt.Errorf("tokens not accepted as input for uniseg tokenizer")
 }
 
-// process implements the actual tokenization logic
+// process implements the actual tokenization logic using uniseg.
+// We additionally mark tokens as lexical or non-lexical.
 func (p *UnisegProvider) process(chunks []string) (common.AnyTokenSliceWrapper, error) {
 	tsw := &common.TknSliceWrapper{}
 
 	for _, chunk := range chunks {
-		if len(strings.TrimSpace(chunk)) == 0 {
+		trimmed := strings.TrimSpace(chunk)
+		if len(trimmed) == 0 {
 			continue
 		}
 
-		// Initialize state for word segmentation
-		remaining := chunk
+		// State for uniseg word segmentation
+		remaining := trimmed
 		state := -1
 
 		for len(remaining) > 0 {
-			// Get next word
 			word, rest, newState := uniseg.FirstWordInString(remaining, state)
-			
 			if word != "" {
 				token := common.Tkn{
-					Surface:  word,
+					Surface: word,
 					Position: struct {
 						Start     int
 						End       int
 						Sentence  int
 						Paragraph int
 					}{
-						Start: len(chunk) - len(remaining),
-						End:   len(chunk) - len(rest),
+						Start: len(trimmed) - len(remaining),
+						End:   len(trimmed) - len(rest),
 					},
+					// We decide lexical vs. non-lexical inside isLexical() helper
+					IsLexical: p.isLexical(word),
 				}
 
 				tsw.Append(&token)
 			}
-
 			remaining = rest
 			state = newState
 		}
@@ -110,17 +121,41 @@ func (p *UnisegProvider) process(chunks []string) (common.AnyTokenSliceWrapper, 
 	return tsw, nil
 }
 
-// isSpaceOrPunct returns true if the string consists only of spaces or punctuation
-func isSpaceOrPunct(s string) bool {
-	for _, r := range s {
-		if !unicode.IsSpace(r) && !unicode.IsPunct(r) {
-			return false
+// isLexical determines if a token should be considered linguistic content.
+// It iterates over all runes in the word and returns true if at least one letter
+// belongs to one of the expected script ranges. Otherwise, it returns false.
+// If no language/script configuration is available, it falls back to a simple check.
+func (p *UnisegProvider) isLexical(word string) bool {
+	if word == "" {
+		return false
+	}
+
+	// If a language and its script ranges are defined, use them.
+	if p.lang != "" && len(p.scriptRanges) > 0 {
+		for _, r := range word {
+			// Check if the rune is a letter and is in one of the expected Unicode ranges.
+			if unicode.IsLetter(r) && unicode.IsOneOf(p.scriptRanges, r) {
+				return true
+			}
+		}
+		// No letter matched the expected script ranges.
+		return false
+	}
+
+	// Fallback: If no language/script configuration is available, consider the token lexical
+	// if it contains any letter that isn't solely punctuation or a space.
+	for _, r := range word {
+		if unicode.IsLetter(r) && !isPunctuationOrSpace(r) {
+			return true
 		}
 	}
-	return true
+	return false
 }
 
-
+// isPunctuationOrSpace returns true if the rune is punctuation, symbol, or whitespace.
+func isPunctuationOrSpace(r rune) bool {
+	return unicode.IsPunct(r) || unicode.IsSymbol(r) || unicode.IsSpace(r)
+}
 
 func placehold3445654er() {
 	color.Redln(" 𝒻*** 𝓎ℴ𝓊 𝒸ℴ𝓂𝓅𝒾𝓁ℯ𝓇")

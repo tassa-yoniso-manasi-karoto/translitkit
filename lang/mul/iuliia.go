@@ -33,6 +33,11 @@ func (p *IuliiaProvider) WithContext(ctx context.Context) {
 // SaveConfig merely stores the config to apply after init
 func (p *IuliiaProvider) SaveConfig(cfg map[string]interface{}) error {
 	p.config = cfg
+	lang, ok := p.config["lang"].(string)
+	if !ok {
+		return fmt.Errorf("lang not provided in config")
+	}
+	p.Lang = lang
 	return nil
 }
 
@@ -64,12 +69,6 @@ func (p *IuliiaProvider) applyConfig() error {
 	if !ok {
 		return fmt.Errorf("scheme name not provided in config")
 	}
-
-	lang, ok := p.config["lang"].(string)
-	if !ok {
-		return fmt.Errorf("lang not provided in config")
-	}
-	p.Lang = lang
 	
 	targetScheme, ok := russianSchemesToScript[schemeName]
 	if !ok {
