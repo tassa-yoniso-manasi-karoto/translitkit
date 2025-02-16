@@ -28,7 +28,10 @@ func GetUnicodeRangesFromLang(lang string) ([]*unicode.RangeTable, error) {
 	}
 	
 	if obj := iso.FromAnyCode(lang); obj != nil {
-		ranges := stdLang2Ranges[obj.Part3]
+		ranges, ok := stdLang2Ranges[obj.Part3]
+		if !ok {
+			return []*unicode.RangeTable{}, fmt.Errorf("'%s' has no range available", lang)
+		}
 		return ranges, nil
 	}
 	return []*unicode.RangeTable{}, fmt.Errorf("'%s' is not a valid ISO 639 language", lang)
