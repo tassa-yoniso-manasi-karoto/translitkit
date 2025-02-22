@@ -34,17 +34,17 @@ func init() {
 
 	err := common.Register("mul", common.TokenizerType, "uniseg", unisegEntry)
 	if err != nil {
-		panic(fmt.Sprintf("failed to register uniseg provider: %v", err))
+		panic(fmt.Sprintf("failed to register uniseg provider: %w", err))
 	}
 	
 	err = common.Register("mul", common.TransliteratorType, "aksharamukha", aksharamukhaEntry)
 	if err != nil {
-		panic(fmt.Sprintf("failed to register aksharamukha provider: %v", err))
+		panic(fmt.Sprintf("failed to register aksharamukha provider: %w", err))
 	}
 	
 	err = common.Register("mul", common.TransliteratorType, "iuliia", iuliiaEntry)
 	if err != nil {
-		panic(fmt.Sprintf("failed to register iuliia provider: %v", err))
+		panic(fmt.Sprintf("failed to register iuliia provider: %w", err))
 	}
 	
 	// #### Schemes registration ####

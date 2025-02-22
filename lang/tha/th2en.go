@@ -51,7 +51,7 @@ func (p *TH2ENProvider) Init() (err error) {
 	}
 	if p.targetScheme == "" {
 		if err = p.selectTranslitScheme("paiboon"); err != nil {
-			return fmt.Errorf("error selecting default translit scheme: %v", err)
+			return fmt.Errorf("error selecting default translit scheme: %w", err)
 		}
 	}
 	return
@@ -64,7 +64,7 @@ func (p *TH2ENProvider) InitRecreate(bool) (err error) {
 func (p *TH2ENProvider) init() (err error) {
 	p.browser = rod.New()
 	if err = p.browser.ControlURL(common.BrowserAccessURL).Connect(); err != nil {
-		return fmt.Errorf("go-rod failed to connect to a browser instance for scraping: %v", err)
+		return fmt.Errorf("go-rod failed to connect to a browser instance for scraping: %w", err)
 	}
 	p.applyConfig()
 	return
@@ -79,7 +79,7 @@ func (p *TH2ENProvider) applyConfig() error {
 		return fmt.Errorf("scheme name not provided in config")
 	}
 	if err := p.selectTranslitScheme(targetScheme); err != nil {
-		return fmt.Errorf("error selecting translit scheme %s: %v", targetScheme, err)
+		return fmt.Errorf("error selecting translit scheme %s: %w", targetScheme, err)
 	}
 
 	p.targetScheme = targetScheme
@@ -95,7 +95,7 @@ func (p *TH2ENProvider) GetType() common.ProviderType {
 }
 
 func (p *TH2ENProvider) GetMaxQueryLen() int {
-	return 499
+	return 99
 }
 
 func (p *TH2ENProvider) Close() error {
@@ -118,7 +118,7 @@ func (p *TH2ENProvider) selectTranslitScheme(scheme string) error {
 	logger.Trace().Msg("Creating new page")
 	page, err := p.browser.Page(proto.TargetCreateTarget{})
 	if err != nil {
-		return fmt.Errorf("failed to create page: %v", err)
+		return fmt.Errorf("failed to create page: %w", err)
 	}
 	
 	// TODO
@@ -126,12 +126,12 @@ func (p *TH2ENProvider) selectTranslitScheme(scheme string) error {
 
 	logger.Trace().Msg("Navigating to website")
 	if err := page.Navigate("https://www.thai2english.com/"); err != nil {
-		return fmt.Errorf("failed to navigate to website: %v", err)
+		return fmt.Errorf("failed to navigate to website: %w", err)
 	}
 
 	logger.Trace().Msg("Waiting for page to load")
 	if err := page.WaitLoad(); err != nil {
-		return fmt.Errorf("failed to wait for page load: %v", err)
+		return fmt.Errorf("failed to wait for page load: %w", err)
 	}
 
 	logger.Trace().Msg("Looking for settings button and clicking via JavaScript")
@@ -149,21 +149,21 @@ func (p *TH2ENProvider) selectTranslitScheme(scheme string) error {
 			return true;
 		}`)
 		if err != nil {
-			return fmt.Errorf("failed to click settings button via JavaScript: %v", err)
+			return fmt.Errorf("failed to click settings button via JavaScript: %w", err)
 		}
 	}
 
 	logger.Trace().Msg("Waiting for dialog to appear")
 	select {
 	case <-ctx.Done():
-		return fmt.Errorf("context cancelled while waiting for dialog: %v", ctx.Err())
+		return fmt.Errorf("context cancelled while waiting for dialog: %w", ctx.Err())
 	case <-time.After(500 * time.Millisecond):
 	}
 
 	logger.Trace().Msgf("Looking for radio button with value %s and clicking via JavaScript", scheme)
 	select {
 	case <-ctx.Done():
-		return fmt.Errorf("context cancelled while trying to click radio button: %v", ctx.Err())
+		return fmt.Errorf("context cancelled while trying to click radio button: %w", ctx.Err())
 	default:
 		_, err = page.Eval(fmt.Sprintf(`() => {
 			const radio = document.querySelector('input[type="radio"][value="%s"]');
@@ -174,7 +174,7 @@ func (p *TH2ENProvider) selectTranslitScheme(scheme string) error {
 			return true;
 		}`, scheme))
 		if err != nil {
-			return fmt.Errorf("failed to click radio button via JavaScript: %v", scheme, err)
+			return fmt.Errorf("failed to click radio button via JavaScript: %w", scheme, err)
 		}
 	}
 
@@ -349,11 +349,11 @@ func init() {
 	}
 	err := common.Register(Lang, common.CombinedType, p.Provider.Name(), p)
 	if err != nil {
-		panic(fmt.Sprintf("failed to register %s provider: %v", p.Provider.Name(), err))
+		panic(fmt.Sprintf("failed to register %s provider: %w", p.Provider.Name(), err))
 	}
 	err = common.SetDefault(Lang, []common.ProviderEntry{p})
 	if err != nil {
-		panic(fmt.Sprintf("failed to set %s as default: %v", p.Provider.Name(), err))
+		panic(fmt.Sprintf("failed to set %s as default: %w", p.Provider.Name(), err))
 	}
 	
 	for _, scheme := range translitSchemes {
@@ -377,12 +377,12 @@ func checkWebsiteReachable(ctx context.Context) error {
 	
 	req, err := http.NewRequestWithContext(ctx, "GET", URL,  nil)
 	if err != nil {
-		return fmt.Errorf("failed to create request: %v", err)
+		return fmt.Errorf("failed to create request: %w", err)
 	}
 	
 	resp, err := client.Do(req)
 	if err != nil {
-		return fmt.Errorf("failed to reach th2en: %v", err)
+		return fmt.Errorf("failed to reach th2en: %w", err)
 	}
 	defer resp.Body.Close()
 	

@@ -35,7 +35,7 @@ type TknSliceWrapper struct {
 func (m *Module) Tokens(input string) (*TknSliceWrapper, error) {
 	tsw, err := m.Module.Tokens(input)
 	if err != nil {
-		return &TknSliceWrapper{}, fmt.Errorf("lang/%s: %v", Lang, err)
+		return &TknSliceWrapper{}, fmt.Errorf("lang/%s: %w", Lang, err)
 	}
 	customTsw, ok := tsw.(*TknSliceWrapper)
 	if !ok {
@@ -44,7 +44,7 @@ func (m *Module) Tokens(input string) (*TknSliceWrapper, error) {
 
 	tkns, err := assertLangSpecificTokens(customTsw.Slice)
 	if err != nil {
-		return &TknSliceWrapper{}, fmt.Errorf("failed assertion of []%s.Tkn: %v", Lang, err)
+		return &TknSliceWrapper{}, fmt.Errorf("failed assertion of []%s.Tkn: %w", Lang, err)
 	}
 	customTsw.NativeSlice = tkns
 	return customTsw, nil
@@ -56,7 +56,7 @@ func (m *Module) Tokens(input string) (*TknSliceWrapper, error) {
 func (m *Module) LexicalTokens(input string) (*TknSliceWrapper, error) {
 	raw, err := m.Tokens(input)
 	if err != nil {
-		return &TknSliceWrapper{}, fmt.Errorf("lang/%s: %v", Lang, err)
+		return &TknSliceWrapper{}, fmt.Errorf("lang/%s: %w", Lang, err)
 	}
 	return raw.Filter(), nil
 }

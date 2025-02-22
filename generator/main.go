@@ -80,7 +80,7 @@ func loadConfigs(configDir string) (map[string]LanguageConfig, error) {
 	
 	files, err := os.ReadDir(configDir)
 	if err != nil {
-		return nil, fmt.Errorf("failed to read config directory: %v", err)
+		return nil, fmt.Errorf("failed to read config directory: %w", err)
 	}
 	
 	for _, file := range files {

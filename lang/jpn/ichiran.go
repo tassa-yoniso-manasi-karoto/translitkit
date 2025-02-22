@@ -31,7 +31,7 @@ func (p *IchiranProvider) SaveConfig(cfg map[string]interface{}) error {
 
 func (p *IchiranProvider) Init() (err error) {
 	if err = ichiran.Init(); err != nil {
-		return fmt.Errorf("failed to initialize ichiran: %v", err)
+		return fmt.Errorf("failed to initialize ichiran: %w", err)
 	}
 	p.applyConfig()
 	return
@@ -39,7 +39,7 @@ func (p *IchiranProvider) Init() (err error) {
 
 func (p *IchiranProvider) InitRecreate(noCache bool) (err error) {
 	if err = ichiran.InitRecreate(noCache); err != nil {
-		return fmt.Errorf("failed to initialize ichiran: %v", err)
+		return fmt.Errorf("failed to initialize ichiran: %w", err)
 	}
 	p.applyConfig()
 	return
@@ -120,11 +120,11 @@ func init() {
 	}
 	err := common.Register(Lang, common.CombinedType, "ichiran", IchiranEntry)
 	if err != nil {
-		panic(fmt.Sprintf("failed to register ichiran provider: %v", err))
+		panic(fmt.Sprintf("failed to register ichiran provider: %w", err))
 	}
 	err = common.SetDefault(Lang, []common.ProviderEntry{IchiranEntry}) // TODO add robepike/nihongo to force romanization after
 	if err != nil {
-		panic(fmt.Sprintf("failed to set ichiran as default: %v", err))
+		panic(fmt.Sprintf("failed to set ichiran as default: %w", err))
 	}
 	
 	ichiranScheme := common.TranslitScheme{
@@ -153,7 +153,7 @@ func init() {
 // 		Type:        common.TokenizerType,
 // 	})
 // 	if err != nil {
-// 		panic(fmt.Sprintf("failed to register mecab provider: %v", err))
+// 		panic(fmt.Sprintf("failed to register mecab provider: %w", err))
 // 	}
 
 // 	// Register Hepburn transliterator
@@ -163,7 +163,7 @@ func init() {
 // 		Type:        common.TransliteratorType,
 // 	})
 // 	if err != nil {
-// 		panic(fmt.Sprintf("failed to register hepburn provider: %v", err))
+// 		panic(fmt.Sprintf("failed to register hepburn provider: %w", err))
 // 	}
 
 // 	// Set as default providers (both needed for separate mode)
@@ -178,7 +178,7 @@ func init() {
 // 		},
 // 	})
 // 	if err != nil {
-// 		panic(fmt.Sprintf("failed to set mecab+hepburn as default: %v", err))
+// 		panic(fmt.Sprintf("failed to set mecab+hepburn as default: %w", err))
 // 	}
 // }
 

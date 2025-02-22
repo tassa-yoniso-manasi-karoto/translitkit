@@ -78,13 +78,13 @@ func NewModule(languageCode string, providerNames ...string) (*Module, error) {
 		// Get tokenizer
 		tokenizer, err := getProvider(lang, TokenizerType, providerNames[0])
 		if err != nil {
-			return nil, fmt.Errorf("tokenizer %s not found: %v", providerNames[0], err)
+			return nil, fmt.Errorf("tokenizer %s not found: %w", providerNames[0], err)
 		}
 		
 		// Get transliterator
 		transliterator, err := getProvider(lang, TransliteratorType, providerNames[1])
 		if err != nil {
-			return nil, fmt.Errorf("transliterator %s not found: %v", providerNames[1], err)
+			return nil, fmt.Errorf("transliterator %s not found: %w", providerNames[1], err)
 		}
 
 		module.Tokenizer = tokenizer
@@ -137,7 +137,7 @@ func (m *Module) Init() error {
 		m.Tokenizer.WithContext(m.ctx)
 	}
 	if err := m.Tokenizer.Init(); err != nil {
-		return fmt.Errorf("tokenizer init failed: %v", err)
+		return fmt.Errorf("tokenizer init failed: %w", err)
 	}
 
 	// Propagate context to the transliterator
@@ -145,7 +145,7 @@ func (m *Module) Init() error {
 		m.Transliterator.WithContext(m.ctx)
 	}
 	if err := m.Transliterator.Init(); err != nil {
-		return fmt.Errorf("transliterator init failed: %v", err)
+		return fmt.Errorf("transliterator init failed: %w", err)
 	}
 
 	return nil
@@ -164,14 +164,14 @@ func (m *Module) InitRecreate(noCache bool) error {
 		m.Tokenizer.WithContext(m.ctx)
 	}
 	if err := m.Tokenizer.InitRecreate(noCache); err != nil {
-		return fmt.Errorf("tokenizer InitRecreate failed: %v", err)
+		return fmt.Errorf("tokenizer InitRecreate failed: %w", err)
 	}
 
 	if m.ctx != nil {
 		m.Transliterator.WithContext(m.ctx)
 	}
 	if err := m.Transliterator.InitRecreate(noCache); err != nil {
-		return fmt.Errorf("transliterator InitRecreate failed: %v", err)
+		return fmt.Errorf("transliterator InitRecreate failed: %w", err)
 	}
 
 	return nil
@@ -186,22 +186,22 @@ func (m *Module) MustInit() {
 func (m *Module) Tokens(input string) (AnyTokenSliceWrapper, error) {
 	tsw, err := serialize(input, m.getMaxQueryLen())
 	if err != nil {
-		return nil, fmt.Errorf("input serialization failed: len(input)=%d, %v", len(input), err)
+		return nil, fmt.Errorf("input serialization failed: len(input)=%d, %w", len(input), err)
 	}
 
 	if m.Combined != nil {
 		tsw, err = m.Combined.ProcessFlowController(tsw)
 		if err != nil {
-			return &TknSliceWrapper{}, fmt.Errorf("combined processing failed: %v", err)
+			return &TknSliceWrapper{}, fmt.Errorf("combined processing failed: %w", err)
 		}
 	} else {
 		tsw, err = m.Tokenizer.ProcessFlowController(tsw)
 		if err != nil {
-			return &TknSliceWrapper{}, fmt.Errorf("tokenization failed: %v", err)
+			return &TknSliceWrapper{}, fmt.Errorf("tokenization failed: %w", err)
 		}
 		if m.Transliterator != nil {
 			if tsw, err = m.Transliterator.ProcessFlowController(tsw); err != nil {
-				return &TknSliceWrapper{}, fmt.Errorf("transliteration failed: %v", err)
+				return &TknSliceWrapper{}, fmt.Errorf("transliteration failed: %w", err)
 			}
 		}
 	}
@@ -270,10 +270,10 @@ func (m *Module) Close() error {
 		return m.Combined.Close()
 	}
 	if err := m.Tokenizer.Close(); err != nil {
-		return fmt.Errorf("tokenizer close failed: %v", err)
+		return fmt.Errorf("tokenizer close failed: %w", err)
 	}
 	if err := m.Transliterator.Close(); err != nil {
-		return fmt.Errorf("transliterator close failed: %v", err)
+		return fmt.Errorf("transliterator close failed: %w", err)
 	}
 	return nil
 }

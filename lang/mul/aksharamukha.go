@@ -50,7 +50,7 @@ func (p *AksharamukhaProvider) Init() (err error) {
 	}
 
 	if err = aksharamukha.Init(); err != nil {
-		return fmt.Errorf("failed to initialize aksharamukha: %v", err)
+		return fmt.Errorf("failed to initialize aksharamukha: %w", err)
 	}
 	p.applyConfig()
 	return
@@ -62,7 +62,7 @@ func (p *AksharamukhaProvider) InitRecreate(noCache bool) (err error) {
 	}
 
 	if err = aksharamukha.InitRecreate(noCache); err != nil {
-		return fmt.Errorf("failed to initialize aksharamukha: %v", err)
+		return fmt.Errorf("failed to initialize aksharamukha: %w", err)
 	}
 	p.applyConfig()
 	return

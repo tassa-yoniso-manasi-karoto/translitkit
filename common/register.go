@@ -103,7 +103,7 @@ func defaultModule(lang string) (*Module, error) {
 	}
 
 	if err := m.setProviders(langProviders.Defaults); err != nil {
-		return nil, fmt.Errorf("failed to set providers: %v", err)
+		return nil, fmt.Errorf("failed to set providers: %w", err)
 	}
 
 	return m, nil

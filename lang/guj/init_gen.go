@@ -24,6 +24,6 @@ func init() {
 
 	err := common.SetDefault(Lang, defaultProviders)
 	if err != nil {
-		panic(fmt.Sprintf("failed to set default providers: %v", err))
+		panic(fmt.Sprintf("failed to set default providers: %w", err))
 	}
 }
