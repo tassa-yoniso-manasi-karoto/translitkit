@@ -4,10 +4,13 @@ package common
 import (
 	"fmt"
 	"sync"
+	"errors"
 	
 	"github.com/k0kubun/pp"
 	"github.com/gookit/color"
 )
+
+var ErrNoSchemesRegistered = errors.New("no transliteration schemes registered for provided language")
 
 type TranslitScheme struct {
 	Name         string // e.g., "IAST", "Harvard-Kyoto"
@@ -65,7 +68,7 @@ func GetSchemes(languageCode string) ([]TranslitScheme, error) {
 
 	schemes, exists := GlobalSchemeRegistry.schemes[lang]
 	if !exists {
-		return nil, fmt.Errorf("no transliteration schemes registered for language %s", lang)
+		return nil, ErrNoSchemesRegistered
 	}
 
 	return schemes, nil
@@ -83,7 +86,7 @@ func GetSchemeModule(languageCode, schemeName string) (*Module, error) {
 	GlobalSchemeRegistry.mu.RUnlock()
 
 	if !exists {
-		return nil, fmt.Errorf("no transliteration schemes registered for language %s", lang)
+		return nil, ErrNoSchemesRegistered
 	}
 
 	var targetScheme TranslitScheme
