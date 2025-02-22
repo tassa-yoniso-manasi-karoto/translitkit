@@ -9,7 +9,8 @@ import (
 )
 
 func serialize(input string, max int) (AnyTokenSliceWrapper, error) {
-	chunks, err := chunkify(input, max)
+	c := NewChunkifier(max)
+	chunks, err := c.Chunkify(input)
 	return &TknSliceWrapper{Raw: chunks}, err
 }
 
