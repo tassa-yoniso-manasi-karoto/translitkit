@@ -217,7 +217,7 @@ func (m *Module) LexicalTokens(input string) (AnyTokenSliceWrapper, error) {
 	if err != nil {
 		return nil, err
 	}
-	return FilterAny(raw), nil
+	return ToAnyLexicalTokens(raw), nil
 }
 
 

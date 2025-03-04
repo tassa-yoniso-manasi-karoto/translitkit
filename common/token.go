@@ -37,7 +37,7 @@ type AnyToken interface {
 
 // FilterAny receives any token slice wrapper and returns a new wrapper
 // containing only tokens that contain lexical content (ie. it excludes space, punctuations...)
-func FilterAny(wrapper AnyTokenSliceWrapper) AnyTokenSliceWrapper {
+func ToAnyLexicalTokens(wrapper AnyTokenSliceWrapper) AnyTokenSliceWrapper {
 	filtered := &TknSliceWrapper{}
 	for i := 0; i < wrapper.Len(); i++ {
 		token := wrapper.GetIdx(i)
@@ -51,7 +51,7 @@ func FilterAny(wrapper AnyTokenSliceWrapper) AnyTokenSliceWrapper {
 
 // Filter receives *common.TknSliceWrapper and returns a new wrapper
 // containing only tokens that contain lexical content (ie. it excludes space, punctuations...)
-func Filter(wrapper *TknSliceWrapper) *TknSliceWrapper {
+func ToLexicalTokens(wrapper *TknSliceWrapper) *TknSliceWrapper {
 	filtered := &TknSliceWrapper{}
 	for i := 0; i < wrapper.Len(); i++ {
 		token := wrapper.GetIdx(i)

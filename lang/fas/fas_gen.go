@@ -58,12 +58,12 @@ func (m *Module) LexicalTokens(input string) (*TknSliceWrapper, error) {
 	if err != nil {
 		return &TknSliceWrapper{}, fmt.Errorf("lang/%s: %w", Lang, err)
 	}
-	return raw.Filter(), nil
+	return raw.ToLexicalTokens(), nil
 }
 
 // Filter returns a new TknSliceWrapper containing only tokens that have lexical content.
 // It processes the Tokens output without invoking further module-level processing.
-func (w *TknSliceWrapper) Filter() *TknSliceWrapper {
+func (w *TknSliceWrapper) ToLexicalTokens() *TknSliceWrapper {
 	filtered := &TknSliceWrapper{
 		TknSliceWrapper: common.TknSliceWrapper{},
 		NativeSlice: make([]*Tkn, 0, len(w.NativeSlice)),
