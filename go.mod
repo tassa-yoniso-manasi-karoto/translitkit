@@ -10,12 +10,13 @@ require (
 	github.com/mehanizm/iuliia-go v1.0.3-0.20250108063731-2a2e9aba9125
 	github.com/rivo/uniseg v0.4.7
 	github.com/rs/zerolog v1.33.0
-	github.com/tassa-yoniso-manasi-karoto/go-aksharamukha v0.0.0-20250119041459-d91450df40c3
-	github.com/tassa-yoniso-manasi-karoto/go-ichiran v0.0.0-20250119063737-96ed9cfa2288
+	github.com/tassa-yoniso-manasi-karoto/go-aksharamukha v0.0.0-20250222130736-c9e6da206ea6
+	github.com/tassa-yoniso-manasi-karoto/go-ichiran v0.0.0-20250304080038-7d86df5c2dc4
 	gopkg.in/yaml.v2 v2.4.0
 )
 
 require (
+	al.essio.dev/pkg/shellescape v1.5.1 // indirect
 	dario.cat/mergo v1.0.1 // indirect
 	github.com/AdaLogics/go-fuzz-headers v0.0.0-20230811130428-ced1acdcaa24 // indirect
 	github.com/AlecAivazis/survey/v2 v2.3.7 // indirect
@@ -109,8 +110,8 @@ require (
 	github.com/kevinburke/ssh_config v1.2.0 // indirect
 	github.com/klauspost/compress v1.17.11 // indirect
 	github.com/mailru/easyjson v0.7.7 // indirect
-	github.com/mattn/go-colorable v0.1.13 // indirect
-	github.com/mattn/go-isatty v0.0.19 // indirect
+	github.com/mattn/go-colorable v0.1.14 // indirect
+	github.com/mattn/go-isatty v0.0.20 // indirect
 	github.com/mattn/go-runewidth v0.0.15 // indirect
 	github.com/mattn/go-shellwords v1.0.12 // indirect
 	github.com/mgutz/ansi v0.0.0-20170206155736-9520e82c474b // indirect
@@ -157,7 +158,7 @@ require (
 	github.com/spf13/cobra v1.8.1 // indirect
 	github.com/spf13/pflag v1.0.5 // indirect
 	github.com/stretchr/testify v1.10.0 // indirect
-	github.com/tassa-yoniso-manasi-karoto/dockerutil v0.0.0-20250119023335-70191e1ef1f1 // indirect
+	github.com/tassa-yoniso-manasi-karoto/dockerutil v0.0.0-20250222130553-4736132089a9 // indirect
 	github.com/theupdateframework/notary v0.7.0 // indirect
 	github.com/tidwall/pretty v1.2.1 // indirect
 	github.com/tilt-dev/fsnotify v1.4.8-0.20220602155310-fff9c274a375 // indirect
@@ -196,7 +197,7 @@ require (
 	golang.org/x/net v0.33.0 // indirect
 	golang.org/x/oauth2 v0.23.0 // indirect
 	golang.org/x/sync v0.10.0 // indirect
-	golang.org/x/sys v0.28.0 // indirect
+	golang.org/x/sys v0.30.0 // indirect
 	golang.org/x/term v0.27.0 // indirect
 	golang.org/x/text v0.21.0 // indirect
 	golang.org/x/time v0.8.0 // indirect
