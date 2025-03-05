@@ -324,14 +324,14 @@ func defaultSpacingRule(prev, current string) bool {
 	
 	// 1.1 No space before closing punctuation or punctuation that follows text
 	switch firstCurr {
-	case '.', ',', '!', '?', ':', ';', ')', ']', '}', '»', '・', '…', '"', ''', '」',
+	case '.', ',', '!', '?', ':', ';', ')', ']', '}', '»', '・', '…', '"', '\'', '」',
 		 '】', '々', '～', '。', '、', '：', '；', '，', '．', '！', '？', '）', '］', '｝', '』', '》', '〉':
 		return false
 	}
 
 	// 1.2 No space after opening punctuation or punctuation that precedes text
 	switch lastPrev {
-	case '(', '[', '{', '«', '"', ''', '「', '【', '（', '［', '『', '《', '〈':
+	case '(', '[', '{', '«', '"', '\'', '「', '【', '（', '［', '『', '《', '〈':
 		return false
 	}
 	
@@ -363,8 +363,8 @@ func defaultSpacingRule(prev, current string) bool {
 	}
 	
 	// 3.2 No spaces between Latin characters and certain scripts
-	isLastLatinAlpha := unicode.Is(unicode.Latin, lastPrev) && unicode.IsLetter(lastPrev)
-	isFirstLatinAlpha := unicode.Is(unicode.Latin, firstCurr) && unicode.IsLetter(firstCurr)
+	//isLastLatinAlpha := unicode.Is(unicode.Latin, lastPrev) && unicode.IsLetter(lastPrev)
+	//isFirstLatinAlpha := unicode.Is(unicode.Latin, firstCurr) && unicode.IsLetter(firstCurr)
 	
 	// 3.3 Thai script doesn't use spaces between words
 	if unicode.Is(unicode.Thai, lastPrev) && unicode.Is(unicode.Thai, firstCurr) {
