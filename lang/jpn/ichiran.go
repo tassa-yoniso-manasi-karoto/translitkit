@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"math"
 	"context"
+	"strings"
 	
 	"github.com/tassa-yoniso-manasi-karoto/go-ichiran"
 	"github.com/tassa-yoniso-manasi-karoto/translitkit/common"
@@ -113,6 +114,8 @@ func (p *IchiranProvider) processChunks(chunks []string) (common.AnyTokenSliceWr
 		for i, jt := range *jTokens {
 			lexSurfaces[i] = jt.Surface
 		}
+		// rm because it is already substituted by ichiran for western punctuation
+		chunk = RemoveJapanesePunctuation(chunk)
 
 		// 2) Combine lexical tokens w/ filler
 		integrated := common.IntegrateProviderTokens(chunk, lexSurfaces)
@@ -169,6 +172,31 @@ func init() {
 		common.Log.Warn().Msg("Failed to register scheme " + ichiranScheme.Name)
 	}
 }
+
+// RemoveJapanesePunctuation removes all occurrences of Japanese punctuation characters
+// from the provided string. The punctuation characters include:
+//   ・ "、" (U+3001)
+//   ・ "。" (U+3002)
+//   ・ "・" (U+30FB)
+//   ・ "「" (U+300C)
+//   ・ "」" (U+300D)
+//   ・ "，" (U+FF0C)
+//   ・ "．" (U+FF0E)
+//   ・ "？" (U+FF1F)
+//   ・ "！" (U+FF01)
+//   ・ "（" (U+FF08)
+//   ・ "）" (U+FF09)
+func RemoveJapanesePunctuation(s string) string {
+	// Define the set of punctuation characters to remove.
+	punct := "、。・「」，．？！（）"
+	return strings.Map(func(r rune) rune {
+		if strings.ContainsRune(punct, r) {
+			return -1 // drop the character
+		}
+		return r
+	}, s)
+}
+
 
 func placeholder() {
 	color.Redln(" 𝒻*** 𝓎ℴ𝓊 𝒸ℴ𝓂𝓅𝒾𝓁ℯ𝓇")
