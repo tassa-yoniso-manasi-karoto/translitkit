@@ -357,8 +357,8 @@ func defaultSpacingRule(prev, current string) bool {
 	   unicode.Is(unicode.Katakana, lastPrev) || unicode.Is(unicode.Hangul, lastPrev) {
 		if unicode.Is(unicode.Han, firstCurr) || unicode.Is(unicode.Hiragana, firstCurr) || 
 		   unicode.Is(unicode.Katakana, firstCurr) || unicode.Is(unicode.Hangul, firstCurr) {
-			// No spaces between consecutive characters of these scripts
-			return false
+			// Force space between consecutive characters of these scripts = tokenization
+			return true
 		}
 	}
 	
@@ -368,7 +368,8 @@ func defaultSpacingRule(prev, current string) bool {
 	
 	// 3.3 Thai script doesn't use spaces between words
 	if unicode.Is(unicode.Thai, lastPrev) && unicode.Is(unicode.Thai, firstCurr) {
-		return false
+		// Force space between consecutive characters of these scripts = tokenization
+		return true
 	}
 	
 	// 3.4 No spaces in Indic scripts between characters of the same script
