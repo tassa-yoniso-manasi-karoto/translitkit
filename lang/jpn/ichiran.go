@@ -70,44 +70,76 @@ func (p *IchiranProvider) Close() error {
 
 
 
-func (p *IchiranProvider) ProcessFlowController(input common.AnyTokenSliceWrapper) (results common.AnyTokenSliceWrapper, err error) {
+// ProcessFlowController either processes raw input chunks or returns an error if tokens are passed in.
+func (p *IchiranProvider) ProcessFlowController(input common.AnyTokenSliceWrapper) (common.AnyTokenSliceWrapper, error) {
 	raw := input.GetRaw()
 	if input.Len() == 0 && len(raw) == 0 {
-		return nil, fmt.Errorf("empty input was passed to processor")
+		return nil, fmt.Errorf("ichiran: empty input was passed to processor")
 	}
-	ProviderType := p.GetType()
-	if len(raw) != 0 {
-		switch ProviderType {
-		case common.TokenizerType:
-		case common.TransliteratorType:
-		case common.CombinedType:
-			return p.process(raw)
+
+	switch p.GetType() {
+	case common.CombinedType:
+		if len(raw) != 0 {
+			// We'll analyze the raw text
+			outWrapper, err := p.processChunks(raw)
+			if err != nil {
+				return nil, err
+			}
+			input.ClearRaw() // mark that we've consumed the raw data
+			return outWrapper, nil
 		}
-		// Important to clear the field Raw, otherwise Tkn would be ignored by next processor
-		input.ClearRaw()
-	} else { // generic token processor: take common.Tkn as well as lang-specic tokens that have common.Tkn as their embedded field
-		switch ProviderType {
-		case common.TokenizerType:
-			// Either refuse or add linguistic annotations
-			return nil, fmt.Errorf("not implemented atm: Tokens is not accepted as input type for a tokenizer")
-		case common.TransliteratorType:
-		case common.CombinedType:
-			// Refuse because it is already tokenized
-			return nil, fmt.Errorf("not implemented atm: Tokens is not accepted as input type for a provider that combines tokenizer+transliterator")
-		}
+		// If we *already* have tokens in input, we have nowhere to pass them
+		return nil, fmt.Errorf("ichiran: not implemented for pre-tokenized data (we are combined)")
+
+	default:
+		return nil, fmt.Errorf("ichiran: unsupported provider type %s", p.GetType())
 	}
-	return nil, fmt.Errorf("handling not implemented for '%s' with ProviderType '%s'", p.Name(), ProviderType)
 }
 
-// returns jpn.TknSliceWrapper that satisfies AnyTokenSliceWrapper
-func (p *IchiranProvider) process(chunks []string) (common.AnyTokenSliceWrapper, error) {
+// processChunks takes the raw input chunks, runs morphological analysis, and integrates filler tokens.
+func (p *IchiranProvider) processChunks(chunks []string) (common.AnyTokenSliceWrapper, error) {
 	tsw := &TknSliceWrapper{}
+
 	for idx, chunk := range chunks {
-		JSONTokens, err := ichiran.Analyze(chunk)
+		// 1) Ichiran morphological analysis
+		jTokens, err := ichiran.Analyze(chunk)
 		if err != nil {
-			return nil, fmt.Errorf("failed to analyse chunk %d of %d: %v\nraw_chunk=>>>%s<<<", idx, len(chunks), err, chunk)
+			return nil, fmt.Errorf("ichiran: failed to analyze chunk %d: %w\nraw_chunk=>>>%s<<<", idx, err, chunk)
 		}
-		tsw.Append(ToAnyTokenSlice(JSONTokens)...)
+
+		// Build a string slice of lexical surfaces from jTokens
+		// so that we can call IntegrateProviderTokens to preserve filler
+		lexSurfaces := make([]string, len(*jTokens))
+		for i, jt := range *jTokens {
+			lexSurfaces[i] = jt.Surface
+		}
+
+		// 2) Combine lexical tokens w/ filler
+		integrated := common.IntegrateProviderTokens(chunk, lexSurfaces)
+
+		// We'll iterate integrated tokens, filling morphological data for lexical ones
+		lexCount := 0
+		for _, tkn := range integrated {
+			if tkn.IsLexical {
+				// 3) This token corresponds to jTokens[lexCount]
+				ichToken := (*jTokens)[lexCount]
+				lexCount++
+
+				// Convert to jpn.Tkn (with morphological data)
+				jpnTkn := ToJapaneseToken(ichToken)
+				// We also preserve the tkn positions if needed:
+				jpnTkn.Position.Start = tkn.Position.Start
+				jpnTkn.Position.End = tkn.Position.End
+
+				tsw.Append(jpnTkn)
+			} else {
+				// 4) Non-lexical filler => just preserve as is
+				fillerTkn := &Tkn{
+					Tkn: *tkn, // embed the original Tkn fields
+				}
+				tsw.Append(fillerTkn)
+			}
+		}
 	}
 	return tsw, nil
 }
@@ -122,14 +154,14 @@ func init() {
 	if err != nil {
 		panic(fmt.Sprintf("failed to register ichiran provider: %w", err))
 	}
-	err = common.SetDefault(Lang, []common.ProviderEntry{IchiranEntry}) // TODO add robepike/nihongo to force romanization after
+	err = common.SetDefault(Lang, []common.ProviderEntry{IchiranEntry})
 	if err != nil {
 		panic(fmt.Sprintf("failed to set ichiran as default: %w", err))
 	}
 	
 	ichiranScheme := common.TranslitScheme{
-		Name: "Hepburn (Ichiran)",
-		Description: "Hepburn romanization (Ichiran)",
+		Name: "Hepburn",
+		Description: "Hepburn romanization",
 		Provider: "ichiran",
 		NeedsDocker: true,
 	}
@@ -137,50 +169,6 @@ func init() {
 		common.Log.Warn().Msg("Failed to register scheme " + ichiranScheme.Name)
 	}
 }
-
-// // Example of registering separate providers:
-// func init() {
-// 	ja := iso.FromAnyCode("ja")
-
-// 	// Create provider instances
-// 	mecab := &MecabProvider{}
-// 	hepburn := &HepburnProvider{}
-
-// 	// Register MeCab tokenizer
-// 	err := common.Register(ja, common.TokenizerType, "mecab", common.ProviderEntry{
-// 		Provider:     mecab,
-// 		Capabilities: []string{"tokenization"},
-// 		Type:        common.TokenizerType,
-// 	})
-// 	if err != nil {
-// 		panic(fmt.Sprintf("failed to register mecab provider: %w", err))
-// 	}
-
-// 	// Register Hepburn transliterator
-// 	err = common.Register(ja, common.TransliteratorType, "hepburn", common.ProviderEntry{
-// 		Provider:     hepburn,
-// 		Capabilities: []string{"romaji"},
-// 		Type:        common.TransliteratorType,
-// 	})
-// 	if err != nil {
-// 		panic(fmt.Sprintf("failed to register hepburn provider: %w", err))
-// 	}
-
-// 	// Set as default providers (both needed for separate mode)
-// 	err = common.SetDefault(ja, []common.ProviderEntry{
-// 		{
-// 			Provider: mecab,
-// 			Type:    common.TokenizerType,
-// 		},
-// 		{
-// 			Provider: hepburn,
-// 			Type:    common.TransliteratorType,
-// 		},
-// 	})
-// 	if err != nil {
-// 		panic(fmt.Sprintf("failed to set mecab+hepburn as default: %w", err))
-// 	}
-// }
 
 func placeholder() {
 	color.Redln(" 𝒻*** 𝓎ℴ𝓊 𝒸ℴ𝓂𝓅𝒾𝓁ℯ𝓇")
