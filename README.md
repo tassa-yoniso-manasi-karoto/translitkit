@@ -69,13 +69,18 @@ See docs of sub package "common" for the basic methods set available across lang
 
 "combined" means the provider implements both transliteration and tokenization.
 
+### Chinese
+
+- [gojieba](https://github.com/yanyiwu/gojieba) **[tokenized]**
+- [go-pinyin](https://github.com/mozillazg/go-pinyin) **[transliterator]**
+
 ### Japanese
 
 - [Ichiran](https://github.com/tshatrov/ichiran) **[combined]**
 
 ### Thai
 
- - [thai2english.com](https://www.thai2english.com) scraper **[combined]** *(may be obsolete in the future but currently is the best option since the docker img of pythainlp is broken)*
+ - [thai2english.com](https://www.thai2english.com) scraper **[combined]** *(may be obsoleted in the future but currently is the best option since the docker image of pythainlp is broken, and the devs aren't too much in a hurry to fix it: issue [#1049](https://github.com/PyThaiNLP/pythainlp/issues/1049))*
 
 ### Multilingual
 
