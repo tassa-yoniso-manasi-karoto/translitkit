@@ -305,39 +305,138 @@ type SpacingRule func(prev, current string) bool
 
 // defaultSpacingRule is our configurable rule for whether to insert a space between two tokens.
 func defaultSpacingRule(prev, current string) bool {
-	// If current token is empty, no space is needed.
-	if current == "" {
+	// If either token is empty, no space is needed
+	if prev == "" || current == "" {
 		return false
 	}
 
-	// Do not add a space if the current token starts with punctuation
-	// that should attach to the previous token.
-	runes := []rune(current)
-	if len(runes) > 0 {
-		first := runes[0]
-		// Common punctuation marks that should not have a preceding space.
-		switch first {
-		case '.', ',', '!', '?', ':', ';', ')', ']', '}', '»':
-			return false
-		}
-		// Also, if Unicode categorizes the first rune as punctuation,
-		// we might decide not to insert a space.
-		if unicode.IsPunct(first) {
+	prevRunes := []rune(prev)
+	currRunes := []rune(current)
+	
+	if len(prevRunes) == 0 || len(currRunes) == 0 {
+		return false
+	}
+
+	lastPrev := prevRunes[len(prevRunes)-1]
+	firstCurr := currRunes[0]
+
+	// 1. Handle punctuation that should not have spacing
+	
+	// 1.1 No space before closing punctuation or punctuation that follows text
+	switch firstCurr {
+	case '.', ',', '!', '?', ':', ';', ')', ']', '}', '»', '・', '…', '"', ''', '」',
+		 '】', '々', '～', '。', '、', '：', '；', '，', '．', '！', '？', '）', '］', '｝', '』', '》', '〉':
+		return false
+	}
+
+	// 1.2 No space after opening punctuation or punctuation that precedes text
+	switch lastPrev {
+	case '(', '[', '{', '«', '"', ''', '「', '【', '（', '［', '『', '《', '〈':
+		return false
+	}
+	
+	// 2. Detect Unicode character categories
+	
+	// 2.1 No space between punctuation and text
+	if unicode.IsPunct(lastPrev) && !unicode.IsPunct(firstCurr) {
+		return false
+	}
+	if !unicode.IsPunct(lastPrev) && unicode.IsPunct(firstCurr) {
+		return false
+	}
+	
+	// 2.2 No space between consecutive punctuation marks
+	if unicode.IsPunct(lastPrev) && unicode.IsPunct(firstCurr) {
+		return false
+	}
+	
+	// 3. Language-specific handling for scripts that don't use spaces
+	
+	// 3.1 East Asian scripts (Chinese, Japanese, Korean)
+	if unicode.Is(unicode.Han, lastPrev) || unicode.Is(unicode.Hiragana, lastPrev) || 
+	   unicode.Is(unicode.Katakana, lastPrev) || unicode.Is(unicode.Hangul, lastPrev) {
+		if unicode.Is(unicode.Han, firstCurr) || unicode.Is(unicode.Hiragana, firstCurr) || 
+		   unicode.Is(unicode.Katakana, firstCurr) || unicode.Is(unicode.Hangul, firstCurr) {
+			// No spaces between consecutive characters of these scripts
 			return false
 		}
 	}
-
-	// Do not add a space if the previous token ends with an opening punctuation.
-	if prev != "" {
-		runesPrev := []rune(prev)
-		last := runesPrev[len(runesPrev)-1]
-		switch last {
-		case '(', '[', '{', '«':
-			return false
-		}
+	
+	// 3.2 No spaces between Latin characters and certain scripts
+	isLastLatinAlpha := unicode.Is(unicode.Latin, lastPrev) && unicode.IsLetter(lastPrev)
+	isFirstLatinAlpha := unicode.Is(unicode.Latin, firstCurr) && unicode.IsLetter(firstCurr)
+	
+	// 3.3 Thai script doesn't use spaces between words
+	if unicode.Is(unicode.Thai, lastPrev) && unicode.Is(unicode.Thai, firstCurr) {
+		return false
 	}
-
-	// Otherwise, insert a space.
+	
+	// 3.4 No spaces in Indic scripts between characters of the same script
+	isLastIndic := unicode.Is(unicode.Devanagari, lastPrev) || unicode.Is(unicode.Bengali, lastPrev) || 
+	              unicode.Is(unicode.Gurmukhi, lastPrev) || unicode.Is(unicode.Gujarati, lastPrev) || 
+	              unicode.Is(unicode.Tamil, lastPrev) || unicode.Is(unicode.Telugu, lastPrev) || 
+	              unicode.Is(unicode.Kannada, lastPrev) || unicode.Is(unicode.Malayalam, lastPrev) || 
+	              unicode.Is(unicode.Sinhala, lastPrev)
+	              
+	isFirstIndic := unicode.Is(unicode.Devanagari, firstCurr) || unicode.Is(unicode.Bengali, firstCurr) || 
+	               unicode.Is(unicode.Gurmukhi, firstCurr) || unicode.Is(unicode.Gujarati, firstCurr) || 
+	               unicode.Is(unicode.Tamil, firstCurr) || unicode.Is(unicode.Telugu, firstCurr) || 
+	               unicode.Is(unicode.Kannada, firstCurr) || unicode.Is(unicode.Malayalam, firstCurr) || 
+	               unicode.Is(unicode.Sinhala, firstCurr)
+	               
+	if isLastIndic && isFirstIndic {
+		return false
+	}
+	
+	// 4. Number and symbol handling
+	
+	// 4.1 No space between numbers and certain symbols
+	if unicode.IsDigit(lastPrev) && (firstCurr == '.' || firstCurr == ',' || firstCurr == '%' || firstCurr == '°' || 
+	   firstCurr == ':' || firstCurr == '-' || firstCurr == '/' || firstCurr == '×' || firstCurr == '⁄') {
+		return false
+	}
+	
+	// 4.2 No space between certain symbols and numbers
+	if (lastPrev == '+' || lastPrev == '-' || lastPrev == '±' || lastPrev == '=' || lastPrev == '<' || lastPrev == '>' || 
+	    lastPrev == '~' || lastPrev == '$' || lastPrev == '€' || lastPrev == '£' || lastPrev == '¥' || 
+	    lastPrev == '₹' || lastPrev == '₽' || lastPrev == '¢' || lastPrev == '/' || lastPrev == ':' || 
+	    lastPrev == '#' || lastPrev == '№') && unicode.IsDigit(firstCurr) {
+		return false
+	}
+	
+	// 4.3 No space between consecutive numbers
+	if unicode.IsDigit(lastPrev) && unicode.IsDigit(firstCurr) {
+		return false
+	}
+	
+	// 5. Special cases
+	
+	// 5.1 No space in contractions with apostrophes
+	if lastPrev == '\'' || firstCurr == '\'' {
+		return false
+	}
+	
+	// 5.2 No space in hyphenated words
+	if lastPrev == '-' || firstCurr == '-' {
+		return false
+	}
+	
+	// 5.3 No space for Arabic/Persian scripts connecting characters
+	if unicode.Is(unicode.Arabic, lastPrev) && unicode.Is(unicode.Arabic, firstCurr) {
+		return false
+	}
+	
+	// 5.4 No space for Hebrew characters
+	if unicode.Is(unicode.Hebrew, lastPrev) && unicode.Is(unicode.Hebrew, firstCurr) {
+		return false
+	}
+	
+	// 5.5 No space for Cyrillic special cases
+	if unicode.Is(unicode.Cyrillic, lastPrev) && lastPrev == 'ь' && unicode.Is(unicode.Cyrillic, firstCurr) {
+		return false
+	}
+	
+	// 6. By default, insert a space between lexical tokens
 	return true
 }
 
