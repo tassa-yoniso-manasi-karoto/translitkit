@@ -8,6 +8,7 @@ import (
 	_ "github.com/tassa-yoniso-manasi-karoto/translitkit/lang/mul"
 	_ "github.com/tassa-yoniso-manasi-karoto/translitkit/lang/jpn"
 	_ "github.com/tassa-yoniso-manasi-karoto/translitkit/lang/tha"
+	_ "github.com/tassa-yoniso-manasi-karoto/translitkit/lang/zho"
 	
 	// Indic: Aksharamukha
 	_ "github.com/tassa-yoniso-manasi-karoto/translitkit/lang/hin"

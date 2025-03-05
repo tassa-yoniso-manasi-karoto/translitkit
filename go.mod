@@ -8,10 +8,13 @@ require (
 	github.com/gookit/color v1.5.4
 	github.com/k0kubun/pp v3.0.1+incompatible
 	github.com/mehanizm/iuliia-go v1.0.3-0.20250108063731-2a2e9aba9125
+	github.com/mozillazg/go-pinyin v0.20.0
 	github.com/rivo/uniseg v0.4.7
 	github.com/rs/zerolog v1.33.0
+	github.com/stretchr/testify v1.10.0
 	github.com/tassa-yoniso-manasi-karoto/go-aksharamukha v0.0.0-20250222130736-c9e6da206ea6
 	github.com/tassa-yoniso-manasi-karoto/go-ichiran v0.0.0-20250304080038-7d86df5c2dc4
+	github.com/yanyiwu/gojieba v1.4.5
 	gopkg.in/yaml.v2 v2.4.0
 )
 
@@ -157,7 +160,6 @@ require (
 	github.com/skratchdot/open-golang v0.0.0-20200116055534-eef842397966 // indirect
 	github.com/spf13/cobra v1.8.1 // indirect
 	github.com/spf13/pflag v1.0.5 // indirect
-	github.com/stretchr/testify v1.10.0 // indirect
 	github.com/tassa-yoniso-manasi-karoto/dockerutil v0.0.0-20250222130553-4736132089a9 // indirect
 	github.com/theupdateframework/notary v0.7.0 // indirect
 	github.com/tidwall/pretty v1.2.1 // indirect
