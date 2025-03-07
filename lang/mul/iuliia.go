@@ -30,6 +30,11 @@ func (p *IuliiaProvider) WithContext(ctx context.Context) {
 	p.ctx = ctx
 }
 
+
+func (p *IuliiaProvider) WithProgressCallback(callback common.ProgressCallback) {
+}
+
+
 // SaveConfig merely stores the config to apply after init
 func (p *IuliiaProvider) SaveConfig(cfg map[string]interface{}) error {
 	p.config = cfg

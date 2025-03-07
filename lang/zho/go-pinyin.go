@@ -33,6 +33,9 @@ func (p *GoPinyinProvider) WithContext(ctx context.Context) {
 	}
 }
 
+func (p *GoPinyinProvider) WithProgressCallback(callback common.ProgressCallback) {
+}
+
 // SaveConfig obtains user config, e.g. {"scheme":"tone2"}.
 func (p *GoPinyinProvider) SaveConfig(cfg map[string]interface{}) error {
 	p.config = cfg

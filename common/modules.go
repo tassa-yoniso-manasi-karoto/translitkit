@@ -32,12 +32,13 @@ type anyModule interface {
 // It contains both Tokenization+Transliteration components.
 
 type Module struct {
-	ctx            context.Context
-	Lang           string // ISO-639 Part 3: i.e. "eng", "zho", "jpn"...
-	ProviderType   ProviderType
-	Tokenizer      Provider[AnyTokenSliceWrapper, AnyTokenSliceWrapper]
-	Transliterator Provider[AnyTokenSliceWrapper, AnyTokenSliceWrapper]
-	Combined       Provider[AnyTokenSliceWrapper, AnyTokenSliceWrapper]
+	ctx              context.Context
+	Lang             string // ISO-639 Part 3: i.e. "eng", "zho", "jpn"...
+	ProviderType     ProviderType
+	Tokenizer        Provider[AnyTokenSliceWrapper, AnyTokenSliceWrapper]
+	Transliterator   Provider[AnyTokenSliceWrapper, AnyTokenSliceWrapper]
+	Combined         Provider[AnyTokenSliceWrapper, AnyTokenSliceWrapper]
+	progressCallback ProgressCallback
 }
 
 // NewModule creates a Module for the specified language using either default Providers
@@ -122,12 +123,38 @@ func (m *Module) WithContext(ctx context.Context) *Module {
 	return m
 }
 
+// WithProgressCallback sets a callback function to track progress of transliteration
+// and returns the module for chaining.
+func (m *Module) WithProgressCallback(callback ProgressCallback) *Module {
+	m.progressCallback = callback
+	
+	// Pass the callback to the appropriate provider(s)
+	if m.Combined != nil {
+		m.Combined.WithProgressCallback(callback)
+	} else {
+		// For separate providers, pass it to the transliterator
+		// as it's usually the one doing the chunked processing
+		if m.Transliterator != nil {
+			m.Transliterator.WithProgressCallback(callback)
+		}
+		if m.Tokenizer != nil {
+			m.Tokenizer.WithProgressCallback(callback)
+		}
+	}
+	
+	return m
+}
+
 // Init initializes the module (and its providers) using the stored context (if any).
 func (m *Module) Init() error {
 	if m.Combined != nil {
 		// Propagate context to the combined provider
 		if m.ctx != nil {
 			m.Combined.WithContext(m.ctx)
+		}
+		// Pass progress callback if set
+		if m.progressCallback != nil {
+			m.Combined.WithProgressCallback(m.progressCallback)
 		}
 		return m.Combined.Init()
 	}
@@ -136,6 +163,10 @@ func (m *Module) Init() error {
 	if m.ctx != nil {
 		m.Tokenizer.WithContext(m.ctx)
 	}
+	// Pass progress callback if set
+	if m.progressCallback != nil {
+		m.Tokenizer.WithProgressCallback(m.progressCallback)
+	}
 	if err := m.Tokenizer.Init(); err != nil {
 		return fmt.Errorf("tokenizer init failed: %w", err)
 	}
@@ -143,6 +174,10 @@ func (m *Module) Init() error {
 	// Propagate context to the transliterator
 	if m.ctx != nil {
 		m.Transliterator.WithContext(m.ctx)
+	}
+	// Pass progress callback if set
+	if m.progressCallback != nil && m.Transliterator != nil {
+		m.Transliterator.WithProgressCallback(m.progressCallback)
 	}
 	if err := m.Transliterator.Init(); err != nil {
 		return fmt.Errorf("transliterator init failed: %w", err)
@@ -157,11 +192,19 @@ func (m *Module) InitRecreate(noCache bool) error {
 		if m.ctx != nil {
 			m.Combined.WithContext(m.ctx)
 		}
+		// Pass progress callback if set
+		if m.progressCallback != nil {
+			m.Combined.WithProgressCallback(m.progressCallback)
+		}
 		return m.Combined.InitRecreate(noCache)
 	}
 
 	if m.ctx != nil {
 		m.Tokenizer.WithContext(m.ctx)
+	}
+	// Pass progress callback if set
+	if m.progressCallback != nil {
+		m.Tokenizer.WithProgressCallback(m.progressCallback)
 	}
 	if err := m.Tokenizer.InitRecreate(noCache); err != nil {
 		return fmt.Errorf("tokenizer InitRecreate failed: %w", err)
@@ -169,6 +212,10 @@ func (m *Module) InitRecreate(noCache bool) error {
 
 	if m.ctx != nil {
 		m.Transliterator.WithContext(m.ctx)
+	}
+	// Pass progress callback if set
+	if m.progressCallback != nil && m.Transliterator != nil {
+		m.Transliterator.WithProgressCallback(m.progressCallback)
 	}
 	if err := m.Transliterator.InitRecreate(noCache); err != nil {
 		return fmt.Errorf("transliterator InitRecreate failed: %w", err)
@@ -298,6 +345,26 @@ func (m *Module) getMaxQueryLen() int {
 	}
 
 	return getQueryLenLimit(providers...)
+}
+
+// SupportsProgress checks if this module's providers can report progress during processing.
+// Returns true if at least one provider supports progress reporting, false otherwise.
+func (m *Module) SupportsProgress() bool {
+	if m.Combined != nil {
+		return SupportsProgress(m.Combined)
+	}
+	
+	// For separate providers, check if the transliterator supports progress
+	// since it's usually the one doing the chunked processing
+	if m.Transliterator != nil {
+		return SupportsProgress(m.Transliterator)
+	}
+	
+	if m.Tokenizer != nil {
+		return SupportsProgress(m.Tokenizer)
+	}
+	
+	return false
 }
 
 func (m *Module) setProviders(providers []ProviderEntry) error {

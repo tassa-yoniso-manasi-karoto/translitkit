@@ -22,10 +22,11 @@ var logger = common.Log.With().Str("provider", "thai2english.com").Logger()
 
 // TH2ENProvider satisfies the Provider interface
 type TH2ENProvider struct {
-	ctx		context.Context
-	config		map[string]interface{}
-	browser		*rod.Browser
-	targetScheme	string
+	ctx              context.Context
+	config           map[string]interface{}
+	browser          *rod.Browser
+	targetScheme     string
+	progressCallback common.ProgressCallback
 }
 
 
@@ -100,6 +101,10 @@ func (p *TH2ENProvider) GetMaxQueryLen() int {
 
 func (p *TH2ENProvider) Close() error {
 	return p.browser.Close()
+}
+
+func (p *TH2ENProvider) WithProgressCallback(callback common.ProgressCallback) {
+	p.progressCallback = callback
 }
 
 func (p *TH2ENProvider) selectTranslitScheme(scheme string) error {
@@ -217,12 +222,18 @@ func (p *TH2ENProvider) process(chunks []string) (common.AnyTokenSliceWrapper, e
 	dicTlit := make(map[string]string)
 	dicGloss := make(map[string][]common.Gloss)
 	
+	totalChunks := len(chunks)
+	
 	for idx, chunk := range chunks {
+		if p.progressCallback != nil {
+			p.progressCallback(idx, totalChunks)
+		}
+		
 		if err := p.ctx.Err(); err != nil {
 			return nil, err
 		}
 
-		logger.Trace().Msgf("Processing chunk %d: %s", idx, chunk)
+		logger.Trace().Msgf("Processing chunk %d/%d: %s", idx+1, totalChunks, chunk)
 		
 		page, err := p.browser.Page(proto.TargetCreateTarget{})
 		if err != nil {
@@ -328,6 +339,12 @@ func (p *TH2ENProvider) process(chunks []string) (common.AnyTokenSliceWrapper, e
 		tkn.Glosses = dicGloss[tkn.Surface]
 		tsw.Append(tkn)
 	}
+	
+	// Report completion (all chunks processed)
+	if p.progressCallback != nil {
+		p.progressCallback(totalChunks, totalChunks)
+	}
+	
 	return tsw, nil
 }
 

@@ -26,6 +26,9 @@ func (p *UnisegProvider) WithContext(ctx context.Context) {
 	p.ctx = ctx
 }
 
+func (p *UnisegProvider) WithProgressCallback(callback common.ProgressCallback) {
+}
+
 // SaveConfig stores the config and extracts the language code.
 // It then retrieves the expected Unicode script ranges for that language.
 func (p *UnisegProvider) SaveConfig(cfg map[string]interface{}) error {

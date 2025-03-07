@@ -23,6 +23,11 @@ func (p *IchiranProvider) WithContext(ctx context.Context) {
 	ichiran.Ctx = ctx
 }
 
+
+func (p *IchiranProvider) WithProgressCallback(callback common.ProgressCallback) {
+}
+
+
 // SaveConfig merely stores the config to apply after init
 func (p *IchiranProvider) SaveConfig(cfg map[string]interface{}) error {
 	p.config = cfg

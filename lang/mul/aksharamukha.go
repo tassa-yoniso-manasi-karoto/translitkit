@@ -16,9 +16,10 @@ import (
 
 // AksharamukhaProvider satisfies the Provider interface
 type AksharamukhaProvider struct {
-	config		map[string]interface{}
-	Lang		string // ISO 639-3 language code
+	config		    map[string]interface{}
+	Lang		    string // ISO 639-3 language code
 	targetScheme	aksharamukha.Script
+	progressCallback common.ProgressCallback
 }
 
 
@@ -105,6 +106,10 @@ func (p *AksharamukhaProvider) Close() error {
 	return aksharamukha.Close()
 }
 
+func (p *AksharamukhaProvider) WithProgressCallback(callback common.ProgressCallback) {
+	p.progressCallback = callback
+}
+
 func (p *AksharamukhaProvider) ProcessFlowController(input common.AnyTokenSliceWrapper) (results common.AnyTokenSliceWrapper, err error) {
 	raw := input.GetRaw()
 	if input.Len() == 0 && len(raw) == 0 {
@@ -134,8 +139,14 @@ func (p *AksharamukhaProvider) ProcessFlowController(input common.AnyTokenSliceW
 // process handles raw input strings // FIXME THIS WILL TURN INTO TOKENS AND TRANSLITERATE ENTIRE CHUNKS
 func (p *AksharamukhaProvider) process(chunks []string) (common.AnyTokenSliceWrapper, error) {
 	tsw := &common.TknSliceWrapper{}
+	totalChunks := len(chunks)
 	
-	for _, chunk := range chunks {
+	for idx, chunk := range chunks {
+		// Report progress if callback is set
+		if p.progressCallback != nil {
+			p.progressCallback(idx, totalChunks)
+		}
+		
 		if len(strings.TrimSpace(chunk)) == 0 {
 			continue
 		}
@@ -156,6 +167,11 @@ func (p *AksharamukhaProvider) process(chunks []string) (common.AnyTokenSliceWra
 			token.IsLexical = true
 		}
 		tsw.Append(&token)
+	}
+	
+	// Report completion (all chunks processed)
+	if p.progressCallback != nil {
+		p.progressCallback(totalChunks, totalChunks)
 	}
 
 	return tsw, nil

@@ -24,6 +24,10 @@ func (p *GoJiebaProvider) WithContext(ctx context.Context) {
 	}
 }
 
+func (p *GoJiebaProvider) WithProgressCallback(callback common.ProgressCallback) {
+}
+
+
 // SaveConfig stores configuration (e.g., custom dict paths) for use by Init().
 func (p *GoJiebaProvider) SaveConfig(cfg map[string]interface{}) error {
 	p.config = cfg

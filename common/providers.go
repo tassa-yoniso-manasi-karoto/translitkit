@@ -14,6 +14,13 @@ const (
 	CombinedType       ProviderType = "combined"
 )
 
+// ProgressCallback is a function that reports the progress of a processing operation
+// current is the index of the chunk currently being processed (0-based)
+// total is the total number of chunks to process
+// If a provider returns 0 or math.MaxInt32 (or greater) from GetMaxQueryLen(), 
+// the progress cannot be accurately tracked.
+type ProgressCallback func(current, total int)
+
 // Unified interface for all providers of any type
 type Provider[In AnyTokenSliceWrapper, Out AnyTokenSliceWrapper] interface {
 	WithContext(ctx context.Context)
@@ -24,6 +31,12 @@ type Provider[In AnyTokenSliceWrapper, Out AnyTokenSliceWrapper] interface {
 	Init() error
 	InitRecreate(noCache bool) error
 	ProcessFlowController(input In) (Out, error)
+	
+	// WithProgressCallback sets a callback function to report processing progress
+	// The callback will be called with the current chunk index and total chunks
+	// If a provider's GetMaxQueryLen() returns 0 or math.MaxInt32 or greater,
+	// it means the provider doesn't use chunks and progress can't be tracked.
+	WithProgressCallback(callback ProgressCallback)
 	
 	Name() string
 	GetType() ProviderType
@@ -169,5 +182,15 @@ func getQueryLenLimit(providers ...ProviderEntry) int {
 		}
 	}
 	return limit
+}
+
+// SupportsProgress checks if a provider can meaningfully report progress
+// based on its GetMaxQueryLen() value. This function can be used by client code
+// to determine if progress reporting is available for a given provider.
+func SupportsProgress(provider Provider[AnyTokenSliceWrapper, AnyTokenSliceWrapper]) bool {
+	maxQueryLen := provider.GetMaxQueryLen()
+	// If maxQueryLen is 0 or >= MaxInt32, the provider doesn't use chunks
+	// and therefore can't report meaningful progress
+	return maxQueryLen > 0 && maxQueryLen < math.MaxInt32
 }
 
