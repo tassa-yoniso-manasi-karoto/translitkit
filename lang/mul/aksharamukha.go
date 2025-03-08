@@ -168,11 +168,6 @@ func (p *AksharamukhaProvider) process(chunks []string) (common.AnyTokenSliceWra
 		}
 		tsw.Append(&token)
 	}
-	
-	// Report completion (all chunks processed)
-	if p.progressCallback != nil {
-		p.progressCallback(totalChunks, totalChunks)
-	}
 
 	return tsw, nil
 }

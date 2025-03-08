@@ -8,15 +8,6 @@ import (
 	"github.com/k0kubun/pp"
 )
 
-// serialize breaks the input text into chunks based on the maximum query length
-// and returns a token slice wrapper containing the raw chunks.
-// The number of chunks can be obtained by checking len(wrapper.GetRaw())
-func serialize(input string, max int) (AnyTokenSliceWrapper, error) {
-	c := NewChunkifier(max)
-	chunks, err := c.Chunkify(input)
-	return &TknSliceWrapper{Raw: chunks}, err
-}
-
 
 type AnyTokenSliceWrapper interface {
 	GetIdx(int)		AnyToken

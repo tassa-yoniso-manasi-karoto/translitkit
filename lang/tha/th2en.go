@@ -8,6 +8,7 @@ import (
 	"slices"
 	"time"
 	"context"
+	"regexp"
 
 	"github.com/go-rod/rod"
 	"github.com/go-rod/rod/lib/proto"
@@ -18,7 +19,12 @@ import (
 	"github.com/tassa-yoniso-manasi-karoto/translitkit/common"
 )
 
-var logger = common.Log.With().Str("provider", "thai2english.com").Logger()
+
+var (
+	logger = common.Log.With().Str("provider", "thai2english.com").Logger()
+	reRepetitionMark = regexp.MustCompile(`\s+(ๆ)`)
+)
+
 
 // TH2ENProvider satisfies the Provider interface
 type TH2ENProvider struct {
@@ -221,8 +227,11 @@ func (p *TH2ENProvider) process(chunks []string) (common.AnyTokenSliceWrapper, e
 	providerTokenSlice := []string{}
 	dicTlit := make(map[string]string)
 	dicGloss := make(map[string][]common.Gloss)
-	
 	totalChunks := len(chunks)
+	
+	for idx, chunk := range chunks {
+		chunks[idx] = reRepetitionMark.ReplaceAllString(chunk, "$1")
+	}
 	
 	for idx, chunk := range chunks {
 		if p.progressCallback != nil {

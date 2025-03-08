@@ -4,7 +4,6 @@ package common
 import (
 	"fmt"
 	"sync"
-	"context"
 	
 	iso "github.com/barbashov/iso639-3"
 	"github.com/gookit/color"
@@ -87,8 +86,8 @@ func DefaultModule(languageCode string) (*Module, error) {
 
 // defaultModule is an internal function that configures a common with default providers for a given language.
 func defaultModule(lang string) (*Module, error) {
-	m := &Module{ ctx: context.Background()}
-	m.setLang(lang)
+	m := newModule()
+	m.Lang = lang
 
 	GlobalRegistry.mu.RLock()
 	defer GlobalRegistry.mu.RUnlock()
@@ -105,7 +104,7 @@ func defaultModule(lang string) (*Module, error) {
 	if err := m.setProviders(langProviders.Defaults); err != nil {
 		return nil, fmt.Errorf("failed to set providers: %w", err)
 	}
-
+	m.chunkifier = NewChunkifier(m.getMaxQueryLen())
 	return m, nil
 }
 

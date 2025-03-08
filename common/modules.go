@@ -23,7 +23,6 @@ type anyModule interface {
 	RomanPostProcess(string, func(string) string) string
 	Close() error
 	
-	setLang(string)
 	// getMaxQueryLen() int ?
 	setProviders([]ProviderEntry) error
 }
@@ -39,6 +38,7 @@ type Module struct {
 	Transliterator   Provider[AnyTokenSliceWrapper, AnyTokenSliceWrapper]
 	Combined         Provider[AnyTokenSliceWrapper, AnyTokenSliceWrapper]
 	progressCallback ProgressCallback
+	chunkifier       *Chunkifier
 }
 
 // NewModule creates a Module for the specified language using either default Providers
@@ -60,16 +60,15 @@ func NewModule(languageCode string, providerNames ...string) (*Module, error) {
 		return DefaultModule(lang)
 	}
 
-	module := &Module{
-		Lang: lang,
-		ctx:  context.Background(),
-	}
+	module := newModule()
+	module.Lang = lang
 
 	if len(providerNames) == 1 {
 		// Try to get as combined Provider
 		if Provider, err := getProvider(lang, CombinedType, providerNames[0]); err == nil {
 			module.Combined = Provider
 			module.ProviderType = CombinedType
+			module.chunkifier = NewChunkifier(module.getMaxQueryLen())
 			return module, nil
 		}
 		return nil, fmt.Errorf("single Provider %s not found as combined Provider for language %s", providerNames[0], lang)
@@ -90,10 +89,16 @@ func NewModule(languageCode string, providerNames ...string) (*Module, error) {
 
 		module.Tokenizer = tokenizer
 		module.Transliterator = transliterator
+		module.chunkifier = NewChunkifier(module.getMaxQueryLen())
 		return module, nil
 	}
 
 	return nil, fmt.Errorf("invalid number of Provider names: expected 1 or 2, got %d", len(providerNames))
+}
+
+
+func newModule() *Module {
+	return &Module{ ctx:  context.Background()}
 }
 
 // ProviderNames returns the names of the provider(s) contained in the module.
@@ -143,6 +148,23 @@ func (m *Module) WithProgressCallback(callback ProgressCallback) *Module {
 	}
 	
 	return m
+}
+
+// The default chunkifier is optimized for best performance but there is a case for
+// using a custom chunkifier if you want smaller chunks in order to induce frequent  
+// progress callbacks or if your language has some special requirements (in that case
+// you may also open an issue on github).
+func (m *Module) WithCustomChunkifier(chunkifier *Chunkifier) *Module {
+	m.chunkifier = chunkifier
+	return m
+}
+
+// serialize breaks the input text into chunks based on the maximum query length
+// and returns a token slice wrapper containing the raw chunks.
+// The number of chunks can be obtained by checking len(wrapper.GetRaw())
+func (m *Module) serialize(input string, max int) (AnyTokenSliceWrapper, error) {
+	chunks, err := m.chunkifier.Chunkify(input)
+	return &TknSliceWrapper{Raw: chunks}, err
 }
 
 // Init initializes the module (and its providers) using the stored context (if any).
@@ -231,7 +253,7 @@ func (m *Module) MustInit() {
 }
 
 func (m *Module) Tokens(input string) (AnyTokenSliceWrapper, error) {
-	tsw, err := serialize(input, m.getMaxQueryLen())
+	tsw, err := m.serialize(input, m.getMaxQueryLen())
 	if err != nil {
 		return nil, fmt.Errorf("input serialization failed: len(input)=%d, %w", len(input), err)
 	}
@@ -327,11 +349,6 @@ func (m *Module) Close() error {
 
 func (m *Module) RomanPostProcess(s string, f func(string) (string)) (string) {
 	return f(s)
-}
-
-
-func (m *Module) setLang(lang string) {
-	m.Lang = lang
 }
 
 // getMaxQueryLen returns the maximum query length that can be processed by the module.

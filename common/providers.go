@@ -34,8 +34,6 @@ type Provider[In AnyTokenSliceWrapper, Out AnyTokenSliceWrapper] interface {
 	
 	// WithProgressCallback sets a callback function to report processing progress
 	// The callback will be called with the current chunk index and total chunks
-	// If a provider's GetMaxQueryLen() returns 0 or math.MaxInt32 or greater,
-	// it means the provider doesn't use chunks and progress can't be tracked.
 	WithProgressCallback(callback ProgressCallback)
 	
 	Name() string

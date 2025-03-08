@@ -2,7 +2,6 @@ package jpn
 
 import (
 	"fmt"
-	"math"
 	"context"
 	"strings"
 	
@@ -63,11 +62,9 @@ func (p *IchiranProvider) GetType() common.ProviderType {
 	return common.CombinedType
 }
 
-// Returns a limit based on the max of a 32 bit integer.
 // Ichiran's developper doesn't know of a length limit to the input of the CLI
-// but I am setting this just in case. It could also be MaxInt64.
 func (p *IchiranProvider) GetMaxQueryLen() int {
-	return math.MaxInt32-2
+	return 0
 }
 
 func (p *IchiranProvider) Close() error {

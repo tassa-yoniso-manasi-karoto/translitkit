@@ -111,6 +111,7 @@ func GetSchemeModule(languageCode, schemeName string) (*Module, error) {
 	if provider, err := getProvider(lang, CombinedType, targetScheme.Provider); err == nil {
 		module.Combined = provider
 		module.ProviderType = CombinedType
+		module.chunkifier = NewChunkifier(module.getMaxQueryLen())
 		// Save configuration for later application during provider initialization.
 		if err := provider.SaveConfig(map[string]interface{}{
 			"lang":   lang,
@@ -142,7 +143,8 @@ func GetSchemeModule(languageCode, schemeName string) (*Module, error) {
 	}); err != nil {
 		return nil, fmt.Errorf("failed to save configuration for transliterator: %w", err)
 	}
-
+	module.chunkifier = NewChunkifier(module.getMaxQueryLen())
+	
 	return module, nil
 }
 
