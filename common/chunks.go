@@ -60,27 +60,34 @@ func NewChunkifier(max int) *Chunkifier {
 // Chunkify takes the given string s and a max length. The function tries each
 // of c.SplitMethods in turn, splitting the string and then greedily combining tokens into chunks.
 func (c *Chunkifier) Chunkify(s string) ([]string, error) {
+	Log.Trace().
+		Int("MaxLength", c.MaxLength).
+		Msgf("Chunkify: starting with input string of length %d", utf8.RuneCountInString(s))
 	// If a negative max was passed or if the entire string already fits
 	if c.MaxLength <= 0 || utf8.RuneCountInString(s) <= c.MaxLength {
+		Log.Trace().Msg("Chunkify: string fits within max length, returning original string")
 		return []string{s}, nil
 	}
 
 	for _, method := range c.SplitMethods {
+		Log.Trace().Msgf("Chunkify: trying split method with joiner %q", method.Joiner)
 		tokens := method.SplitFn(s)
-		// Debug / inspection print
-		// fmt.Printf("DEBUG: tokens from method %v: %#v\n", method, tokens)
+		Log.Trace().Msgf("Chunkify: obtained %d tokens", len(tokens))
 
 		if !tokensAreWithinLimit(tokens, c.MaxLength) {
-			// If this split creates tokens bigger than max, skip it
+			Log.Trace().Msg("Chunkify: tokens exceed max length, skipping this split method")
 			continue
 		}
 		combined := combineTokens(tokens, method.Joiner, c.MaxLength)
 		if combined != nil {
+			Log.Trace().Msgf("Chunkify: successfully combined tokens into %d chunks", len(combined))
 			return combined, nil
 		}
 	}
 
-	return nil, fmt.Errorf("could not decompose string into smaller parts: %q", s)
+	errMsg := fmt.Sprintf("could not decompose string into smaller parts: %q", s)
+	Log.Trace().Msg(errMsg)
+	return nil, fmt.Errorf(errMsg)
 }
 
 // --- Utility functions ---
