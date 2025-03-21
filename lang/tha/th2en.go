@@ -28,16 +28,10 @@ var (
 
 // TH2ENProvider satisfies the Provider interface
 type TH2ENProvider struct {
-	ctx              context.Context
 	config           map[string]interface{}
 	browser          *rod.Browser
 	targetScheme     string
 	progressCallback common.ProgressCallback
-}
-
-
-func (p *TH2ENProvider) WithContext(ctx context.Context) {
-	p.ctx = ctx
 }
 
 // SaveConfig merely stores the config to apply after init
@@ -47,37 +41,56 @@ func (p *TH2ENProvider) SaveConfig(cfg map[string]interface{}) error {
 }
 
 
-func (p *TH2ENProvider) Init() (err error) {
+// InitWithContext initializes with the provided context
+func (p *TH2ENProvider) InitWithContext(ctx context.Context) (err error) {
 	// force refresh logger
 	logger = common.Log.With().Str("provider", "thai2english.com").Logger()
-	if err = checkWebsiteReachable(p.ctx); err != nil {
+	if err = checkWebsiteReachable(ctx); err != nil {
 		return
 	}
-	if err = p.init(); err != nil {
+	if err = p.initWithContext(ctx); err != nil {
 		return
 	}
 	if p.targetScheme == "" {
-		if err = p.selectTranslitScheme("paiboon"); err != nil {
+		if err = p.selectTranslitScheme(ctx, "paiboon"); err != nil {
 			return fmt.Errorf("error selecting default translit scheme: %w", err)
 		}
 	}
 	return
 }
 
+// Init initializes with background context
+func (p *TH2ENProvider) Init() (err error) {
+	return p.InitWithContext(context.Background())
+}
+
+// InitRecreateWithContext reinitializes with the provided context
+func (p *TH2ENProvider) InitRecreateWithContext(ctx context.Context, noCache bool) (err error) {
+	return p.InitWithContext(ctx)
+}
+
+// InitRecreate reinitializes with background context
 func (p *TH2ENProvider) InitRecreate(bool) (err error) {
 	return p.Init()
 }
 
-func (p *TH2ENProvider) init() (err error) {
+// initWithContext initializes the provider with the given context
+func (p *TH2ENProvider) initWithContext(ctx context.Context) (err error) {
 	p.browser = rod.New()
-	if err = p.browser.ControlURL(common.BrowserAccessURL).Connect(); err != nil {
+	if err = p.browser.ControlURL(common.BrowserAccessURL).Context(ctx).Connect(); err != nil {
 		return fmt.Errorf("go-rod failed to connect to a browser instance for scraping: %w", err)
 	}
-	p.applyConfig()
+	p.applyConfig(ctx)
 	return
 }
 
-func (p *TH2ENProvider) applyConfig() error {
+
+// applyConfig applies the stored configuration to the provider.
+// This includes selecting the transliteration scheme if specified.
+// The context is used for cancellation during configuration.
+//
+// Returns an error if configuration application fails or the context is canceled.
+func (p *TH2ENProvider) applyConfig(ctx context.Context) error {
 	if p.config == nil {
 		return nil
 	}
@@ -85,7 +98,7 @@ func (p *TH2ENProvider) applyConfig() error {
 	if !ok {
 		return fmt.Errorf("scheme name not provided in config")
 	}
-	if err := p.selectTranslitScheme(targetScheme); err != nil {
+	if err := p.selectTranslitScheme(ctx, targetScheme); err != nil {
 		return fmt.Errorf("error selecting translit scheme %s: %w", targetScheme, err)
 	}
 
@@ -105,17 +118,28 @@ func (p *TH2ENProvider) GetMaxQueryLen() int {
 	return 99
 }
 
-func (p *TH2ENProvider) Close() error {
-	return p.browser.Close()
+// CloseWithContext closes the provider with the given context
+func (p *TH2ENProvider) CloseWithContext(ctx context.Context) error {
+	if p.browser != nil {
+		return p.browser.Context(ctx).Close()
+	}
+	return nil
 }
+
+// Close closes the provider with background context
+func (p *TH2ENProvider) Close() error {
+	return p.CloseWithContext(context.Background())
+}
+
 
 func (p *TH2ENProvider) WithProgressCallback(callback common.ProgressCallback) {
 	p.progressCallback = callback
 }
 
-func (p *TH2ENProvider) selectTranslitScheme(scheme string) error {
-	// Create context with timeout
-	ctx, cancel := context.WithTimeout(p.ctx, 30*time.Second)
+// selectTranslitScheme selects the transliteration scheme with provided context
+func (p *TH2ENProvider) selectTranslitScheme(ctx context.Context, scheme string) error {
+	// Create a derived context with timeout
+	ctxWithTimeout, cancel := context.WithTimeout(ctx, 30*time.Second)
 	defer cancel()
 	
 	// Normalize the input scheme
@@ -127,13 +151,10 @@ func (p *TH2ENProvider) selectTranslitScheme(scheme string) error {
 	}
 	
 	logger.Trace().Msg("Creating new page")
-	page, err := p.browser.Page(proto.TargetCreateTarget{})
+	page, err := p.browser.Context(ctxWithTimeout).Page(proto.TargetCreateTarget{})
 	if err != nil {
 		return fmt.Errorf("failed to create page: %w", err)
 	}
-	
-	// TODO
-	page = page.Context(ctx)
 
 	logger.Trace().Msg("Navigating to website")
 	if err := page.Navigate("https://www.thai2english.com/"); err != nil {
@@ -147,8 +168,8 @@ func (p *TH2ENProvider) selectTranslitScheme(scheme string) error {
 
 	logger.Trace().Msg("Looking for settings button and clicking via JavaScript")
 	select {
-	case <-ctx.Done():
-		return fmt.Errorf("context cancelled while trying to click settings button: %v", ctx.Err())
+	case <-ctxWithTimeout.Done():
+		return fmt.Errorf("context cancelled while trying to click settings button: %v", ctxWithTimeout.Err())
 	default:
 		_, err = page.Eval(`() => {
 			const buttons = Array.from(document.querySelectorAll('button'));
@@ -166,15 +187,15 @@ func (p *TH2ENProvider) selectTranslitScheme(scheme string) error {
 
 	logger.Trace().Msg("Waiting for dialog to appear")
 	select {
-	case <-ctx.Done():
-		return fmt.Errorf("context cancelled while waiting for dialog: %w", ctx.Err())
+	case <-ctxWithTimeout.Done():
+		return fmt.Errorf("context cancelled while waiting for dialog: %w", ctxWithTimeout.Err())
 	case <-time.After(500 * time.Millisecond):
 	}
 
 	logger.Trace().Msgf("Looking for radio button with value %s and clicking via JavaScript", scheme)
 	select {
-	case <-ctx.Done():
-		return fmt.Errorf("context cancelled while trying to click radio button: %w", ctx.Err())
+	case <-ctxWithTimeout.Done():
+		return fmt.Errorf("context cancelled while trying to click radio button: %w", ctxWithTimeout.Err())
 	default:
 		_, err = page.Eval(fmt.Sprintf(`() => {
 			const radio = document.querySelector('input[type="radio"][value="%s"]');
@@ -185,7 +206,7 @@ func (p *TH2ENProvider) selectTranslitScheme(scheme string) error {
 			return true;
 		}`, scheme))
 		if err != nil {
-			return fmt.Errorf("failed to click radio button via JavaScript: %w", scheme, err)
+			return fmt.Errorf("failed to click radio button via JavaScript: %w", err)
 		}
 	}
 
@@ -193,7 +214,8 @@ func (p *TH2ENProvider) selectTranslitScheme(scheme string) error {
 	return nil
 }
 
-func (p *TH2ENProvider) ProcessFlowController(input common.AnyTokenSliceWrapper) (results common.AnyTokenSliceWrapper, err error) {
+// ProcessFlowController processes input with the given context
+func (p *TH2ENProvider) ProcessFlowController(ctx context.Context, input common.AnyTokenSliceWrapper) (results common.AnyTokenSliceWrapper, err error) {
 	raw := input.GetRaw()
 	if input.Len() == 0 && len(raw) == 0 {
 		return nil, fmt.Errorf("empty input was passed to processor")
@@ -204,7 +226,7 @@ func (p *TH2ENProvider) ProcessFlowController(input common.AnyTokenSliceWrapper)
 		case common.TokenizerType:
 		case common.TransliteratorType:
 		case common.CombinedType:
-			return p.process(raw)
+			return p.process(ctx, raw)
 		}
 		input.ClearRaw()
 	} else { // generic token processor: take common.Tkn as well as lang-specic tokens that have common.Tkn as their embedded field
@@ -222,7 +244,9 @@ func (p *TH2ENProvider) ProcessFlowController(input common.AnyTokenSliceWrapper)
 }
 
 
-func (p *TH2ENProvider) process(chunks []string) (common.AnyTokenSliceWrapper, error) {
+
+// process processes chunks with the given context
+func (p *TH2ENProvider) process(ctx context.Context, chunks []string) (common.AnyTokenSliceWrapper, error) {
 	tsw := &TknSliceWrapper{}
 	providerTokenSlice := []string{}
 	dicTlit := make(map[string]string)
@@ -238,13 +262,13 @@ func (p *TH2ENProvider) process(chunks []string) (common.AnyTokenSliceWrapper, e
 			p.progressCallback(idx, totalChunks)
 		}
 		
-		if err := p.ctx.Err(); err != nil {
+		if err := ctx.Err(); err != nil {
 			return nil, err
 		}
 
 		logger.Trace().Msgf("Processing chunk %d/%d: %s", idx+1, totalChunks, chunk)
 		
-		page, err := p.browser.Page(proto.TargetCreateTarget{})
+		page, err := p.browser.Context(ctx).Page(proto.TargetCreateTarget{})
 		if err != nil {
 			return nil, fmt.Errorf("failed to create page: %w", err)
 		}
@@ -266,7 +290,6 @@ func (p *TH2ENProvider) process(chunks []string) (common.AnyTokenSliceWrapper, e
 		// (AJAX, fetch, or WebSockets) stop for a set duration
 		logger.Trace().Msg("Wait for RequestIdle (300 ms)")
 		page.MustWaitRequestIdle()
-		
 		
 		logger.Trace().Msg("Wait for main element to be present")
 		_, err = page.Element(".word-breakdown_line-meanings__1RADe")
@@ -369,7 +392,7 @@ var translitSchemes = []common.TranslitScheme{
 
 func init() {
 	p := common.ProviderEntry{
-		Provider:     &TH2ENProvider{ ctx: context.Background() },
+		Provider:     &TH2ENProvider{},
 		Capabilities: []string{"tokenization", "transliteration"},
 		Type:         common.CombinedType,
 	}

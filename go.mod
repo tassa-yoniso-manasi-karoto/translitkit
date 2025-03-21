@@ -2,6 +2,7 @@ module github.com/tassa-yoniso-manasi-karoto/translitkit
 
 go 1.23.4
 
+
 require (
 	github.com/barbashov/iso639-3 v1.0.0
 	github.com/go-rod/rod v0.116.2
@@ -12,8 +13,6 @@ require (
 	github.com/rivo/uniseg v0.4.7
 	github.com/rs/zerolog v1.33.0
 	github.com/stretchr/testify v1.10.0
-	github.com/tassa-yoniso-manasi-karoto/go-aksharamukha v0.0.0-20250222130736-c9e6da206ea6
-	github.com/tassa-yoniso-manasi-karoto/go-ichiran v0.0.0-20250304080038-7d86df5c2dc4
 	github.com/yanyiwu/gojieba v1.4.5
 	gopkg.in/yaml.v2 v2.4.0
 )
@@ -160,7 +159,6 @@ require (
 	github.com/skratchdot/open-golang v0.0.0-20200116055534-eef842397966 // indirect
 	github.com/spf13/cobra v1.8.1 // indirect
 	github.com/spf13/pflag v1.0.5 // indirect
-	github.com/tassa-yoniso-manasi-karoto/dockerutil v0.0.0-20250222130553-4736132089a9 // indirect
 	github.com/theupdateframework/notary v0.7.0 // indirect
 	github.com/tidwall/pretty v1.2.1 // indirect
 	github.com/tilt-dev/fsnotify v1.4.8-0.20220602155310-fff9c274a375 // indirect

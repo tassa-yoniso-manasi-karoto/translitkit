@@ -15,15 +15,13 @@ import (
 
 // IchiranProvider satisfies the Provider interface
 type IchiranProvider struct {
-	config	map[string]interface{}
-}
-
-func (p *IchiranProvider) WithContext(ctx context.Context) {
-	ichiran.Ctx = ctx
+	config			map[string]interface{}
+	progressCallback	common.ProgressCallback
 }
 
 
 func (p *IchiranProvider) WithProgressCallback(callback common.ProgressCallback) {
+	p.progressCallback = callback
 }
 
 
@@ -33,8 +31,8 @@ func (p *IchiranProvider) SaveConfig(cfg map[string]interface{}) error {
 	return nil
 }
 
-
-func (p *IchiranProvider) Init() (err error) {
+// InitWithContext initializes the provider with the given context
+func (p *IchiranProvider) InitWithContext(ctx context.Context) (err error) {
 	if err = ichiran.Init(); err != nil {
 		return fmt.Errorf("failed to initialize ichiran: %w", err)
 	}
@@ -42,13 +40,25 @@ func (p *IchiranProvider) Init() (err error) {
 	return
 }
 
-func (p *IchiranProvider) InitRecreate(noCache bool) (err error) {
+// Init initializes the provider with a background context
+func (p *IchiranProvider) Init() (err error) {
+	return p.InitWithContext(context.Background())
+}
+
+// InitRecreateWithContext reinitializes the provider with the given context
+func (p *IchiranProvider) InitRecreateWithContext(ctx context.Context, noCache bool) (err error) {
 	if err = ichiran.InitRecreate(noCache); err != nil {
 		return fmt.Errorf("failed to initialize ichiran: %w", err)
 	}
 	p.applyConfig()
 	return
 }
+
+// InitRecreate reinitializes the provider with a background context
+func (p *IchiranProvider) InitRecreate(noCache bool) (err error) {
+	return p.InitRecreateWithContext(context.Background(), noCache)
+}
+
 
 func (p *IchiranProvider) applyConfig() error {
 	return nil
@@ -67,14 +77,19 @@ func (p *IchiranProvider) GetMaxQueryLen() int {
 	return 0
 }
 
-func (p *IchiranProvider) Close() error {
+
+// CloseWithContext closes the provider with the given context
+func (p *IchiranProvider) CloseWithContext(ctx context.Context) error {
 	return ichiran.Close()
 }
 
+// Close closes the provider with a background context
+func (p *IchiranProvider) Close() error {
+	return p.CloseWithContext(context.Background())
+}
 
-
-// ProcessFlowController either processes raw input chunks or returns an error if tokens are passed in.
-func (p *IchiranProvider) ProcessFlowController(input common.AnyTokenSliceWrapper) (common.AnyTokenSliceWrapper, error) {
+// ProcessFlowController processes input with the given context
+func (p *IchiranProvider) ProcessFlowController(ctx context.Context, input common.AnyTokenSliceWrapper) (common.AnyTokenSliceWrapper, error) {
 	raw := input.GetRaw()
 	if input.Len() == 0 && len(raw) == 0 {
 		return nil, fmt.Errorf("ichiran: empty input was passed to processor")
@@ -84,7 +99,7 @@ func (p *IchiranProvider) ProcessFlowController(input common.AnyTokenSliceWrappe
 	case common.CombinedType:
 		if len(raw) != 0 {
 			// We'll analyze the raw text
-			outWrapper, err := p.processChunks(raw)
+			outWrapper, err := p.processChunks(ctx, raw)
 			if err != nil {
 				return nil, err
 			}
@@ -99,11 +114,16 @@ func (p *IchiranProvider) ProcessFlowController(input common.AnyTokenSliceWrappe
 	}
 }
 
-// processChunks takes the raw input chunks, runs morphological analysis, and integrates filler tokens.
-func (p *IchiranProvider) processChunks(chunks []string) (common.AnyTokenSliceWrapper, error) {
+// processChunks takes the raw input chunks, runs morphological analysis with the given context
+func (p *IchiranProvider) processChunks(ctx context.Context, chunks []string) (common.AnyTokenSliceWrapper, error) {
 	tsw := &TknSliceWrapper{}
 
 	for idx, chunk := range chunks {
+		// Check if context is done
+		if err := ctx.Err(); err != nil {
+			return nil, fmt.Errorf("ichiran: context canceled while processing chunk %d: %w", idx, err)
+		}
+	
 		// 1) Ichiran morphological analysis
 		jTokens, err := ichiran.Analyze(chunk)
 		if err != nil {

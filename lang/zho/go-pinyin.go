@@ -3,7 +3,6 @@ package zho
 import (
 	"context"
 	"fmt"
-	"math"
 	"regexp"
 	"strconv"
 	"strings"
@@ -12,11 +11,21 @@ import (
 	"github.com/tassa-yoniso-manasi-karoto/translitkit/common"
 )
 
-// GoPinyinProvider now chooses the "most frequent" reading for Tkn.Pinyin
-// while also storing all alternatives in Tkn.PinyinAll & Tkn.PinyinNumAll.
+// DEV NOTE: I personally didn't need to add chinese to translitkit but since Go
+// is popular in China the go-native NLP libraries are solid so I figured it'd
+// be easy to add chinese support. All the code and comments here were generated
+// by a LLM with the GoPinyin's docs, translitkit's docs and a reference
+// implementation of provider I made myself for another language.
+// Hence I have left the LLM's comment as is.
+
+
+// GoPinyinProvider implements the Provider interface for Chinese Pinyin transliteration.
+// It uses the go-pinyin library to convert Chinese characters to Pinyin romanization.
+// This provider chooses the "most frequent" reading for Tkn.Pinyin while also storing
+// all alternative readings in Tkn.PinyinAll and Tkn.PinyinNumAll.
 type GoPinyinProvider struct {
-	ctx    context.Context
 	config map[string]interface{}
+	progressCallback common.ProgressCallback
 
 	chosenScheme string
 	mainStyle    int
@@ -26,24 +35,32 @@ type GoPinyinProvider struct {
 	numArgs  pinyin.Args
 }
 
-// WithContext attaches a context if desired.
-func (p *GoPinyinProvider) WithContext(ctx context.Context) {
-	if ctx != nil {
-		p.ctx = ctx
-	}
-}
-
+// WithProgressCallback sets a callback function for reporting progress during processing.
+// This is a no-op for GoPinyin as it typically processes text very quickly.
 func (p *GoPinyinProvider) WithProgressCallback(callback common.ProgressCallback) {
+	p.progressCallback = callback
 }
 
-// SaveConfig obtains user config, e.g. {"scheme":"tone2"}.
+// SaveConfig stores the configuration for later application during initialization.
+// This allows the provider to be configured before being initialized.
+//
+// Returns an error if the configuration is invalid.
 func (p *GoPinyinProvider) SaveConfig(cfg map[string]interface{}) error {
 	p.config = cfg
 	return nil
 }
 
-// Init sets pinyin styles. Now we do heteronym = true to gather all readings.
-func (p *GoPinyinProvider) Init() error {
+// InitWithContext initializes the provider with the given context.
+// This sets up the pinyin styles and configurations based on the stored configuration.
+// The context can be used for cancellation, though initialization is typically quick.
+//
+// Returns an error if initialization fails or the context is canceled.
+func (p *GoPinyinProvider) InitWithContext(ctx context.Context) error {
+	// Check for context cancellation
+	if err := ctx.Err(); err != nil {
+		return fmt.Errorf("gopinyin: context canceled during initialization: %w", err)
+	}
+	
 	// If mainArgs.Style != 0, we've done it once already
 	if p.mainArgs.Style != 0 {
 		return nil
@@ -75,26 +92,73 @@ func (p *GoPinyinProvider) Init() error {
 	return nil
 }
 
-// InitRecreate re-initializes from scratch.
-func (p *GoPinyinProvider) InitRecreate(noCache bool) error {
+// Init initializes the provider with a background context.
+// This is a convenience method for operations that don't need cancellation control.
+//
+// Returns an error if initialization fails.
+func (p *GoPinyinProvider) Init() error {
+	return p.InitWithContext(context.Background())
+}
+
+// InitRecreateWithContext reinitializes the provider from scratch with the given context.
+// This clears all configuration and resets the provider to its initial state.
+// The context can be used for cancellation, though reinitialization is typically quick.
+//
+// Returns an error if reinitialization fails or the context is canceled.
+func (p *GoPinyinProvider) InitRecreateWithContext(ctx context.Context, noCache bool) error {
+	// Check for context cancellation
+	if err := ctx.Err(); err != nil {
+		return fmt.Errorf("gopinyin: context canceled during reinitialization: %w", err)
+	}
+	
 	p.mainArgs = pinyin.Args{}
 	p.numArgs = pinyin.Args{}
 	p.mainStyle = 0
 	p.numStyle = 0
-	return p.Init()
+	return p.InitWithContext(ctx)
 }
 
-// ProcessFlowController: if token is Chinese and lexical, we compute multiple
-// pinyin readings, store them, and pick the first (most frequent) for Tkn.Pinyin.
-func (p *GoPinyinProvider) ProcessFlowController(
-	input common.AnyTokenSliceWrapper,
-) (common.AnyTokenSliceWrapper, error) {
+// InitRecreate reinitializes the provider with a background context.
+// This is a convenience method for operations that don't need cancellation control.
+//
+// Returns an error if reinitialization fails.
+func (p *GoPinyinProvider) InitRecreate(noCache bool) error {
+	return p.InitRecreateWithContext(context.Background(), noCache)
+}
 
-	if err := p.Init(); err != nil {
+// ProcessFlowController processes input tokens using the specified context.
+// This processes pre-tokenized input, adding Pinyin romanization to Chinese tokens.
+// The context is used for cancellation during processing.
+//
+// Parameters:
+//   - ctx: Context for cancellation and timeout control
+//   - input: The token slice wrapper to process
+//
+// Returns:
+//   - AnyTokenSliceWrapper: A wrapper containing the processed tokens
+//   - error: An error if processing fails, the context is canceled, or initialization fails
+func (p *GoPinyinProvider) ProcessFlowController(ctx context.Context, input common.AnyTokenSliceWrapper) (common.AnyTokenSliceWrapper, error) {
+	// Check for context cancellation
+	if err := ctx.Err(); err != nil {
+		return nil, fmt.Errorf("gopinyin: context canceled during processing: %w", err)
+	}
+
+	if err := p.InitWithContext(ctx); err != nil {
 		return nil, fmt.Errorf("gopinyin init failed: %w", err)
 	}
 
-	for i := 0; i < input.Len(); i++ {
+	tokens := input.Len()
+	for i := 0; i < tokens; i++ {
+		// Periodically check for context cancellation
+		if i%100 == 0 && ctx.Err() != nil {
+			return nil, fmt.Errorf("gopinyin: context canceled while processing token %d: %w", i, ctx.Err())
+		}
+		
+		// Report progress if callback is set
+		if p.progressCallback != nil && i%100 == 0 {
+			p.progressCallback(i, tokens)
+		}
+		
 		anyTkn := input.GetIdx(i)
 		if !anyTkn.IsLexicalContent() {
 			continue
@@ -157,29 +221,45 @@ func (p *GoPinyinProvider) ProcessFlowController(
 		// 5) Put the final reading in Tkn.Romanization
 		zhoTkn.SetRoman(zhoTkn.Pinyin)
 	}
+	
+	// Report completion if callback is set
+	if p.progressCallback != nil {
+		p.progressCallback(tokens, tokens)
+	}
 
 	return input, nil
 }
+
 
 // Name identifies this provider as "gopinyin".
 func (p *GoPinyinProvider) Name() string {
 	return "gopinyin"
 }
 
-// GetType returns Transliterator.
 func (p *GoPinyinProvider) GetType() common.ProviderType {
 	return common.TransliteratorType
 }
 
-// GetMaxQueryLen is large for go-pinyin in memory usage.
 func (p *GoPinyinProvider) GetMaxQueryLen() int {
-	return math.MaxInt32
+	return 0
 }
 
-// Close is a no-op for go-pinyin.
+// CloseWithContext releases resources used by the provider with the given context.
+// For GoPinyin, this is a no-op as there are no persistent resources to release.
+//
+// Returns nil as there are no resources to release.
+func (p *GoPinyinProvider) CloseWithContext(ctx context.Context) error {
+	return nil
+}
+
+// Close releases resources used by the provider with a background context.
+// For GoPinyin, this is a no-op as there are no persistent resources to release.
+//
+// Returns nil as there are no resources to release.
 func (p *GoPinyinProvider) Close() error {
 	return nil
 }
+
 
 // PinyinSchemes maps user-friendly scheme names to pinyin int constants.
 var PinyinSchemes = map[string]int{
@@ -196,6 +276,13 @@ var PinyinSchemes = map[string]int{
 }
 
 // parseToneNumber picks the last digit [1..5] from a tone2 syllable like "hao3".
+// This is a helper function for extracting tone numbers from numeric Pinyin notation.
+//
+// Parameters:
+//   - s: The syllable with numeric tone marking
+//
+// Returns:
+//   - int: The tone number (1-5), or 0 if no valid tone number is found
 func parseToneNumber(s string) int {
 	re := regexp.MustCompile(`(\d)$`)
 	match := re.FindStringSubmatch(s)

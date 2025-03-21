@@ -15,22 +15,22 @@ import (
 )
 
 type UnisegProvider struct {
-	ctx          context.Context
 	config       map[string]interface{}
+	progressCallback common.ProgressCallback
 	lang         string
 	scriptRanges []*unicode.RangeTable
 }
 
 
-func (p *UnisegProvider) WithContext(ctx context.Context) {
-	p.ctx = ctx
-}
-
+// WithProgressCallback sets a callback function for reporting progress during processing.
 func (p *UnisegProvider) WithProgressCallback(callback common.ProgressCallback) {
+	p.progressCallback = callback
 }
 
-// SaveConfig stores the config and extracts the language code.
-// It then retrieves the expected Unicode script ranges for that language.
+// SaveConfig stores the configuration for later application during initialization.
+// It extracts the language code and retrieves the expected Unicode script ranges for that language.
+//
+// Returns an error if the configuration is invalid.
 func (p *UnisegProvider) SaveConfig(cfg map[string]interface{}) error {
 	p.config = cfg
 
@@ -38,17 +38,47 @@ func (p *UnisegProvider) SaveConfig(cfg map[string]interface{}) error {
 		p.lang = langVal
 		p.scriptRanges, _ = common.GetUnicodeRangesFromLang(p.lang)
 	} else {
-		p.lang = "" // TODO FIXME
+		p.lang = "" // Default to no language-specific behavior
 	}
 	return nil
 }
 
-func (p *UnisegProvider) Init() error {
+// InitWithContext initializes the provider with the given context.
+// For Uniseg, this is a no-op as there are no resources to initialize.
+// The context can be used for cancellation, though initialization is immediate.
+//
+// Returns nil as there are no initialization steps that can fail.
+func (p *UnisegProvider) InitWithContext(ctx context.Context) error {
+	// Check for context cancellation
+	if err := ctx.Err(); err != nil {
+		return fmt.Errorf("uniseg: context canceled during initialization: %w", err)
+	}
 	return nil
 }
 
-func (p *UnisegProvider) InitRecreate(bool) error {
-	return nil
+// Init initializes the provider with a background context.
+// This is a convenience method for operations that don't need cancellation control.
+//
+// Returns nil as there are no initialization steps that can fail.
+func (p *UnisegProvider) Init() error {
+	return p.InitWithContext(context.Background())
+}
+
+// InitRecreateWithContext reinitializes the provider from scratch with the given context.
+// For Uniseg, this is equivalent to InitWithContext as there are no persistent resources.
+// The context can be used for cancellation, though reinitialization is immediate.
+//
+// Returns nil as there are no reinitialization steps that can fail.
+func (p *UnisegProvider) InitRecreateWithContext(ctx context.Context, noCache bool) error {
+	return p.InitWithContext(ctx)
+}
+
+// InitRecreate reinitializes the provider with a background context.
+// This is a convenience method for operations that don't need cancellation control.
+//
+// Returns nil as there are no reinitialization steps that can fail.
+func (p *UnisegProvider) InitRecreate(noCache bool) error {
+	return p.InitRecreateWithContext(context.Background(), noCache)
 }
 
 func (p *UnisegProvider) Name() string {
@@ -63,19 +93,46 @@ func (p *UnisegProvider) GetMaxQueryLen() int {
 	return 0
 }
 
+// CloseWithContext releases resources used by the provider with the given context.
+// For Uniseg, this is a no-op as there are no persistent resources to release.
+//
+// Returns nil as there are no resources to release.
+func (p *UnisegProvider) CloseWithContext(ctx context.Context) error {
+	return nil
+}
+
+// Close releases resources used by the provider with a background context.
+// For Uniseg, this is a no-op as there are no persistent resources to release.
+//
+// Returns nil as there are no resources to release.
 func (p *UnisegProvider) Close() error {
 	return nil
 }
 
-// ProcessFlowController implements the common.Provider interface
-func (p *UnisegProvider) ProcessFlowController(input common.AnyTokenSliceWrapper) (common.AnyTokenSliceWrapper, error) {
+// ProcessFlowController processes input tokens using the specified context.
+// This handles raw input chunks only, as Uniseg is a tokenizer that doesn't work with pre-tokenized content.
+// The context is used for cancellation during processing.
+//
+// Parameters:
+//   - ctx: Context for cancellation and timeout control
+//   - input: The token slice wrapper containing raw input chunks
+//
+// Returns:
+//   - AnyTokenSliceWrapper: A wrapper containing the processed tokens
+//   - error: An error if processing fails, the context is canceled, or input format is invalid
+func (p *UnisegProvider) ProcessFlowController(ctx context.Context, input common.AnyTokenSliceWrapper) (common.AnyTokenSliceWrapper, error) {
+	// Check for context cancellation
+	if err := ctx.Err(); err != nil {
+		return nil, fmt.Errorf("uniseg: context canceled during processing: %w", err)
+	}
+	
 	raw := input.GetRaw()
 	if input.Len() == 0 && len(raw) == 0 {
 		return nil, fmt.Errorf("empty input was passed to processor")
 	}
 
 	if len(raw) != 0 {
-		return p.process(raw)
+		return p.process(ctx, raw)
 	}
 
 	// We don't handle already tokenized input
@@ -83,11 +140,31 @@ func (p *UnisegProvider) ProcessFlowController(input common.AnyTokenSliceWrapper
 }
 
 // process implements the actual tokenization logic using uniseg.
-// We additionally mark tokens as lexical or non-lexical.
-func (p *UnisegProvider) process(chunks []string) (common.AnyTokenSliceWrapper, error) {
+// It segments text into words according to Unicode rules and marks tokens as lexical or non-lexical.
+// The context is used for cancellation during processing.
+//
+// Parameters:
+//   - ctx: Context for cancellation and timeout control
+//   - chunks: Raw text chunks to process
+//
+// Returns:
+//   - AnyTokenSliceWrapper: A wrapper containing the processed tokens
+//   - error: An error if processing fails or the context is canceled
+func (p *UnisegProvider) process(ctx context.Context, chunks []string) (common.AnyTokenSliceWrapper, error) {
 	tsw := &common.TknSliceWrapper{}
+	totalChunks := len(chunks)
 
-	for _, chunk := range chunks {
+	for idx, chunk := range chunks {
+		// Check for context cancellation
+		if err := ctx.Err(); err != nil {
+			return nil, fmt.Errorf("uniseg: context canceled while processing chunk %d: %w", idx, err)
+		}
+		
+		// Report progress if callback is set
+		if p.progressCallback != nil {
+			p.progressCallback(idx, totalChunks)
+		}
+		
 		trimmed := strings.TrimSpace(chunk)
 		if len(trimmed) == 0 {
 			continue
@@ -98,6 +175,11 @@ func (p *UnisegProvider) process(chunks []string) (common.AnyTokenSliceWrapper, 
 		state := -1
 
 		for len(remaining) > 0 {
+			// Check for context cancellation in long loops
+			if err := ctx.Err(); err != nil {
+				return nil, fmt.Errorf("uniseg: context canceled during word segmentation: %w", err)
+			}
+			
 			word, rest, newState := uniseg.FirstWordInString(remaining, state)
 			if word != "" {
 				token := common.Tkn{
@@ -121,6 +203,12 @@ func (p *UnisegProvider) process(chunks []string) (common.AnyTokenSliceWrapper, 
 			state = newState
 		}
 	}
+	
+	// Report completion if callback is set
+	if p.progressCallback != nil {
+		p.progressCallback(totalChunks, totalChunks)
+	}
+	
 	return tsw, nil
 }
 

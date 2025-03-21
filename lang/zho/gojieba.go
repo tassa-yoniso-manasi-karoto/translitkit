@@ -9,33 +9,50 @@ import (
 	"github.com/yanyiwu/gojieba"
 )
 
-// GoJiebaProvider tokenizes Chinese text with gojieba, preserving filler tokens
-// and populating relevant fields in our custom Tkn struct where possible.
+// DEV NOTE: I personally didn't need to add chinese to translitkit but since Go
+// is popular in China the go-native NLP libraries are solid so I figured it'd
+// be easy to add chinese support. All the code and comments here were generated
+// by a LLM with the GoJieba's docs, translitkit's docs and a reference
+// implementation of provider I made myself for another language.
+// Hence I have left the LLM's comment as is.
+
+
+
+// GoJiebaProvider implements the Provider interface for Chinese text segmentation.
+// It uses the gojieba library to tokenize Chinese text with word boundaries and
+// part-of-speech tagging, while preserving non-lexical tokens like punctuation.
 type GoJiebaProvider struct {
-	ctx    context.Context
 	config map[string]interface{}
+	progressCallback common.ProgressCallback
 	jieba  *gojieba.Jieba
 }
 
-// WithContext updates the provider's context.
-func (p *GoJiebaProvider) WithContext(ctx context.Context) {
-	if ctx != nil {
-		p.ctx = ctx
-	}
-}
-
+// WithProgressCallback sets a callback function for reporting progress during processing.
+// The callback will be invoked with the current chunk index and total number of chunks.
 func (p *GoJiebaProvider) WithProgressCallback(callback common.ProgressCallback) {
+	p.progressCallback = callback
 }
 
-
-// SaveConfig stores configuration (e.g., custom dict paths) for use by Init().
+// SaveConfig stores the configuration for later application during initialization.
+// This allows the provider to be configured before being initialized.
+//
+// Returns an error if the configuration is invalid.
 func (p *GoJiebaProvider) SaveConfig(cfg map[string]interface{}) error {
 	p.config = cfg
 	return nil
 }
 
-// Init initializes the gojieba engine (if not already done).
-func (p *GoJiebaProvider) Init() error {
+// InitWithContext initializes the gojieba engine with the given context.
+// This is called automatically before processing if the engine is not already initialized.
+// The context can be used for cancellation, though initialization is typically quick.
+//
+// Returns an error if initialization fails or the context is canceled.
+func (p *GoJiebaProvider) InitWithContext(ctx context.Context) error {
+	// Check for context cancellation
+	if err := ctx.Err(); err != nil {
+		return fmt.Errorf("gojieba: context canceled during initialization: %w", err)
+	}
+	
 	if p.jieba != nil {
 		return nil
 	}
@@ -46,24 +63,60 @@ func (p *GoJiebaProvider) Init() error {
 	return nil
 }
 
-// InitRecreate frees existing gojieba resources and re-initializes from scratch.
-func (p *GoJiebaProvider) InitRecreate(noCache bool) error {
+// Init initializes the provider with a background context.
+// This is a convenience method for operations that don't need cancellation control.
+//
+// Returns an error if initialization fails.
+func (p *GoJiebaProvider) Init() error {
+	return p.InitWithContext(context.Background())
+}
+
+// InitRecreateWithContext frees existing gojieba resources and re-initializes from scratch.
+// This is useful when dictionary paths or other configuration changes.
+// The context can be used for cancellation during reinitialization.
+//
+// Returns an error if reinitialization fails or the context is canceled.
+func (p *GoJiebaProvider) InitRecreateWithContext(ctx context.Context, noCache bool) error {
+	// Check for context cancellation
+	if err := ctx.Err(); err != nil {
+		return fmt.Errorf("gojieba: context canceled during reinitialization: %w", err)
+	}
+	
 	if p.jieba != nil {
 		p.jieba.Free()
 		p.jieba = nil
 	}
-	return p.Init()
+	return p.InitWithContext(ctx)
 }
 
-// ProcessFlowController performs tokenization on raw chunks, preserving filler tokens.
-// It populates Tkn fields that can be informed by gojieba (e.g. part-of-speech).
-func (p *GoJiebaProvider) ProcessFlowController(
-	input common.AnyTokenSliceWrapper,
-) (common.AnyTokenSliceWrapper, error) {
+// InitRecreate reinitializes the provider with a background context.
+// This is a convenience method for operations that don't need cancellation control.
+//
+// Returns an error if reinitialization fails.
+func (p *GoJiebaProvider) InitRecreate(noCache bool) error {
+	return p.InitRecreateWithContext(context.Background(), noCache)
+}
 
+// ProcessFlowController processes input tokens using the specified context.
+// This handles raw input chunks and performs Chinese word segmentation with POS tagging.
+// The context is used for cancellation during processing.
+//
+// Parameters:
+//   - ctx: Context for cancellation and timeout control
+//   - input: The token slice wrapper containing raw input chunks
+//
+// Returns:
+//   - AnyTokenSliceWrapper: A wrapper containing the processed tokens
+//   - error: An error if processing fails, the context is canceled, or initialization fails
+func (p *GoJiebaProvider) ProcessFlowController(ctx context.Context, input common.AnyTokenSliceWrapper) (common.AnyTokenSliceWrapper, error) {
+	// Check for context cancellation
+	if err := ctx.Err(); err != nil {
+		return nil, fmt.Errorf("gojieba: context canceled during processing: %w", err)
+	}
+	
 	// Ensure gojieba is initialized
 	if p.jieba == nil {
-		if err := p.Init(); err != nil {
+		if err := p.InitWithContext(ctx); err != nil {
 			return nil, fmt.Errorf("failed to init gojieba: %w", err)
 		}
 	}
@@ -74,8 +127,19 @@ func (p *GoJiebaProvider) ProcessFlowController(
 	}
 
 	outWrapper := &TknSliceWrapper{}
+	totalChunks := len(rawChunks)
 
-	for _, chunk := range rawChunks {
+	for idx, chunk := range rawChunks {
+		// Check for context cancellation
+		if err := ctx.Err(); err != nil {
+			return nil, fmt.Errorf("gojieba: context canceled while processing chunk %d: %w", idx, ctx.Err())
+		}
+		
+		// Report progress if callback is set
+		if p.progressCallback != nil {
+			p.progressCallback(idx, totalChunks)
+		}
+		
 		if chunk == "" {
 			continue
 		}
@@ -136,6 +200,11 @@ func (p *GoJiebaProvider) ProcessFlowController(
 			outWrapper.Append(zhoTkn)
 		}
 	}
+	
+	// Report completion if callback is set
+	if p.progressCallback != nil {
+		p.progressCallback(totalChunks, totalChunks)
+	}
 
 	// Clear raw chunks to mark they've been processed
 	input.ClearRaw()
@@ -158,11 +227,28 @@ func (p *GoJiebaProvider) GetMaxQueryLen() int {
 	return math.MaxInt32
 }
 
-// Close frees the gojieba instance.
-func (p *GoJiebaProvider) Close() error {
+// CloseWithContext releases resources used by the provider with the given context.
+// This frees the gojieba instance to release memory.
+// The context can be used for cancellation during resource release.
+//
+// Returns an error if closing fails or the context is canceled.
+func (p *GoJiebaProvider) CloseWithContext(ctx context.Context) error {
+	// Check for context cancellation
+	if err := ctx.Err(); err != nil {
+		return fmt.Errorf("gojieba: context canceled during close: %w", err)
+	}
+	
 	if p.jieba != nil {
 		p.jieba.Free()
 		p.jieba = nil
 	}
 	return nil
+}
+
+// Close releases resources used by the provider with a background context.
+// This is a convenience method for operations that don't need cancellation control.
+//
+// Returns an error if closing fails.
+func (p *GoJiebaProvider) Close() error {
+	return p.CloseWithContext(context.Background())
 }

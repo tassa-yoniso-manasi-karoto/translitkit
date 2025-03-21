@@ -21,25 +21,73 @@ const (
 // the progress cannot be accurately tracked.
 type ProgressCallback func(current, total int)
 
-// Unified interface for all providers of any type
+// Provider is a unified interface for all providers of any type in the library.
+// It handles tokenization, transliteration, or both combined, for specific languages.
+// Providers process text input and return processed tokens with linguistic annotations.
+// All providers must be context-aware and support cancellation via context.
 type Provider[In AnyTokenSliceWrapper, Out AnyTokenSliceWrapper] interface {
-	WithContext(ctx context.Context)
-	// SaveConfig just stores the config for later usage, so that
-	// when we actually do .Init(), the provider can safely apply them.
+	// SaveConfig stores configuration options for later application during initialization.
+	// This allows providers to maintain their configuration separately from initialization.
+	// Returns an error if the configuration is invalid.
 	SaveConfig(cfg map[string]interface{}) error
 	
+	// Init initializes the provider with a background context.
+	// This is a convenience method that calls InitWithContext with context.Background().
+	// Returns an error if initialization fails.
 	Init() error
-	InitRecreate(noCache bool) error
-	ProcessFlowController(input In) (Out, error)
 	
-	// WithProgressCallback sets a callback function to report processing progress
+	// InitWithContext initializes the provider with the specified context.
+	// The context can be used to cancel initialization or set deadlines.
+	// Returns an error if initialization fails or the context is canceled.
+	InitWithContext(ctx context.Context) error
+	
+	// InitRecreate reinitializes the provider from scratch with a background context,
+	// optionally clearing any caches when noCache is true.
+	// This is a convenience method that calls InitRecreateWithContext with context.Background().
+	// Returns an error if reinitialization fails.
+	InitRecreate(noCache bool) error
+	
+	// InitRecreateWithContext reinitializes the provider from scratch with the specified context,
+	// optionally clearing any caches when noCache is true. This can be used to recreate
+	// Docker containers or other resources.
+	// Returns an error if reinitialization fails or the context is canceled.
+	InitRecreateWithContext(ctx context.Context, noCache bool) error
+	
+	// Close releases resources used by the provider with a background context.
+	// This is a convenience method that calls CloseWithContext with context.Background().
+	// Returns an error if closing fails.
+	Close() error
+	
+	// CloseWithContext releases resources used by the provider with the specified context.
+	// The context can be used to cancel the closing operation or set deadlines.
+	// Returns an error if closing fails or the context is canceled.
+	CloseWithContext(ctx context.Context) error
+	
+	// ProcessFlowController processes the input tokens using the specified context.
+	// This is the core processing method of the provider. It handles either raw input
+	// chunks or pre-tokenized content based on the provider type.
+	// The context can be used to cancel processing or set deadlines.
+	// Returns processed tokens and an error if processing fails or the context is canceled.
+	ProcessFlowController(ctx context.Context, input In) (Out, error)
+	
+	// WithProgressCallback sets a callback function to report processing progress.
 	// The callback will be called with the current chunk index and total chunks
+	// during processing operations. This can be used for status reporting or
+	// progress bars in user interfaces.
 	WithProgressCallback(callback ProgressCallback)
 	
+	// Name returns the unique identifier of the provider.
+	// This is used for registration and lookup in the provider registry.
 	Name() string
+	
+	// GetType returns the type of the provider (TokenizerType, TransliteratorType, or CombinedType).
+	// This is used to determine the provider's capabilities and role in processing.
 	GetType() ProviderType
+	
+	// GetMaxQueryLen returns the maximum input length the provider can handle in a single operation.
+	// This is used to determine chunking strategies for large inputs.
+	// A return value of 0 indicates no known limit.
 	GetMaxQueryLen() int
-	Close() error
 }
 
 type LanguageProviders struct {

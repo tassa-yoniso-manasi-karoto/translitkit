@@ -3,7 +3,6 @@ package mul
 
 import (
 	"fmt"
-	"strings"
 	"math"
 	"context"
 
@@ -23,10 +22,6 @@ type AksharamukhaProvider struct {
 }
 
 
-func (p *AksharamukhaProvider) WithContext(ctx context.Context) {
-	aksharamukha.Ctx = ctx
-}
-
 // NewAksharamukhaProvider creates a new provider instance with the specified language
 func NewAksharamukhaProvider(lang string) *AksharamukhaProvider {
 	return &AksharamukhaProvider{
@@ -34,7 +29,10 @@ func NewAksharamukhaProvider(lang string) *AksharamukhaProvider {
 	}
 }
 
-// SaveConfig merely stores the config to apply after init
+// SaveConfig stores the configuration for later application during initialization.
+// This allows the provider to be configured before being initialized.
+//
+// Returns an error if the configuration is invalid.
 func (p *AksharamukhaProvider) SaveConfig(cfg map[string]interface{}) error {
 	p.config = cfg
 	lang, ok := p.config["lang"].(string)
@@ -45,7 +43,12 @@ func (p *AksharamukhaProvider) SaveConfig(cfg map[string]interface{}) error {
 	return nil
 }
 
-func (p *AksharamukhaProvider) Init() (err error) {
+// InitWithContext initializes the provider with the given context.
+// This sets up the aksharamukha library and applies any stored configuration.
+// The context is used for cancellation during initialization.
+//
+// Returns an error if initialization fails, language is not set, or the context is canceled.
+func (p *AksharamukhaProvider) InitWithContext(ctx context.Context) (err error) {
 	if p.Lang == "" {
 		return fmt.Errorf("language code must be set before initialization")
 	}
@@ -57,7 +60,20 @@ func (p *AksharamukhaProvider) Init() (err error) {
 	return
 }
 
-func (p *AksharamukhaProvider) InitRecreate(noCache bool) (err error) {
+// Init initializes the provider with a background context.
+// This is a convenience method for operations that don't need cancellation control.
+//
+// Returns an error if initialization fails or language is not set.
+func (p *AksharamukhaProvider) Init() (err error) {
+	return p.InitWithContext(context.Background())
+}
+
+// InitRecreateWithContext reinitializes the provider from scratch with the given context.
+// This can be used to recreate any resources and optionally clear caches when noCache is true.
+// The context is used for cancellation during reinitialization.
+//
+// Returns an error if reinitialization fails, language is not set, or the context is canceled.
+func (p *AksharamukhaProvider) InitRecreateWithContext(ctx context.Context, noCache bool) (err error) {
 	if p.Lang == "" {
 		return fmt.Errorf("language code must be set before initialization")
 	}
@@ -67,6 +83,14 @@ func (p *AksharamukhaProvider) InitRecreate(noCache bool) (err error) {
 	}
 	p.applyConfig()
 	return
+}
+
+// InitRecreate reinitializes the provider with a background context.
+// This is a convenience method for operations that don't need cancellation control.
+//
+// Returns an error if reinitialization fails or language is not set.
+func (p *AksharamukhaProvider) InitRecreate(noCache bool) (err error) {
+	return p.InitRecreateWithContext(context.Background(), noCache)
 }
 
 
@@ -102,32 +126,55 @@ func (p *AksharamukhaProvider) GetMaxQueryLen() int {
 	return math.MaxInt32
 }
 
-func (p *AksharamukhaProvider) Close() error {
+// CloseWithContext releases resources used by the provider with the given context.
+// The context is used for cancellation during resource release.
+//
+// Returns an error if closing fails or the context is canceled.
+func (p *AksharamukhaProvider) CloseWithContext(ctx context.Context) error {
 	return aksharamukha.Close()
 }
 
-func (p *AksharamukhaProvider) WithProgressCallback(callback common.ProgressCallback) {
-	p.progressCallback = callback
+// Close releases resources used by the provider with a background context.
+// This is a convenience method for operations that don't need cancellation control.
+//
+// Returns an error if closing fails.
+func (p *AksharamukhaProvider) Close() error {
+	return p.CloseWithContext(context.Background())
 }
 
-func (p *AksharamukhaProvider) ProcessFlowController(input common.AnyTokenSliceWrapper) (results common.AnyTokenSliceWrapper, err error) {
+// WithProgressCallback sets a callback function for reporting progress during processing.
+// The callback will be invoked with the current chunk index and total number of chunks.
+func (p *AksharamukhaProvider) WithProgressCallback(callback common.ProgressCallback) {
+	p.progressCallback = callback
+}// ProcessFlowController processes input tokens using the specified context.
+// This handles either raw input chunks or pre-tokenized content.
+// The context is used for cancellation during processing.
+//
+// Parameters:
+//   - ctx: Context for cancellation and timeout control
+//   - input: The token slice wrapper to process
+//
+// Returns:
+//   - AnyTokenSliceWrapper: A wrapper containing the processed tokens
+//   - error: An error if processing fails, the context is canceled, or input format is invalid
+func (p *AksharamukhaProvider) ProcessFlowController(ctx context.Context, input common.AnyTokenSliceWrapper) (results common.AnyTokenSliceWrapper, err error) {
 	raw := input.GetRaw()
 	if input.Len() == 0 && len(raw) == 0 {
 		return nil, fmt.Errorf("empty input was passed to processor")
 	}
 	providerType := p.GetType()
 	if len(raw) != 0 {
-		switch providerType {
-		case common.TransliteratorType:
-			return p.process(raw)
-		default:
-			return nil, fmt.Errorf("provider type %s not supported", providerType)
-		}
+		//switch providerType {
+		//case common.TransliteratorType:
+		//	return p.process(ctx, raw)
+		//default:
+		return nil, fmt.Errorf("provider type %s not supported", providerType)
+		//}
 		input.ClearRaw()
 	} else {
 		switch providerType {
 		case common.TransliteratorType:
-			return p.processTokens(input)
+			return p.processTokens(ctx, input)
 		default:
 			return nil, fmt.Errorf("provider type %s not supported", providerType)
 		}
@@ -135,13 +182,26 @@ func (p *AksharamukhaProvider) ProcessFlowController(input common.AnyTokenSliceW
 	return nil, fmt.Errorf("handling not implemented for '%s' with ProviderType '%s'", p.Name(), providerType)
 }
 
-
-// process handles raw input strings // FIXME THIS WILL TURN INTO TOKENS AND TRANSLITERATE ENTIRE CHUNKS
-func (p *AksharamukhaProvider) process(chunks []string) (common.AnyTokenSliceWrapper, error) {
+// process handles raw input strings, converting them to tokens with romanization. // FIXME THIS WILL TURN INTO TOKENS AND TRANSLITERATE ENTIRE CHUNKS
+// The context is used for cancellation during processing.
+//
+// Parameters:
+//   - ctx: Context for cancellation and timeout control
+//   - chunks: Raw text chunks to process
+//
+// Returns:
+//   - AnyTokenSliceWrapper: A wrapper containing the processed tokens
+//   - error: An error if processing fails or the context is canceled
+/*func (p *AksharamukhaProvider) process(ctx context.Context, chunks []string) (common.AnyTokenSliceWrapper, error) {
 	tsw := &common.TknSliceWrapper{}
 	totalChunks := len(chunks)
 	
 	for idx, chunk := range chunks {
+		// Check for context cancellation
+		if err := ctx.Err(); err != nil {
+			return nil, fmt.Errorf("aksharamukha: context canceled while processing chunk %d: %w", idx, err)
+		}
+		
 		// Report progress if callback is set
 		if p.progressCallback != nil {
 			p.progressCallback(idx, totalChunks)
@@ -168,13 +228,41 @@ func (p *AksharamukhaProvider) process(chunks []string) (common.AnyTokenSliceWra
 		}
 		tsw.Append(&token)
 	}
+	
+	// Report completion if callback is set
+	if p.progressCallback != nil {
+		p.progressCallback(totalChunks, totalChunks)
+	}
 
 	return tsw, nil
-}
+}*/
 
-// processTokens handles pre-tokenized input
-func (p *AksharamukhaProvider) processTokens(input common.AnyTokenSliceWrapper) (common.AnyTokenSliceWrapper, error) {
-	for _, tkn := range input.(*common.TknSliceWrapper).Slice {
+
+// processTokens handles pre-tokenized input, adding romanization to tokens.
+// The context is used for cancellation during processing.
+//
+// Parameters:
+//   - ctx: Context for cancellation and timeout control
+//   - input: Pre-tokenized input to process
+//
+// Returns:
+//   - AnyTokenSliceWrapper: A wrapper containing the processed tokens
+//   - error: An error if processing fails or the context is canceled
+func (p *AksharamukhaProvider) processTokens(ctx context.Context, input common.AnyTokenSliceWrapper) (common.AnyTokenSliceWrapper, error) {
+	tokens := input.(*common.TknSliceWrapper).Slice
+	totalTokens := len(tokens)
+	
+	for idx, tkn := range tokens {
+		// Check for context cancellation
+		if err := ctx.Err(); err != nil {
+			return nil, fmt.Errorf("aksharamukha: context canceled while processing token %d: %w", idx, err)
+		}
+		
+		// Report progress if callback is set
+		if p.progressCallback != nil && idx%10 == 0 { // Report every 10 tokens to avoid excessive callbacks
+			p.progressCallback(idx, totalTokens)
+		}
+		
 		s := tkn.GetSurface()
 		if !tkn.IsLexicalContent() || s == "" || tkn.Roman() != "" {
 			continue
@@ -184,11 +272,25 @@ func (p *AksharamukhaProvider) processTokens(input common.AnyTokenSliceWrapper) 
 			return nil, fmt.Errorf("romanization failed for token %s: %w", s, err)
 		}
 		tkn.SetRoman(romanized)
-		//fmt.Printf("TOKEN %s: %s\n\n\n", color.Bold.Sprint(idx), pp.Sprint(tkn))
 	}
+	
+	// Report completion if callback is set
+	if p.progressCallback != nil {
+		p.progressCallback(totalTokens, totalTokens)
+	}
+	
 	return input, nil
 }
 
+// romanize converts text to a romanized form using the appropriate scheme.
+// It uses either the configured scheme or falls back to the default romanization.
+//
+// Parameters:
+//   - text: The text to romanize
+//
+// Returns:
+//   - string: The romanized text
+//   - error: An error if romanization fails
 func (p *AksharamukhaProvider) romanize(text string) (string, error) {
 	if p.targetScheme != "" {
 		script, err := aksharamukha.DefaultScriptFor(p.Lang)

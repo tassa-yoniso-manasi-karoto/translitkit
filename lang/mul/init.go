@@ -3,7 +3,6 @@ package mul
 
 import (
 	"fmt"
-	"context"
 	
 	"github.com/tassa-yoniso-manasi-karoto/translitkit/common"
 )
@@ -16,7 +15,7 @@ var indicLangs = []string{
 
 func init() {
 	unisegEntry := common.ProviderEntry{
-		Provider:     &UnisegProvider{ ctx: context.Background() },
+		Provider:     &UnisegProvider{},
 		Capabilities: []string{"tokenization"},
 		Type:        common.TokenizerType,
 	}
