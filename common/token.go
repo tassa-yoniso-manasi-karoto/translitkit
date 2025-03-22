@@ -254,7 +254,7 @@ func tokenizedParts(tokens []AnyToken) []string {
 
 // roman constructs the romanized string intelligently using the provided spacing rule.
 func defaultRoman(tokens []AnyToken) string {
-	spacingRule := defaultSpacingRule
+	spacingRule := DefaultSpacingRule
 	var builder strings.Builder
 	var prev string
 
@@ -278,7 +278,7 @@ func defaultRoman(tokens []AnyToken) string {
 
 // defaultTokenized constructs the tokenized string intelligently using the provided spacing rule.
 func defaultTokenized(tokens []AnyToken) string {
-	spacingRule := defaultSpacingRule
+	spacingRule := DefaultSpacingRule
 	var builder strings.Builder
 	var prev string
 
@@ -297,8 +297,10 @@ func defaultTokenized(tokens []AnyToken) string {
 // SpacingRule defines a function signature for deciding if a space is needed between tokens.
 type SpacingRule func(prev, current string) bool
 
-// defaultSpacingRule is our configurable rule for whether to insert a space between two tokens.
-func defaultSpacingRule(prev, current string) bool {
+// DefaultSpacingRule is our configurable rule for whether to insert a space between two tokens.
+// FIXME This function was LLM generated but the LLM failed to understand that we want to force
+// adding spaces for languages that don't use them, may still need tweaking for langs other than ja, zh, th
+func DefaultSpacingRule(prev, current string) bool {
 	// If either token is empty, no space is needed
 	if prev == "" || current == "" {
 		return false
@@ -351,7 +353,7 @@ func defaultSpacingRule(prev, current string) bool {
 	   unicode.Is(unicode.Katakana, lastPrev) || unicode.Is(unicode.Hangul, lastPrev) {
 		if unicode.Is(unicode.Han, firstCurr) || unicode.Is(unicode.Hiragana, firstCurr) || 
 		   unicode.Is(unicode.Katakana, firstCurr) || unicode.Is(unicode.Hangul, firstCurr) {
-			// Force space between consecutive characters of these scripts = tokenization
+			// 💡 Force space between consecutive characters of these scripts = tokenization
 			return true
 		}
 	}
@@ -362,7 +364,7 @@ func defaultSpacingRule(prev, current string) bool {
 	
 	// 3.3 Thai script doesn't use spaces between words
 	if unicode.Is(unicode.Thai, lastPrev) && unicode.Is(unicode.Thai, firstCurr) {
-		// Force space between consecutive characters of these scripts = tokenization
+		// 💡 Force space between consecutive characters of these scripts = tokenization
 		return true
 	}
 	
