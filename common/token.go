@@ -317,50 +317,54 @@ func DefaultSpacingRule(prev, current string) bool {
 	lastPrev := prevRunes[len(prevRunes)-1]
 	firstCurr := currRunes[0]
 
-	// 1. Script-specific handling for languages that traditionally don't use spaces
+	// 1. Specific punctuation rules
+	
+	// 1.1 No space before closing/following punctuation
+	if isClosingPunctuation(firstCurr) {
+		return false
+	}
+	
+	// 1.2 No space after opening punctuation
+	if isOpeningPunctuation(lastPrev) {
+		return false
+	}
+	
+	// 1.3 ADD space after separator punctuation (comma, semicolon, etc.)
+	if isSeparatorPunctuation(lastPrev) {
+		return true
+	}
+	
+	// 1.4 ADD space after terminal punctuation (period, exclamation, etc.)
+	if isTerminalPunctuation(lastPrev) {
+		return true
+	}
+	
+	// 1.5 No space between consecutive punctuation marks
+	if unicode.IsPunct(lastPrev) && unicode.IsPunct(firstCurr) {
+		return false
+	}
+	
+	// 2. Script-specific handling
 	
 	// Get the script categories for the two characters
 	prevScript := getScriptCategory(lastPrev)
 	currScript := getScriptCategory(firstCurr)
 	
-	// 1.1 CJK scripts (Chinese, Japanese, Korean)
+	// 2.1 CJK scripts (Chinese, Japanese, Korean)
 	if isCJKScript(prevScript) && isCJKScript(currScript) {
-		// Always force spaces between consecutive CJK words for tokenization
+		// Force spaces between consecutive CJK words for tokenization
 		return true
 	}
 	
-	// 1.2 Southeast Asian scripts (Thai, Lao, Khmer, Burmese, etc.)
+	// 2.2 Southeast Asian scripts (Thai, Lao, Khmer, Burmese, etc.)
 	if isSEAsianScript(prevScript) && isSEAsianScript(currScript) {
 		// Force spaces for tokenization
 		return true
 	}
 	
-	// 1.3 Scripts that traditionally don't use spaces between words
-	// but we want to force tokenization for readability
+	// 2.3 Scripts that traditionally don't use spaces between words
 	if isNonSpacingScript(prevScript) && isNonSpacingScript(currScript) {
 		return true
-	}
-	
-	// 2. Punctuation handling
-	
-	// 2.1 No space before sentence-ending/sentence-separating punctuation
-	if isPunctuation(firstCurr, endPunctuation) {
-		return false
-	}
-	
-	// 2.2 No space after opening punctuation
-	if isPunctuation(lastPrev, openPunctuation) {
-		return false
-	}
-	
-	// 2.3 No space between consecutive punctuation marks
-	if unicode.IsPunct(lastPrev) && unicode.IsPunct(firstCurr) {
-		return false
-	}
-	
-	// 2.4 No space between punctuation and adjacent text
-	if unicode.IsPunct(lastPrev) || unicode.IsPunct(firstCurr) {
-		return false
 	}
 	
 	// 3. Special cases for symbols and numbers
@@ -442,6 +446,46 @@ func isAttachedToNumber(r rune) bool {
 	switch r {
 	case '.', ',', '%', '°', ':', '-', '/', '×', '⁄', '+', '±', '=', '<', '>', 
 	     '~', '$', '€', '£', '¥', '₹', '₽', '¢', '#', '№':
+		return true
+	default:
+		return false
+	}
+}
+
+// isOpeningPunctuation checks if a character is opening punctuation
+func isOpeningPunctuation(r rune) bool {
+	switch r {
+	case '(', '[', '{', '«', '"', '\'', '「', '【', '（', '［', '『', '《', '〈':
+		return true
+	default:
+		return false
+	}
+}
+
+// isClosingPunctuation checks if a character is closing punctuation
+func isClosingPunctuation(r rune) bool {
+	switch r {
+	case ')', ']', '}', '»', '"', '\'', '」', '】', '）', '］', '｝', '』', '》', '〉':
+		return true
+	default:
+		return false
+	}
+}
+
+// isSeparatorPunctuation checks if a character is separator punctuation (should have space after)
+func isSeparatorPunctuation(r rune) bool {
+	switch r {
+	case ',', ';', '、', '，', '；':
+		return true
+	default:
+		return false
+	}
+}
+
+// isTerminalPunctuation checks if a character is terminal punctuation (should have space after)
+func isTerminalPunctuation(r rune) bool {
+	switch r {
+	case '.', '!', '?', '。', '．', '！', '？':
 		return true
 	default:
 		return false
