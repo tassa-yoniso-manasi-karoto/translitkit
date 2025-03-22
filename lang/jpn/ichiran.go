@@ -33,7 +33,7 @@ func (p *IchiranProvider) SaveConfig(cfg map[string]interface{}) error {
 
 // InitWithContext initializes the provider with the given context
 func (p *IchiranProvider) InitWithContext(ctx context.Context) (err error) {
-	if err = ichiran.Init(); err != nil {
+	if err = ichiran.InitWithContext(ctx); err != nil {
 		return fmt.Errorf("failed to initialize ichiran: %w", err)
 	}
 	p.applyConfig()
@@ -47,7 +47,7 @@ func (p *IchiranProvider) Init() (err error) {
 
 // InitRecreateWithContext reinitializes the provider with the given context
 func (p *IchiranProvider) InitRecreateWithContext(ctx context.Context, noCache bool) (err error) {
-	if err = ichiran.InitRecreate(noCache); err != nil {
+	if err = ichiran.InitRecreateWithContext(ctx, noCache); err != nil {
 		return fmt.Errorf("failed to initialize ichiran: %w", err)
 	}
 	p.applyConfig()
@@ -125,7 +125,7 @@ func (p *IchiranProvider) processChunks(ctx context.Context, chunks []string) (c
 		}
 	
 		// 1) Ichiran morphological analysis
-		jTokens, err := ichiran.Analyze(chunk)
+		jTokens, err := ichiran.AnalyzeWithContext(ctx, chunk)
 		if err != nil {
 			return nil, fmt.Errorf("ichiran: failed to analyze chunk %d: %w\nraw_chunk=>>>%s<<<", idx, err, chunk)
 		}

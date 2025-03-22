@@ -511,10 +511,12 @@ github.com/stretchr/testify v1.8.0/go.mod h1:yNjHg4UonilssWZ8iaSj1OCr/vHnekPRkoO
 github.com/stretchr/testify v1.8.1/go.mod h1:w2LPCIKwWwSfY2zedu0+kehJoqGctiVI29o6fzry7u4=
 github.com/stretchr/testify v1.10.0 h1:Xv5erBjTwe/5IxqUQTdXv5kgmIvbHo3QQyRwhJsOfJA=
 github.com/stretchr/testify v1.10.0/go.mod h1:r2ic/lqez/lEtzL7wO/rwa5dbSLXVDPFyf8C91i36aY=
-github.com/tassa-yoniso-manasi-karoto/dockerutil v0.0.0-20250222130553-4736132089a9 h1:+v28hDNPVh+dlJU/dNdC5KTBd7o/mOMbnsXYdUHV7sw=
-github.com/tassa-yoniso-manasi-karoto/dockerutil v0.0.0-20250222130553-4736132089a9/go.mod h1:vqVmetSp1Dbcb+og18U6WtKKHWoPOfUVw/WCOtzrmC4=
-github.com/tassa-yoniso-manasi-karoto/go-aksharamukha v0.0.0-20250222130736-c9e6da206ea6 h1:QK8eEwvuTksHN1z0swPHb6EULw9ALGjh9CPuyKQK1SY=
-github.com/tassa-yoniso-manasi-karoto/go-aksharamukha v0.0.0-20250222130736-c9e6da206ea6/go.mod h1:wXqQlXeCy50ud+3KB8KfSQBiU72iK93lQxzB9KRnm+4=
+github.com/tassa-yoniso-manasi-karoto/dockerutil v0.0.0-20250125053402-0ba60f8e6ba7 h1:91EZiihQ4vGEFjEuFXAqpGyBUlaV2NbL+rJWVxk3elg=
+github.com/tassa-yoniso-manasi-karoto/dockerutil v0.0.0-20250125053402-0ba60f8e6ba7/go.mod h1:vqVmetSp1Dbcb+og18U6WtKKHWoPOfUVw/WCOtzrmC4=
+github.com/tassa-yoniso-manasi-karoto/go-aksharamukha v0.0.0-20250321133057-249cfd96068f h1:vKnbSIS/1uSHPf5mTwh7KP7THLIQzAvgRt3dPCNqneM=
+github.com/tassa-yoniso-manasi-karoto/go-aksharamukha v0.0.0-20250321133057-249cfd96068f/go.mod h1:wXqQlXeCy50ud+3KB8KfSQBiU72iK93lQxzB9KRnm+4=
+github.com/tassa-yoniso-manasi-karoto/go-ichiran v1.0.1-beta h1:NYXy6gE0RZlps8SydVC0oBL0zgYbFV/AH9xEF2wcm/0=
+github.com/tassa-yoniso-manasi-karoto/go-ichiran v1.0.1-beta/go.mod h1:LeVRb3Eo9biCHWdKXn+nX126tufwzZ0soU8YM/YYfAE=
 github.com/theupdateframework/notary v0.7.0 h1:QyagRZ7wlSpjT5N2qQAh/pN+DVqgekv4DzbAiAiEL3c=
 github.com/theupdateframework/notary v0.7.0/go.mod h1:c9DRxcmhHmVLDay4/2fUYdISnHqbFDGRSlXPO0AhYWw=
 github.com/tidwall/pretty v1.2.1 h1:qjsOFOWWQl+N3RsoF5/ssm1pHmJJwhjlSbZ51I6wMl4=

@@ -48,7 +48,7 @@ func (p *TH2ENProvider) InitWithContext(ctx context.Context) (err error) {
 	if err = checkWebsiteReachable(ctx); err != nil {
 		return
 	}
-	if err = p.initWithContext(ctx); err != nil {
+	if err = p.init(ctx); err != nil {
 		return
 	}
 	if p.targetScheme == "" {
@@ -74,14 +74,32 @@ func (p *TH2ENProvider) InitRecreate(bool) (err error) {
 	return p.Init()
 }
 
-// initWithContext initializes the provider with the given context
-func (p *TH2ENProvider) initWithContext(ctx context.Context) (err error) {
-	p.browser = rod.New()
-	if err = p.browser.ControlURL(common.BrowserAccessURL).Context(ctx).Connect(); err != nil {
-		return fmt.Errorf("go-rod failed to connect to a browser instance for scraping: %w", err)
+// init initializes the provider with the given context
+func (p *TH2ENProvider) init(ctx context.Context) (err error) {
+	// Check if BrowserAccessURL is available
+	if common.BrowserAccessURL == "" {
+		return fmt.Errorf("BrowserAccessURL is not set - required for web scraping")
 	}
-	p.applyConfig(ctx)
-	return
+
+	// Initialize browser with proper error handling
+	p.browser = rod.New().ControlURL(common.BrowserAccessURL).Context(ctx)
+	if p.browser == nil {
+		return fmt.Errorf("failed to create browser instance")
+	}
+	
+	// Connect to the browser - this is a critical step
+	if err = p.browser.Connect(); err != nil {
+		return fmt.Errorf("go-rod failed to connect to browser: %w", err)
+	}
+	
+	// Apply config only after successful connection
+	if err = p.applyConfig(ctx); err != nil {
+		p.browser.Close() // Clean up on error
+		p.browser = nil
+		return fmt.Errorf("failed to apply config: %w", err) 
+	}
+	
+	return nil
 }
 
 
@@ -138,6 +156,11 @@ func (p *TH2ENProvider) WithProgressCallback(callback common.ProgressCallback) {
 
 // selectTranslitScheme selects the transliteration scheme with provided context
 func (p *TH2ENProvider) selectTranslitScheme(ctx context.Context, scheme string) error {
+	// Protect against nil browser
+	if p.browser == nil {
+		return fmt.Errorf("browser not initialized, call Init first")
+	}
+
 	// Create a derived context with timeout
 	ctxWithTimeout, cancel := context.WithTimeout(ctx, 30*time.Second)
 	defer cancel()
@@ -151,10 +174,14 @@ func (p *TH2ENProvider) selectTranslitScheme(ctx context.Context, scheme string)
 	}
 	
 	logger.Trace().Msg("Creating new page")
-	page, err := p.browser.Context(ctxWithTimeout).Page(proto.TargetCreateTarget{})
+	// IMPORTANT: We use the original browser instance directly, not a new one with context
+	// The context is already set in the main browser instance during init
+	// Trying to slap a new one on top will cause runtime panics
+	page, err := p.browser.Page(proto.TargetCreateTarget{})
 	if err != nil {
 		return fmt.Errorf("failed to create page: %w", err)
 	}
+	defer page.Close()
 
 	logger.Trace().Msg("Navigating to website")
 	if err := page.Navigate("https://www.thai2english.com/"); err != nil {
@@ -214,6 +241,7 @@ func (p *TH2ENProvider) selectTranslitScheme(ctx context.Context, scheme string)
 	return nil
 }
 
+
 // ProcessFlowController processes input with the given context
 func (p *TH2ENProvider) ProcessFlowController(ctx context.Context, input common.AnyTokenSliceWrapper) (results common.AnyTokenSliceWrapper, err error) {
 	raw := input.GetRaw()
@@ -243,8 +271,6 @@ func (p *TH2ENProvider) ProcessFlowController(ctx context.Context, input common.
 	return nil, fmt.Errorf("handling not implemented for '%s' with ProviderType '%s'", p.Name(), ProviderType)
 }
 
-
-
 // process processes chunks with the given context
 func (p *TH2ENProvider) process(ctx context.Context, chunks []string) (common.AnyTokenSliceWrapper, error) {
 	tsw := &TknSliceWrapper{}
@@ -268,7 +294,10 @@ func (p *TH2ENProvider) process(ctx context.Context, chunks []string) (common.An
 
 		logger.Trace().Msgf("Processing chunk %d/%d: %s", idx+1, totalChunks, chunk)
 		
-		page, err := p.browser.Context(ctx).Page(proto.TargetCreateTarget{})
+		// IMPORTANT: We use the original browser instance directly, not a new one with context
+		// The context is already set in the main browser instance during init
+		// Trying to slap a new one on top will cause runtime panics
+		page, err := p.browser.Page(proto.TargetCreateTarget{})
 		if err != nil {
 			return nil, fmt.Errorf("failed to create page: %w", err)
 		}
@@ -361,6 +390,7 @@ func (p *TH2ENProvider) process(ctx context.Context, chunks []string) (common.An
 			logger.Warn().Err(err).Msg("failed to close page")
 		}
 	}
+	
 	// Simple interleaving of the strings (joined chunks) that
 	//	- allows to discriminate true lexical content from what isn't
 	//	- retain non-lexical content, properly tagged
@@ -370,11 +400,6 @@ func (p *TH2ENProvider) process(ctx context.Context, chunks []string) (common.An
 		tkn.Romanization = dicTlit[tkn.Surface]
 		tkn.Glosses = dicGloss[tkn.Surface]
 		tsw.Append(tkn)
-	}
-	
-	// Report completion (all chunks processed)
-	if p.progressCallback != nil {
-		p.progressCallback(totalChunks, totalChunks)
 	}
 	
 	return tsw, nil
