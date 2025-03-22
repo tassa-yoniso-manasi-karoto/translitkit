@@ -297,9 +297,10 @@ func defaultTokenized(tokens []AnyToken) string {
 // SpacingRule defines a function signature for deciding if a space is needed between tokens.
 type SpacingRule func(prev, current string) bool
 
-// DefaultSpacingRule is our configurable rule for whether to insert a space between two tokens.
-// FIXME This function was LLM generated but the LLM failed to understand that we want to force
-// adding spaces for languages that don't use them, may still need tweaking for langs other than ja, zh, th
+// DefaultSpacingRule determines if a space should be inserted between two tokens
+// This rule is specifically designed for tokenization of languages that traditionally
+// don't use spaces (like Japanese, Chinese, Thai, etc.), and will force spaces
+// between words while intelligently handling punctuation and special cases.
 func DefaultSpacingRule(prev, current string) bool {
 	// If either token is empty, no space is needed
 	if prev == "" || current == "" {
@@ -316,125 +317,140 @@ func DefaultSpacingRule(prev, current string) bool {
 	lastPrev := prevRunes[len(prevRunes)-1]
 	firstCurr := currRunes[0]
 
-	// 1. Handle punctuation that should not have spacing
+	// 1. Script-specific handling for languages that traditionally don't use spaces
 	
-	// 1.1 No space before closing punctuation or punctuation that follows text
-	switch firstCurr {
-	case '.', ',', '!', '?', ':', ';', ')', ']', '}', '»', '・', '…', '"', '\'', '」',
-		 '】', '々', '～', '。', '、', '：', '；', '，', '．', '！', '？', '）', '］', '｝', '』', '》', '〉':
-		return false
-	}
-
-	// 1.2 No space after opening punctuation or punctuation that precedes text
-	switch lastPrev {
-	case '(', '[', '{', '«', '"', '\'', '「', '【', '（', '［', '『', '《', '〈':
-		return false
+	// Get the script categories for the two characters
+	prevScript := getScriptCategory(lastPrev)
+	currScript := getScriptCategory(firstCurr)
+	
+	// 1.1 CJK scripts (Chinese, Japanese, Korean)
+	if isCJKScript(prevScript) && isCJKScript(currScript) {
+		// Always force spaces between consecutive CJK words for tokenization
+		return true
 	}
 	
-	// 2. Detect Unicode character categories
-	
-	// 2.1 No space between punctuation and text
-	if unicode.IsPunct(lastPrev) && !unicode.IsPunct(firstCurr) {
-		return false
-	}
-	if !unicode.IsPunct(lastPrev) && unicode.IsPunct(firstCurr) {
-		return false
+	// 1.2 Southeast Asian scripts (Thai, Lao, Khmer, Burmese, etc.)
+	if isSEAsianScript(prevScript) && isSEAsianScript(currScript) {
+		// Force spaces for tokenization
+		return true
 	}
 	
-	// 2.2 No space between consecutive punctuation marks
+	// 1.3 Scripts that traditionally don't use spaces between words
+	// but we want to force tokenization for readability
+	if isNonSpacingScript(prevScript) && isNonSpacingScript(currScript) {
+		return true
+	}
+	
+	// 2. Punctuation handling
+	
+	// 2.1 No space before sentence-ending/sentence-separating punctuation
+	if isPunctuation(firstCurr, endPunctuation) {
+		return false
+	}
+	
+	// 2.2 No space after opening punctuation
+	if isPunctuation(lastPrev, openPunctuation) {
+		return false
+	}
+	
+	// 2.3 No space between consecutive punctuation marks
 	if unicode.IsPunct(lastPrev) && unicode.IsPunct(firstCurr) {
 		return false
 	}
 	
-	// 3. Language-specific handling for scripts that don't use spaces
-	
-	// 3.1 East Asian scripts (Chinese, Japanese, Korean)
-	if unicode.Is(unicode.Han, lastPrev) || unicode.Is(unicode.Hiragana, lastPrev) || 
-	   unicode.Is(unicode.Katakana, lastPrev) || unicode.Is(unicode.Hangul, lastPrev) {
-		if unicode.Is(unicode.Han, firstCurr) || unicode.Is(unicode.Hiragana, firstCurr) || 
-		   unicode.Is(unicode.Katakana, firstCurr) || unicode.Is(unicode.Hangul, firstCurr) {
-			// 💡 Force space between consecutive characters of these scripts = tokenization
-			return true
-		}
-	}
-	
-	// 3.2 No spaces between Latin characters and certain scripts
-	//isLastLatinAlpha := unicode.Is(unicode.Latin, lastPrev) && unicode.IsLetter(lastPrev)
-	//isFirstLatinAlpha := unicode.Is(unicode.Latin, firstCurr) && unicode.IsLetter(firstCurr)
-	
-	// 3.3 Thai script doesn't use spaces between words
-	if unicode.Is(unicode.Thai, lastPrev) && unicode.Is(unicode.Thai, firstCurr) {
-		// 💡 Force space between consecutive characters of these scripts = tokenization
-		return true
-	}
-	
-	// 3.4 No spaces in Indic scripts between characters of the same script
-	isLastIndic := unicode.Is(unicode.Devanagari, lastPrev) || unicode.Is(unicode.Bengali, lastPrev) || 
-	              unicode.Is(unicode.Gurmukhi, lastPrev) || unicode.Is(unicode.Gujarati, lastPrev) || 
-	              unicode.Is(unicode.Tamil, lastPrev) || unicode.Is(unicode.Telugu, lastPrev) || 
-	              unicode.Is(unicode.Kannada, lastPrev) || unicode.Is(unicode.Malayalam, lastPrev) || 
-	              unicode.Is(unicode.Sinhala, lastPrev)
-	              
-	isFirstIndic := unicode.Is(unicode.Devanagari, firstCurr) || unicode.Is(unicode.Bengali, firstCurr) || 
-	               unicode.Is(unicode.Gurmukhi, firstCurr) || unicode.Is(unicode.Gujarati, firstCurr) || 
-	               unicode.Is(unicode.Tamil, firstCurr) || unicode.Is(unicode.Telugu, firstCurr) || 
-	               unicode.Is(unicode.Kannada, firstCurr) || unicode.Is(unicode.Malayalam, firstCurr) || 
-	               unicode.Is(unicode.Sinhala, firstCurr)
-	               
-	if isLastIndic && isFirstIndic {
+	// 2.4 No space between punctuation and adjacent text
+	if unicode.IsPunct(lastPrev) || unicode.IsPunct(firstCurr) {
 		return false
 	}
 	
-	// 4. Number and symbol handling
+	// 3. Special cases for symbols and numbers
 	
-	// 4.1 No space between numbers and certain symbols
-	if unicode.IsDigit(lastPrev) && (firstCurr == '.' || firstCurr == ',' || firstCurr == '%' || firstCurr == '°' || 
-	   firstCurr == ':' || firstCurr == '-' || firstCurr == '/' || firstCurr == '×' || firstCurr == '⁄') {
+	// 3.1 No space between numbers and certain symbols
+	if unicode.IsDigit(lastPrev) && isAttachedToNumber(firstCurr) {
 		return false
 	}
 	
-	// 4.2 No space between certain symbols and numbers
-	if (lastPrev == '+' || lastPrev == '-' || lastPrev == '±' || lastPrev == '=' || lastPrev == '<' || lastPrev == '>' || 
-	    lastPrev == '~' || lastPrev == '$' || lastPrev == '€' || lastPrev == '£' || lastPrev == '¥' || 
-	    lastPrev == '₹' || lastPrev == '₽' || lastPrev == '¢' || lastPrev == '/' || lastPrev == ':' || 
-	    lastPrev == '#' || lastPrev == '№') && unicode.IsDigit(firstCurr) {
+	// 3.2 No space between certain symbols and numbers
+	if isAttachedToNumber(lastPrev) && unicode.IsDigit(firstCurr) {
 		return false
 	}
 	
-	// 4.3 No space between consecutive numbers
+	// 3.3 No space between consecutive numbers
 	if unicode.IsDigit(lastPrev) && unicode.IsDigit(firstCurr) {
 		return false
 	}
 	
-	// 5. Special cases
-	
-	// 5.1 No space in contractions with apostrophes
+	// 3.4 No space in contractions with apostrophes
 	if lastPrev == '\'' || firstCurr == '\'' {
 		return false
 	}
 	
-	// 5.2 No space in hyphenated words
+	// 3.5 No space in hyphenated words
 	if lastPrev == '-' || firstCurr == '-' {
 		return false
 	}
 	
-	// 5.3 No space for Arabic/Persian scripts connecting characters
-	if unicode.Is(unicode.Arabic, lastPrev) && unicode.Is(unicode.Arabic, firstCurr) {
-		return false
+	// 4. Script transitions
+	
+	// 4.1 Different script transition (e.g., Latin to Japanese)
+	// Usually needs a space for clarity
+	if prevScript != currScript && 
+	   !unicode.IsPunct(lastPrev) && !unicode.IsPunct(firstCurr) &&
+	   !unicode.IsSpace(lastPrev) && !unicode.IsSpace(firstCurr) {
+		return true
 	}
 	
-	// 5.4 No space for Hebrew characters
-	if unicode.Is(unicode.Hebrew, lastPrev) && unicode.Is(unicode.Hebrew, firstCurr) {
-		return false
+	// 5. Latin script handling
+	
+	// 5.1 Space between Latin words
+	if isLatinLetter(lastPrev) && isLatinLetter(firstCurr) {
+		return true
 	}
 	
-	// 5.5 No space for Cyrillic special cases
-	if unicode.Is(unicode.Cyrillic, lastPrev) && lastPrev == 'ь' && unicode.Is(unicode.Cyrillic, firstCurr) {
-		return false
-	}
-	
-	// 6. By default, insert a space between lexical tokens
+	// 6. Default: Insert a space when in doubt
+	// This is safer for tokenization purposes
 	return true
+}
+
+// Helper functions
+// isCJKScript checks if the script is Chinese, Japanese, or Korean
+func isCJKScript(script string) bool {
+	return script == "Han" || script == "Hiragana" || script == "Katakana" || script == "Hangul"
+}
+
+// isSEAsianScript checks if the script is Southeast Asian
+func isSEAsianScript(script string) bool {
+	return script == "Thai" || script == "Lao" || script == "Khmer" || script == "Myanmar"
+}
+
+// isNonSpacingScript checks if the script traditionally doesn't use spaces
+func isNonSpacingScript(script string) bool {
+	return isCJKScript(script) || isSEAsianScript(script) || 
+		   script == "Devanagari" || script == "Bengali" || 
+		   script == "Tamil" || script == "Telugu" || 
+		   script == "Kannada" || script == "Malayalam" || 
+		   script == "Gujarati" || script == "Gurmukhi"
+}
+
+// isPunctuation checks if a character is in a given punctuation set
+func isPunctuation(r rune, set map[rune]bool) bool {
+	return set[r]
+}
+
+// isAttachedToNumber checks if a character is typically attached to numbers
+func isAttachedToNumber(r rune) bool {
+	switch r {
+	case '.', ',', '%', '°', ':', '-', '/', '×', '⁄', '+', '±', '=', '<', '>', 
+	     '~', '$', '€', '£', '¥', '₹', '₽', '¢', '#', '№':
+		return true
+	default:
+		return false
+	}
+}
+
+// isLatinLetter checks if a character is a Latin alphabet letter
+func isLatinLetter(r rune) bool {
+	return unicode.Is(unicode.Latin, r) && unicode.IsLetter(r)
 }
 
 

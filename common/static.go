@@ -6,6 +6,23 @@ import (
 	iso "github.com/barbashov/iso639-3"
 )
 
+var (
+	stdLang2Ranges = make(map[string][]*unicode.RangeTable)
+	
+	// End punctuation (no space before these)
+	endPunctuation = map[rune]bool{
+		'.': true, ',': true, '!': true, '?': true, ':': true, ';': true, 
+		')': true, ']': true, '}': true, '»': true, '…': true, '"': true, '\'': true,
+		'」': true, '】': true, '）': true, '］': true, '｝': true, '』': true, '》': true, '〉': true,
+		'。': true, '、': true, '：': true, '；': true, '，': true, '．': true, '！': true, '？': true,
+	}
+	
+	// Opening punctuation (no space after these)
+	openPunctuation = map[rune]bool{
+		'(': true, '[': true, '{': true, '«': true, '"': true, '\'': true, 
+		'「': true, '【': true, '（': true, '［': true, '『': true, '《': true, '〈': true,
+	}
+)
 
 // GetUnicodeRangesFromLang returns the Unicode range tables that represent the primary
 // writing scripts for the specified language.
@@ -37,7 +54,56 @@ func GetUnicodeRangesFromLang(lang string) ([]*unicode.RangeTable, error) {
 	return []*unicode.RangeTable{}, fmt.Errorf("'%s' is not a valid ISO 639 language", lang)
 }
 
-var stdLang2Ranges = make(map[string][]*unicode.RangeTable)
+
+// getScriptCategory determines which writing system a character belongs to
+func getScriptCategory(r rune) string {
+	switch {
+	case unicode.Is(unicode.Han, r):
+		return "Han" // Chinese characters (Hanzi, Kanji, Hanja)
+	case unicode.Is(unicode.Hiragana, r):
+		return "Hiragana"
+	case unicode.Is(unicode.Katakana, r):
+		return "Katakana"
+	case unicode.Is(unicode.Hangul, r):
+		return "Hangul" // Korean
+	case unicode.Is(unicode.Thai, r):
+		return "Thai"
+	case unicode.Is(unicode.Lao, r):
+		return "Lao"
+	case unicode.Is(unicode.Khmer, r):
+		return "Khmer"
+	case unicode.Is(unicode.Myanmar, r):
+		return "Myanmar" // Burmese
+	case unicode.Is(unicode.Latin, r):
+		return "Latin"
+	case unicode.Is(unicode.Cyrillic, r):
+		return "Cyrillic"
+	case unicode.Is(unicode.Greek, r):
+		return "Greek"
+	case unicode.Is(unicode.Arabic, r):
+		return "Arabic"
+	case unicode.Is(unicode.Hebrew, r):
+		return "Hebrew"
+	case unicode.Is(unicode.Devanagari, r):
+		return "Devanagari"
+	case unicode.Is(unicode.Bengali, r):
+		return "Bengali"
+	case unicode.Is(unicode.Tamil, r):
+		return "Tamil"
+	case unicode.Is(unicode.Telugu, r):
+		return "Telugu"
+	case unicode.Is(unicode.Kannada, r):
+		return "Kannada"
+	case unicode.Is(unicode.Malayalam, r):
+		return "Malayalam"
+	case unicode.Is(unicode.Gujarati, r):
+		return "Gujarati"
+	case unicode.Is(unicode.Gurmukhi, r):
+		return "Gurmukhi" // Punjabi
+	default:
+		return "Other"
+	}
+}
 
 var langsNeedTokenization = []string{
 	"zho", "cmn", // Chinese (Mandarin) - 920 million
