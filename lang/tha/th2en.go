@@ -133,7 +133,7 @@ func (p *TH2ENProvider) GetType() common.ProviderType {
 }
 
 func (p *TH2ENProvider) GetMaxQueryLen() int {
-	return 99
+	return 120
 }
 
 // CloseWithContext closes the provider with the given context
