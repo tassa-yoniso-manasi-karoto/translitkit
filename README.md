@@ -20,21 +20,17 @@ Thus there are linguistic annotations available following analysis such as part-
 ```go
 import (
 	"fmt"
-	"context"
 	"github.com/tassa-yoniso-manasi-karoto/translitkit"
 	"github.com/tassa-yoniso-manasi-karoto/translitkit/lang/jpn"
 )
 
-const text = "日本語の例文です"
-
 func main() {
+	text := "日本語の例文です"
+
 	// Provides basic features for an arbitrary language of the ISO-639 set
 	m, err := translitkit.DefaultModule("jpn")
 	check(err)
 	
-	// Optional
-	m.WithContext(context.TODO())
-
 	m.MustInit()
 	defer m.Close()
 	
@@ -53,6 +49,9 @@ func main() {
 	fmt.Printf("%#v\n", kana)
 }
 ```
+> [!NOTE]
+> context-aware methods are also available and should be prefered
+
 ### Output
 
 ```
@@ -71,7 +70,7 @@ See docs of sub package "common" for the basic methods set available across lang
 
 ### Chinese
 
-- [gojieba](https://github.com/yanyiwu/gojieba) **[tokenized]**
+- [gojieba](https://github.com/yanyiwu/gojieba) **[tokenizer]**
 - [go-pinyin](https://github.com/mozillazg/go-pinyin) **[transliterator]**
 
 ### Japanese
