@@ -306,9 +306,6 @@ func (p *TH2ENProvider) ProcessFlowController(ctx context.Context, input common.
 // process processes chunks with the given context
 func (p *TH2ENProvider) process(ctx context.Context, chunks []string) (common.AnyTokenSliceWrapper, error) {
 	tsw := &TknSliceWrapper{}
-	providerTokenSlice := []string{}
-	dicTlit := make(map[string]string)
-	dicGloss := make(map[string][]common.Gloss)
 	totalChunks := len(chunks)
 	
 	for idx, chunk := range chunks {
@@ -367,6 +364,9 @@ func (p *TH2ENProvider) process(ctx context.Context, chunks []string) (common.An
 			return tsw, fmt.Errorf("elements are empty. idx=%d", idx)
 		}
 
+		providerTokenSlice := []string{}
+		dicTlit := make(map[string]string)
+		dicGloss := make(map[string][]common.Gloss)
 		// Process each element
 		for _, element := range elements {
 			thNode, err := element.Element(".thai")
@@ -416,22 +416,28 @@ func (p *TH2ENProvider) process(ctx context.Context, chunks []string) (common.An
 				})
 			}
 		}
+		// Simple interleaving of the strings (joined chunks) that
+		//	- allows to discriminate true lexical content from what isn't
+		//	- retain non-lexical content, properly tagged
+		tkns, err := common.IntegrateProviderTokensV2(chunk, providerTokenSlice)
+		if err != nil {
+			logger.Error().
+				Err(err).
+				Msg("Token integration had issues, romanization may be incomplete")
+			// Continue despite errors - we still want to return partial results
+		}
+
+
+		for _, tkn := range tkns {
+			tkn.Romanization = dicTlit[tkn.Surface]
+			tkn.Glosses = dicGloss[tkn.Surface]
+			tsw.Append(tkn)
+		}
 
 		// Close page after processing
 		if err := page.Close(); err != nil {
 			logger.Warn().Err(err).Msg("failed to close page")
 		}
-	}
-	
-	// Simple interleaving of the strings (joined chunks) that
-	//	- allows to discriminate true lexical content from what isn't
-	//	- retain non-lexical content, properly tagged
-	tkns := common.IntegrateProviderTokens(strings.Join(chunks, ""), providerTokenSlice)
-
-	for _, tkn := range tkns {
-		tkn.Romanization = dicTlit[tkn.Surface]
-		tkn.Glosses = dicGloss[tkn.Surface]
-		tsw.Append(tkn)
 	}
 	
 	return tsw, nil

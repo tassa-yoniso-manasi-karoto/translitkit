@@ -202,6 +202,8 @@ func (c *Chunkifier) splitRecursively(s string, methodIndex int) ([]string, erro
 					if allSmall {
 						// All sub-tokens are within limit
 						subTokens = tempTokens
+				        Log.Trace().Strs("subTokens", subTokens).Msgf("Chunkify: after using alternative method %s on oversized token: SUCCESS: allSmall is true", 
+					    c.SplitMethods[nextMethodIndex].Name)
 						break
 					}
 				}

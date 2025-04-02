@@ -1,8 +1,11 @@
 package common
 
 import (
+	"fmt"
 	"strings"
 	"unicode"
+	"crypto/md5"
+	"encoding/hex"
 	
 	"github.com/gookit/color"
 	"github.com/k0kubun/pp"
@@ -160,6 +163,70 @@ type Tkn struct {
 }
 
 
+// IntegrateProviderTokensV2 is an improved version of deprecated IntegrateProviderTokens
+// that adds better error handling and reporting for token matching issues.
+func IntegrateProviderTokensV2(original string, providerTokens []string) ([]*Tkn, error) {
+	var result []*Tkn
+	pos := 0
+	missedTokens := 0
+	totalTokens := len(providerTokens)
+	
+	for i, token := range providerTokens {
+		// Skip empty tokens
+		if token == "" {
+			continue
+		}
+		
+		// Find the token starting from the current position
+		idx := strings.Index(original[pos:], token)
+		if idx == -1 {
+			missedTokens++
+			Log.Debug().
+				Str("token", token).
+				Int("position", pos).
+				Int("token_index", i).
+				Msg("Token not found in original text, skipping")
+			continue
+		}
+		
+		// Adjust index relative to the whole string
+		idx += pos
+		
+		// Capture any text between the current position and the token's start as a fake token
+		if pos < idx {
+			fake := original[pos:idx]
+			result = append(result, &Tkn{Surface: fake, IsLexical: false})
+		}
+		
+		// Append the provider token
+		result = append(result, &Tkn{Surface: token, IsLexical: true})
+		
+		// Update the position after the token
+		pos = idx + len(token)
+	}
+	
+	// Capture any trailing characters as a fake token
+	if pos < len(original) {
+		fake := original[pos:]
+		result = append(result, &Tkn{Surface: fake, IsLexical: false})
+	}
+	
+	// If we missed more than 20% of tokens, return an error but still return results
+	if totalTokens > 0 && missedTokens > totalTokens/5 {
+		return result, fmt.Errorf("token matching issues: missed %d of %d tokens (%.1f%%)", 
+			missedTokens, totalTokens, float64(missedTokens)/float64(totalTokens)*100)
+	}
+	
+	return result, nil
+}
+
+// GetContentHash generates a hash for a text chunk for caching purposes
+func GetContentHash(text string) string {
+	hash := md5.Sum([]byte(text))
+	return hex.EncodeToString(hash[:])
+}
+
+// DEPRECATED: USE IntegrateProviderTokensV2 INSTEAD!
 // Some tokenization providers have a lossy tokenization that offers only the core, lexical content.
 // IntegrateProviderTokens combines the tokens produced by the provider with the
 // intervening text (such as punctuation, spaces, or other characters) that the provider
