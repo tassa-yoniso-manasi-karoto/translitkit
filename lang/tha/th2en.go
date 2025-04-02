@@ -12,6 +12,7 @@ import (
 
 	"github.com/go-rod/rod"
 	"github.com/go-rod/rod/lib/proto"
+	"github.com/go-rod/rod/lib/launcher"
 	
 	"github.com/gookit/color"
 	"github.com/k0kubun/pp"
@@ -24,7 +25,6 @@ var (
 	logger = common.Log.With().Str("provider", "thai2english.com").Logger()
 	reRepetitionMark = regexp.MustCompile(`\s+(ๆ)`)
 )
-
 
 // TH2ENProvider satisfies the Provider interface
 type TH2ENProvider struct {
@@ -43,21 +43,53 @@ func (p *TH2ENProvider) SaveConfig(cfg map[string]interface{}) error {
 
 // InitWithContext initializes with the provided context
 func (p *TH2ENProvider) InitWithContext(ctx context.Context) (err error) {
-	// force refresh logger
-	logger = common.Log.With().Str("provider", "thai2english.com").Logger()
-	if err = checkWebsiteReachable(ctx); err != nil {
-		return
-	}
-	if err = p.init(ctx); err != nil {
-		return
-	}
-	if p.targetScheme == "" {
-		if err = p.selectTranslitScheme(ctx, "paiboon"); err != nil {
-			return fmt.Errorf("error selecting default translit scheme: %w", err)
+	// Get a browser instance (either via BrowserAccessURL or automatic download)
+	var browserURL string
+
+	if common.BrowserAccessURL == "" {
+		// Use launcher to automatically download and manage browser
+		logger.Info().Msg("BrowserAccessURL not set, using automatic browser management")
+
+		// Create a new launcher that will download the browser if needed
+		l := launcher.New()
+		// Configure the launcher with appropriate options
+		l = l.Headless(true)
+
+		// Launch the browser and get the WebSocket URL
+		url, err := l.Launch()
+		if err != nil {
+			return fmt.Errorf("failed to launch browser automatically: %w", err)
 		}
+
+		browserURL = url
+		logger.Info().Str("browser_url", url).Msg("Browser launched automatically")
+	} else {
+		// Use provided BrowserAccessURL
+		browserURL = common.BrowserAccessURL
+		logger.Info().Str("browser_url", browserURL).Msg("Using provided browser URL")
 	}
-	return
+
+	// Initialize browser with proper error handling
+	p.browser = rod.New().ControlURL(browserURL).Context(ctx)
+	if p.browser == nil {
+		return fmt.Errorf("failed to create browser instance")
+	}
+
+	// Connect to the browser - this is a critical step
+	if err = p.browser.Connect(); err != nil {
+		return fmt.Errorf("go-rod failed to connect to browser: %w", err)
+	}
+
+	// Apply config only after successful connection
+	if err = p.applyConfig(ctx); err != nil {
+		p.browser.Close() // Clean up on error
+		p.browser = nil
+		return fmt.Errorf("failed to apply config: %w", err)
+	}
+
+	return nil
 }
+
 
 // Init initializes with background context
 func (p *TH2ENProvider) Init() (err error) {
@@ -448,22 +480,24 @@ func checkWebsiteReachable(ctx context.Context) error {
 	client := &http.Client{
 		Timeout: 3 * time.Second,
 	}
-	
-	req, err := http.NewRequestWithContext(ctx, "GET", URL,  nil)
+
+	req, err := http.NewRequestWithContext(ctx, "GET", URL, nil)
 	if err != nil {
 		return fmt.Errorf("failed to create request: %w", err)
 	}
-	
+
 	resp, err := client.Do(req)
 	if err != nil {
-		return fmt.Errorf("failed to reach th2en: %w", err)
+		logger.Warn().Err(err).Msg("Could not reach thai2english.com - will attempt to proceed anyway using automatic browser management")
+		return nil // Return nil instead of error to allow automatic browser management to try
 	}
 	defer resp.Body.Close()
-	
+
 	if resp.StatusCode != http.StatusOK {
-		return fmt.Errorf("website returned non-200 status code: %d", resp.StatusCode)
+		logger.Warn().Int("status_code", resp.StatusCode).Msg("Website returned non-200 status code - will attempt to proceed anyway")
+		return nil // Return nil to allow automatic browser management to try
 	}
-	
+
 	return nil
 }
 
