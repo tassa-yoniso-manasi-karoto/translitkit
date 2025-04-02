@@ -158,7 +158,7 @@ require (
 	github.com/skratchdot/open-golang v0.0.0-20200116055534-eef842397966 // indirect
 	github.com/spf13/cobra v1.8.1 // indirect
 	github.com/spf13/pflag v1.0.5 // indirect
-	github.com/tassa-yoniso-manasi-karoto/dockerutil v0.0.0-20250222130553-4736132089a9 // indirect
+	github.com/tassa-yoniso-manasi-karoto/dockerutil v0.0.0-20250402055055-5169dec2dfb7 // indirect
 	github.com/tassa-yoniso-manasi-karoto/go-aksharamukha v0.0.0-20250321133057-249cfd96068f // indirect
 	github.com/tassa-yoniso-manasi-karoto/go-ichiran v1.0.1-beta // indirect
 	github.com/theupdateframework/notary v0.7.0 // indirect
