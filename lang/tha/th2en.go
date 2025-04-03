@@ -419,6 +419,8 @@ func (p *TH2ENProvider) process(ctx context.Context, chunks []string) (common.An
 		// Simple interleaving of the strings (joined chunks) that
 		//	- allows to discriminate true lexical content from what isn't
 		//	- retain non-lexical content, properly tagged
+		
+		// IMPORTANT: keep this in the for loop to prevent mysterious bug, see commit msg 6bf9a50
 		tkns, err := common.IntegrateProviderTokensV2(chunk, providerTokenSlice)
 		if err != nil {
 			logger.Error().
