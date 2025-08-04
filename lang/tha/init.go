@@ -53,7 +53,7 @@ func init() {
 }
 
 func registerThaiSchemes() {
-	// Register thai2english.com schemes (moved from th2en.go)
+	// thai2english.com
 	thai2englishSchemes := []common.TranslitScheme{
 		{Name: "paiboon", Description: "Paiboon-esque transliteration", Provider: "thai2english.com", NeedsScraper: true},
 		{Name: "thai2english", Description: "thai2english's custom transliteration system", Provider: "thai2english.com", NeedsScraper: true},
@@ -71,16 +71,11 @@ func registerThaiSchemes() {
 		}
 	}
 	
-	// Register PyThaiNLP romanization schemes
+	// PyThaiNLP (lightweight mode only)
 	pythainlpSchemes := []common.TranslitScheme{
 		{
 			Name:        "royin",
 			Description: "Royal Thai General System of Transcription (RTGS)",
-			Provider:    "pythainlp",
-		},
-		{
-			Name:        "thai2rom",
-			Description: "Deep learning-based Thai romanization",
 			Provider:    "pythainlp",
 		},
 		{
@@ -137,6 +132,6 @@ func setDefaultProviders() {
 	common.Log.Info().
 		Str("lang", Lang).
 		Str("provider", "pythainlp").
-		Msg("Set PyThaiNLP as default Thai provider. Users can configure pythainlp-tokenizer + thai2english.com for hybrid approach")
+		Msg("Set PyThaiNLP as default Thai provider.")
 }
 

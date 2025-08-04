@@ -35,7 +35,28 @@ func (p *PyThaiNLPProvider) SaveConfig(cfg map[string]interface{}) error {
 	
 	// Extract romanization engine if specified
 	if engine, ok := cfg["roman_engine"].(string); ok {
-		p.romanEngine = engine
+		// Validate engine is supported in lightweight mode
+		switch engine {
+		case pythainlp.EngineRoyin, pythainlp.EngineTLTKRom, pythainlp.EngineLookup:
+			p.romanEngine = engine
+		default:
+			return fmt.Errorf("romanization engine '%s' not supported in lightweight mode", engine)
+		}
+	}
+	
+	// Handle scheme configuration from translitkit
+	if scheme, ok := cfg["scheme"].(string); ok {
+		// Map scheme names to engines
+		switch scheme {
+		case "royin":
+			p.romanEngine = pythainlp.EngineRoyin
+		case "tltk":
+			p.romanEngine = pythainlp.EngineTLTKRom
+		case "lookup":
+			p.romanEngine = pythainlp.EngineLookup
+		default:
+			return fmt.Errorf("romanization scheme '%s' not supported", scheme)
+		}
 	}
 	
 	return nil
@@ -43,9 +64,10 @@ func (p *PyThaiNLPProvider) SaveConfig(cfg map[string]interface{}) error {
 
 // InitWithContext initializes the provider with context
 func (p *PyThaiNLPProvider) InitWithContext(ctx context.Context) error {
-	// Create PyThaiNLP manager
+	// Create PyThaiNLP manager - always use lightweight mode for translitkit
 	manager, err := pythainlp.NewManager(ctx,
-		pythainlp.WithQueryTimeout(30*time.Second))
+		pythainlp.WithQueryTimeout(30*time.Second),
+		pythainlp.WithLightweightMode(true))
 	if err != nil {
 		return fmt.Errorf("failed to create PyThaiNLP manager: %w", err)
 	}
@@ -70,8 +92,10 @@ func (p *PyThaiNLPProvider) InitRecreateWithContext(ctx context.Context, noCache
 		p.manager.Close()
 	}
 	
+	// Always use lightweight mode for translitkit
 	manager, err := pythainlp.NewManager(ctx,
-		pythainlp.WithQueryTimeout(30*time.Second))
+		pythainlp.WithQueryTimeout(30*time.Second),
+		pythainlp.WithLightweightMode(true))
 	if err != nil {
 		return fmt.Errorf("failed to create PyThaiNLP manager: %w", err)
 	}
@@ -176,8 +200,13 @@ func (p *PyThaiNLPProvider) tokenizeOnly(ctx context.Context, text string) ([]*T
 
 // analyzeText performs both tokenization and romanization
 func (p *PyThaiNLPProvider) analyzeText(ctx context.Context, text string) ([]*Tkn, error) {
-	// Use the analyze API for combined operation
-	result, err := p.manager.AnalyzeText(ctx, text)
+	// Use the analyze API for combined operation with specified romanization engine
+	opts := pythainlp.AnalyzeOptions{
+		Features:       []string{"tokenize", "romanize"},
+		RomanizeEngine: p.romanEngine,
+	}
+	
+	result, err := p.manager.AnalyzeWithOptions(ctx, text, opts)
 	if err != nil {
 		return nil, fmt.Errorf("analysis failed: %w", err)
 	}
