@@ -1,13 +1,15 @@
 package tha
 
 import (
+	"unicode"
+	
 	"github.com/tassa-yoniso-manasi-karoto/translitkit/common"
 )
 
 // convertToThaiToken converts a common.Tkn to tha.Tkn
 // This maps only the essential fields from go-pythainlp results
 func convertToThaiToken(token *common.Tkn) *Tkn {
-	return &Tkn{
+	thaiToken := &Tkn{
 		Tkn: *token, // Embed the common token
 		
 		// Thai-specific fields are left empty for now
@@ -22,6 +24,12 @@ func convertToThaiToken(token *common.Tkn) *Tkn {
 		// - RegisterLevel (formal/informal detection)
 		// - Etymology (Thai, Pali, Sanskrit detection)
 	}
+	
+	// Override IsLexical to properly detect non-lexical tokens
+	// PyThaiNLP includes punctuation as tokens, but they should not be lexical
+	thaiToken.IsLexical = isLexicalContent(token.Surface)
+	
+	return thaiToken
 }
 
 // convertPyThaiNLPToken could be used in the future to convert
@@ -40,4 +48,29 @@ func convertPyThaiNLPToken(pyToken interface{}) *Tkn {
 	// Future: Extract additional fields from pyToken
 	
 	return tkn
+}
+
+// isLexicalContent determines if a token contains actual lexical content
+// (not just punctuation or symbols)
+func isLexicalContent(text string) bool {
+	if text == "" {
+		return false
+	}
+	
+	// Check if it contains Thai characters (0x0E00 to 0x0E7F)
+	for _, r := range text {
+		if r >= 0x0E00 && r <= 0x0E7F {
+			return true
+		}
+	}
+	
+	// Check if it contains letters or digits (any script)
+	for _, r := range text {
+		if unicode.IsLetter(r) || unicode.IsDigit(r) {
+			return true
+		}
+	}
+	
+	// If it's only punctuation, symbols, or spaces, it's not lexical
+	return false
 }
