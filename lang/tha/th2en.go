@@ -455,32 +455,7 @@ var translitSchemes = []common.TranslitScheme{
 	{ Name:"simplified-ipa",Description:"Simplified phonetic notation"},
 }
 
-func init() {
-	p := common.ProviderEntry{
-		Provider:     &TH2ENProvider{},
-		Capabilities: []string{"tokenization", "transliteration"},
-		Type:         common.CombinedType,
-	}
-	err := common.Register(Lang, common.CombinedType, p.Provider.Name(), p)
-	if err != nil {
-		panic(fmt.Sprintf("failed to register %s provider: %w", p.Provider.Name(), err))
-	}
-	err = common.SetDefault(Lang, []common.ProviderEntry{p})
-	if err != nil {
-		panic(fmt.Sprintf("failed to set %s as default: %w", p.Provider.Name(), err))
-	}
-	
-	for _, scheme := range translitSchemes {
-		scheme.Provider = p.Provider.Name()
-		scheme.NeedsScraper = true
-		if err := common.RegisterScheme(Lang, scheme); err != nil {
-			common.Log.Warn().
-				Str("pkg", Lang).
-				Msg("Failed to register scheme " + scheme.Name)
-		}
-	}
-
-}
+// init function moved to init.go to consolidate all Thai provider registrations
 
 
 func checkWebsiteReachable(ctx context.Context) error {
