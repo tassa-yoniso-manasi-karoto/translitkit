@@ -396,17 +396,27 @@ func DefaultSpacingRule(prev, current string) bool {
 		return false
 	}
 	
-	// 1.3 ADD space after separator punctuation (comma, semicolon, etc.)
+	// 1.3 No space before separator punctuation (comma, semicolon, etc.)
+	if isSeparatorPunctuation(firstCurr) {
+		return false
+	}
+	
+	// 1.4 ADD space after separator punctuation (comma, semicolon, etc.)
 	if isSeparatorPunctuation(lastPrev) {
 		return true
 	}
 	
-	// 1.4 ADD space after terminal punctuation (period, exclamation, etc.)
+	// 1.5 No space before terminal punctuation (period, exclamation, question mark)
+	if isTerminalPunctuation(firstCurr) {
+		return false
+	}
+	
+	// 1.6 ADD space after terminal punctuation (period, exclamation, etc.)
 	if isTerminalPunctuation(lastPrev) {
 		return true
 	}
 	
-	// 1.5 No space between consecutive punctuation marks
+	// 1.7 No space between consecutive punctuation marks
 	if unicode.IsPunct(lastPrev) && unicode.IsPunct(firstCurr) {
 		return false
 	}
