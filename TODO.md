@@ -1,7 +1,6 @@
+- RENABLE LANG SPECIFIC METHODS (KANA PARTS)
 
-- change panic() in inits() into common.Log().Warn()
 
-- TH2EN: test behavior of rod when BrowserAccessURL is invalid
 
 - func (tokens TknSliceWrapper) Tokens() []AnyToken
 

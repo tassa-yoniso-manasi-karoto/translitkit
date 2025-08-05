@@ -40,16 +40,19 @@ func registerThaiSchemes() {
 			Name:        "royin",
 			Description: "Royal Thai General System of Transcription (RTGS)",
 			Providers:   []string{"pythainlp"},
+			NeedsDocker: true,
 		},
 		{
 			Name:        "tltk",
 			Description: "Thai Language Toolkit romanization",
 			Providers:   []string{"pythainlp"},
+			NeedsDocker: true,
 		},
 		{
 			Name:        "lookup",
 			Description: "Dictionary-based romanization with fallback",
 			Providers:   []string{"pythainlp"},
+			NeedsDocker: true,
 		},
 	}
 
