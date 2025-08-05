@@ -47,7 +47,7 @@ type Tkn struct {
 
 
 // TODO Maybe automatically return Katakana or Hiragana as fit
-
+/*
 // Returns a tokenized string of Hiragana readings
 func (m *Module) Kana(input string) (string, error) {
 	if m.Transliterator == nil && m.ProviderType != common.CombinedMode {
@@ -70,7 +70,7 @@ func (m *Module) KanaParts(input string) ([]string, error) {
 		return []string{}, err
 	}
 	return tkns.KanaParts(), nil
-}
+}*/
 
 
 func (wrapper TknSliceWrapper) Kana() string {
@@ -174,3 +174,8 @@ func ToAnyTokenSlice(JSONTokens *ichiran.JSONTokens) (tkns []common.AnyToken) {
 	return
 }
 
+
+
+func placeholder2() {
+	fmt.Print("")
+}

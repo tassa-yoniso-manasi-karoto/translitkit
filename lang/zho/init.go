@@ -18,7 +18,6 @@ func init() {
 	gojiebaEntry := common.ProviderEntry{
 		Provider:     gojiebaProv,
 		Capabilities: []string{"tokenization"},
-		Mode:         common.TokenizerMode,
 	}
 
 	// B) Transliterator: GoPinyin
@@ -26,7 +25,6 @@ func init() {
 	gopinyinEntry := common.ProviderEntry{
 		Provider:     gopinyinProv,
 		Capabilities: []string{"transliteration"},
-		Mode:         common.TransliteratorMode,
 	}
 
 	///////////////////////////////////

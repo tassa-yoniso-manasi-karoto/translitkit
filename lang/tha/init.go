@@ -112,7 +112,6 @@ func setDefaultProviders() {
 	combinedEntry := common.ProviderEntry{
 		Provider:     pythainlpProvider,
 		Capabilities: []string{"tokenization", "transliteration"},
-		Mode:         common.CombinedMode,
 	}
 
 	// Set PyThaiNLP combined as default

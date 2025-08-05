@@ -98,7 +98,6 @@ type LanguageProviders struct {
 type ProviderEntry struct {
 	Provider     Provider[AnyTokenSliceWrapper, AnyTokenSliceWrapper]
 	Capabilities []string
-	Mode         OperatingMode  // The mode context when this entry was retrieved
 }
 
 
@@ -125,7 +124,6 @@ func findProvider(lang string, mode OperatingMode, name string) (ProviderEntry, 
 				// Check if provider supports the requested mode
 				for _, supportedMode := range entry.Provider.SupportedModes() {
 					if supportedMode == mode {
-						entry.Mode = mode // Set the context mode
 						return entry, true
 					}
 				}
@@ -141,7 +139,6 @@ func findProvider(lang string, mode OperatingMode, name string) (ProviderEntry, 
 					// Check if provider supports the requested mode
 					for _, supportedMode := range entry.Provider.SupportedModes() {
 						if supportedMode == mode {
-							entry.Mode = mode // Set the context mode
 							return entry, true
 						}
 					}

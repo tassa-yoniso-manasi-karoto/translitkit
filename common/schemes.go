@@ -120,8 +120,8 @@ func GetSchemeModule(languageCode, schemeName string) (*Module, error) {
 		
 		// Try to get as combined provider
 		if provider, err := getProvider(lang, CombinedMode, providerName); err == nil {
-			module.Combined = provider
-			module.ProviderType = CombinedMode
+			module.Providers = append(module.Providers, provider)
+			module.ProviderRoles[CombinedMode] = provider
 			module.chunkifier = NewChunkifier(module.getMaxQueryLen())
 			
 			// Save configuration
@@ -136,19 +136,25 @@ func GetSchemeModule(languageCode, schemeName string) (*Module, error) {
 		
 		// Not found as combined, try as transliterator
 		if provider, err := getProvider(lang, TransliteratorMode, providerName); err == nil {
-			// Check if language needs tokenization
+			// Validate single transliterator setup
+			if err := validateProviderSetup(lang, []Provider[AnyTokenSliceWrapper, AnyTokenSliceWrapper]{provider}); err != nil {
+				return nil, err
+			}
+			
+			module.Providers = append(module.Providers, provider)
+			module.ProviderRoles[TransliteratorMode] = provider
+			
+			// Use uniseg as tokenizer if language doesn't need special tokenization
 			needsTokenization, _ := NeedsTokenization(lang)
-			if needsTokenization {
-				return nil, fmt.Errorf("language %s requires tokenization but scheme only specifies transliterator %s", lang, providerName)
+			if !needsTokenization {
+				tokenizer, err := getProvider("mul", TokenizerMode, "uniseg")
+				if err != nil {
+					return nil, fmt.Errorf("failed to get uniseg tokenizer: %w", err)
+				}
+				module.Providers = append([]Provider[AnyTokenSliceWrapper, AnyTokenSliceWrapper]{tokenizer}, module.Providers...)
+				module.ProviderRoles[TokenizerMode] = tokenizer
 			}
 			
-			tokenizer, err := getProvider("mul", TokenizerMode, "uniseg")
-			if err != nil {
-				return nil, fmt.Errorf("failed to get uniseg tokenizer: %w", err)
-			}
-			
-			module.Tokenizer = tokenizer
-			module.Transliterator = provider
 			module.chunkifier = NewChunkifier(module.getMaxQueryLen())
 			
 			// Save configuration for transliterator
@@ -175,8 +181,15 @@ func GetSchemeModule(languageCode, schemeName string) (*Module, error) {
 			return nil, fmt.Errorf("second provider must be transliterator, %s not found: %w", targetScheme.Providers[1], err)
 		}
 		
-		module.Tokenizer = tokenizer
-		module.Transliterator = transliterator
+		// Validate the provider combination
+		if err := validateProviderSetup(lang, []Provider[AnyTokenSliceWrapper, AnyTokenSliceWrapper]{tokenizer, transliterator}); err != nil {
+			return nil, err
+		}
+		
+		module.Providers = append(module.Providers, tokenizer)
+		module.Providers = append(module.Providers, transliterator)
+		module.ProviderRoles[TokenizerMode] = tokenizer
+		module.ProviderRoles[TransliteratorMode] = transliterator
 		module.chunkifier = NewChunkifier(module.getMaxQueryLen())
 		
 		// Save configuration for transliterator

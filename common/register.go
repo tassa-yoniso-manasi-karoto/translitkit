@@ -134,34 +134,48 @@ func SetDefault(languageCode string, providers []ProviderEntry) error {
 		return fmt.Errorf("cannot set empty default providers")
 	}
 
-	// Validate providers
-	name := providers[0].Provider.Name()
-	if providers[0].Mode == CombinedMode {
-		if len(providers) > 1 {
-			return fmt.Errorf("combined provider cannot be used with other providers")
-		}
-		// Verify the provider exists
-		if _, ok := findProvider(lang, CombinedMode, providers[0].Provider.Name()); !ok {
-			return fmt.Errorf("combined provider \"%s\" not found in registered providers", name)
-		}
-	} else {
-		// Require tokenizer but make transliterator optional
-		if providers[0].Mode != TokenizerMode {
-			return fmt.Errorf("first provider must be a tokenizer")
-		}
-		if _, ok := findProvider(lang, TokenizerMode, name); !ok {
-			return fmt.Errorf("tokenizer \"%s\" not found in registered providers", name)
-		}
-
-		// Check transliterator if provided
-		if len(providers) > 1 {
-			name := providers[1].Provider.Name()
-			if providers[1].Mode != TransliteratorMode {
-				return fmt.Errorf("second provider must be a transliterator")
+	// Extract provider interfaces for validation
+	providerInterfaces := make([]Provider[AnyTokenSliceWrapper, AnyTokenSliceWrapper], len(providers))
+	for i, entry := range providers {
+		providerInterfaces[i] = entry.Provider
+	}
+	
+	// Validate the provider setup for this language
+	if err := validateProviderSetup(lang, providerInterfaces); err != nil {
+		return err
+	}
+	
+	// Verify providers are registered
+	if len(providers) == 1 {
+		// Check if it's a combined provider
+		modes := providers[0].Provider.SupportedModes()
+		hasCombined := false
+		for _, mode := range modes {
+			if mode == CombinedMode {
+				hasCombined = true
+				break
 			}
-			if _, ok := findProvider(lang, TransliteratorMode, name); !ok {
-				return fmt.Errorf("transliterator \"%s\" not found in registered providers", name)
+		}
+		
+		if hasCombined {
+			if _, ok := findProvider(lang, CombinedMode, providers[0].Provider.Name()); !ok {
+				return fmt.Errorf("combined provider \"%s\" not found in registered providers", providers[0].Provider.Name())
 			}
+		} else {
+			// Check as transliterator
+			if _, ok := findProvider(lang, TransliteratorMode, providers[0].Provider.Name()); !ok {
+				return fmt.Errorf("provider \"%s\" not found in registered providers", providers[0].Provider.Name())
+			}
+		}
+	} else if len(providers) >= 2 {
+		// First should be tokenizer
+		if _, ok := findProvider(lang, TokenizerMode, providers[0].Provider.Name()); !ok {
+			return fmt.Errorf("tokenizer \"%s\" not found in registered providers", providers[0].Provider.Name())
+		}
+		
+		// Second should be transliterator
+		if _, ok := findProvider(lang, TransliteratorMode, providers[1].Provider.Name()); !ok {
+			return fmt.Errorf("transliterator \"%s\" not found in registered providers", providers[1].Provider.Name())
 		}
 	}
 

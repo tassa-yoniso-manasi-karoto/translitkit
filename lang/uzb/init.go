@@ -12,12 +12,10 @@ func init() {
 		{
 			Provider:     &mul.UnisegProvider{},
 			Capabilities: []string{"tokenization"},
-			Mode:        common.TokenizerMode,
 		},
 		{
 			Provider:     mul.NewIuliiaProvider(Lang),
 			Capabilities: []string{"transliteration"},
-			Mode:        common.TransliteratorMode,
 		},
 	}
 
