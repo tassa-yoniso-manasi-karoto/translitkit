@@ -108,7 +108,7 @@ func (p *GoJiebaProvider) InitRecreate(noCache bool) error {
 // Returns:
 //   - AnyTokenSliceWrapper: A wrapper containing the processed tokens
 //   - error: An error if processing fails, the context is canceled, or initialization fails
-func (p *GoJiebaProvider) ProcessFlowController(ctx context.Context, input common.AnyTokenSliceWrapper) (common.AnyTokenSliceWrapper, error) {
+func (p *GoJiebaProvider) ProcessFlowController(ctx context.Context, mode common.OperatingMode, input common.AnyTokenSliceWrapper) (common.AnyTokenSliceWrapper, error) {
 	// Check for context cancellation
 	if err := ctx.Err(); err != nil {
 		return nil, fmt.Errorf("gojieba: context canceled during processing: %w", err)
@@ -217,9 +217,9 @@ func (p *GoJiebaProvider) Name() string {
 	return "gojieba"
 }
 
-// GetType returns the ProviderType: Tokenizer.
-func (p *GoJiebaProvider) GetType() common.ProviderType {
-	return common.TokenizerType
+// SupportedModes returns the operating modes this provider supports.
+func (p *GoJiebaProvider) SupportedModes() []common.OperatingMode {
+	return []common.OperatingMode{common.TokenizerMode}
 }
 
 // GetMaxQueryLen returns a large number so the module can handle big input.

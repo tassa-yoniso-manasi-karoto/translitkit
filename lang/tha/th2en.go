@@ -160,8 +160,9 @@ func (p *TH2ENProvider) Name() string {
 	return "thai2english.com"
 }
 
-func (p *TH2ENProvider) GetType() common.ProviderType {
-	return common.CombinedType
+// SupportedModes returns the operating modes this provider supports
+func (p *TH2ENProvider) SupportedModes() []common.OperatingMode {
+	return []common.OperatingMode{common.CombinedMode}
 }
 
 func (p *TH2ENProvider) GetMaxQueryLen() int {
@@ -275,32 +276,31 @@ func (p *TH2ENProvider) selectTranslitScheme(ctx context.Context, scheme string)
 
 
 // ProcessFlowController processes input with the given context
-func (p *TH2ENProvider) ProcessFlowController(ctx context.Context, input common.AnyTokenSliceWrapper) (results common.AnyTokenSliceWrapper, err error) {
+func (p *TH2ENProvider) ProcessFlowController(ctx context.Context, mode common.OperatingMode, input common.AnyTokenSliceWrapper) (results common.AnyTokenSliceWrapper, err error) {
 	raw := input.GetRaw()
 	if input.Len() == 0 && len(raw) == 0 {
 		return nil, fmt.Errorf("empty input was passed to processor")
 	}
-	ProviderType := p.GetType()
 	if len(raw) != 0 {
-		switch ProviderType {
-		case common.TokenizerType:
-		case common.TransliteratorType:
-		case common.CombinedType:
+		switch mode {
+		case common.TokenizerMode:
+		case common.TransliteratorMode:
+		case common.CombinedMode:
 			return p.process(ctx, raw)
 		}
 		input.ClearRaw()
 	} else { // generic token processor: take common.Tkn as well as lang-specic tokens that have common.Tkn as their embedded field
-		switch ProviderType {
-		case common.TokenizerType:
+		switch mode {
+		case common.TokenizerMode:
 			// Either refuse because it is already tokenized or add linguistic annotations
 			return nil, fmt.Errorf("not implemented atm: Tokens is not accepted as input type for a tokenizer")
-		case common.TransliteratorType:
-		case common.CombinedType:
+		case common.TransliteratorMode:
+		case common.CombinedMode:
 			// Refuse because it is already tokenized
 			return nil, fmt.Errorf("not implemented atm: Tokens is not accepted as input type for a provider that combines tokenizer+transliterator")
 		}
 	}
-	return nil, fmt.Errorf("handling not implemented for '%s' with ProviderType '%s'", p.Name(), ProviderType)
+	return nil, fmt.Errorf("handling not implemented for '%s' with OperatingMode '%s'", p.Name(), mode)
 }
 
 // process processes chunks with the given context

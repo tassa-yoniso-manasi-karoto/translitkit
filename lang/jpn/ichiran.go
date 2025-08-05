@@ -68,8 +68,8 @@ func (p *IchiranProvider) Name() string {
 	return "ichiran"
 }
 
-func (p *IchiranProvider) GetType() common.ProviderType {
-	return common.CombinedType
+func (p *IchiranProvider) SupportedModes() []common.OperatingMode {
+	return []common.OperatingMode{common.CombinedMode}
 }
 
 // Ichiran's developper doesn't know of a length limit to the input of the CLI
@@ -88,15 +88,15 @@ func (p *IchiranProvider) Close() error {
 	return p.CloseWithContext(context.Background())
 }
 
-// ProcessFlowController processes input with the given context
-func (p *IchiranProvider) ProcessFlowController(ctx context.Context, input common.AnyTokenSliceWrapper) (common.AnyTokenSliceWrapper, error) {
+// ProcessFlowController processes input with the given context and mode
+func (p *IchiranProvider) ProcessFlowController(ctx context.Context, mode common.OperatingMode, input common.AnyTokenSliceWrapper) (common.AnyTokenSliceWrapper, error) {
 	raw := input.GetRaw()
 	if input.Len() == 0 && len(raw) == 0 {
 		return nil, fmt.Errorf("ichiran: empty input was passed to processor")
 	}
 
-	switch p.GetType() {
-	case common.CombinedType:
+	switch mode {
+	case common.CombinedMode:
 		if len(raw) != 0 {
 			// We'll analyze the raw text
 			outWrapper, err := p.processChunks(ctx, raw)
@@ -110,7 +110,7 @@ func (p *IchiranProvider) ProcessFlowController(ctx context.Context, input commo
 		return nil, fmt.Errorf("ichiran: not implemented for pre-tokenized data (we are combined)")
 
 	default:
-		return nil, fmt.Errorf("ichiran: unsupported provider type %s", p.GetType())
+		return nil, fmt.Errorf("ichiran: unsupported operating mode %s", mode)
 	}
 }
 
@@ -173,9 +173,8 @@ func init() {
 	IchiranEntry := common.ProviderEntry{
 		Provider:     &IchiranProvider{},
 		Capabilities: []string{"tokenization", "transliteration", "romaji"},
-		Type:         common.CombinedType,
 	}
-	err := common.Register(Lang, common.CombinedType, "ichiran", IchiranEntry)
+	err := common.Register(Lang, IchiranEntry)
 	if err != nil {
 		panic(fmt.Sprintf("failed to register ichiran provider: %w", err))
 	}
@@ -187,7 +186,7 @@ func init() {
 	ichiranScheme := common.TranslitScheme{
 		Name: "Hepburn",
 		Description: "Hepburn romanization",
-		Provider: "ichiran",
+		Providers: []string{"ichiran"},
 		NeedsDocker: true,
 	}
 	if err := common.RegisterScheme(Lang, ichiranScheme); err != nil {

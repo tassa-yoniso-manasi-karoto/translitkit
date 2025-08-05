@@ -17,31 +17,28 @@ func init() {
 	unisegEntry := common.ProviderEntry{
 		Provider:     &UnisegProvider{},
 		Capabilities: []string{"tokenization"},
-		Type:        common.TokenizerType,
 	}
 	aksharamukhaEntry := common.ProviderEntry{
 		Provider:     &AksharamukhaProvider{},
 		Capabilities: []string{"transliteration"},
-		Type:        common.TransliteratorType,
 	}
 	iuliiaEntry := common.ProviderEntry{
 		Provider:     NewIuliiaProvider("rus"),
 		Capabilities: []string{"transliteration"},
-		Type:        common.TransliteratorType,
 	}
 	
 
-	err := common.Register("mul", common.TokenizerType, "uniseg", unisegEntry)
+	err := common.Register("mul", unisegEntry)
 	if err != nil {
 		panic(fmt.Sprintf("failed to register uniseg provider: %w", err))
 	}
 	
-	err = common.Register("mul", common.TransliteratorType, "aksharamukha", aksharamukhaEntry)
+	err = common.Register("mul", aksharamukhaEntry)
 	if err != nil {
 		panic(fmt.Sprintf("failed to register aksharamukha provider: %w", err))
 	}
 	
-	err = common.Register("mul", common.TransliteratorType, "iuliia", iuliiaEntry)
+	err = common.Register("mul", iuliiaEntry)
 	if err != nil {
 		panic(fmt.Sprintf("failed to register iuliia provider: %w", err))
 	}
@@ -50,7 +47,7 @@ func init() {
 
 	for _, indicLang := range indicLangs {
 		for _, scheme := range indicSchemes {
-			scheme.Provider = "aksharamukha"
+			scheme.Providers = []string{"aksharamukha"}
 			scheme.NeedsDocker = true
 			if err := common.RegisterScheme(indicLang, scheme); err != nil {
 				common.Log.Warn().
@@ -62,7 +59,7 @@ func init() {
 	}
 	
 	for _, scheme := range russianSchemes {
-		scheme.Provider = "iuliia"
+		scheme.Providers = []string{"iuliia"}
 		if err := common.RegisterScheme("rus", scheme); err != nil {
 			common.Log.Warn().
 				Str("pkg", Lang).

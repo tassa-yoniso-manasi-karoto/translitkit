@@ -37,7 +37,7 @@ type anyModule interface {
 type Module struct {
 	ctx              context.Context
 	Lang             string // ISO-639 Part 3: i.e. "eng", "zho", "jpn"...
-	ProviderType     ProviderType
+	ProviderType     OperatingMode
 	Tokenizer        Provider[AnyTokenSliceWrapper, AnyTokenSliceWrapper]
 	Transliterator   Provider[AnyTokenSliceWrapper, AnyTokenSliceWrapper]
 	Combined         Provider[AnyTokenSliceWrapper, AnyTokenSliceWrapper]
@@ -69,9 +69,9 @@ func NewModule(languageCode string, providerNames ...string) (*Module, error) {
 
 	if len(providerNames) == 1 {
 		// Try to get as combined Provider
-		if Provider, err := getProvider(lang, CombinedType, providerNames[0]); err == nil {
+		if Provider, err := getProvider(lang, CombinedMode, providerNames[0]); err == nil {
 			module.Combined = Provider
-			module.ProviderType = CombinedType
+			module.ProviderType = CombinedMode
 			module.chunkifier = NewChunkifier(module.getMaxQueryLen())
 			return module, nil
 		}
@@ -80,13 +80,13 @@ func NewModule(languageCode string, providerNames ...string) (*Module, error) {
 
 	if len(providerNames) == 2 {
 		// Get tokenizer
-		tokenizer, err := getProvider(lang, TokenizerType, providerNames[0])
+		tokenizer, err := getProvider(lang, TokenizerMode, providerNames[0])
 		if err != nil {
 			return nil, fmt.Errorf("tokenizer %s not found: %w", providerNames[0], err)
 		}
 		
 		// Get transliterator
-		transliterator, err := getProvider(lang, TransliteratorType, providerNames[1])
+		transliterator, err := getProvider(lang, TransliteratorMode, providerNames[1])
 		if err != nil {
 			return nil, fmt.Errorf("transliterator %s not found: %w", providerNames[1], err)
 		}
@@ -288,17 +288,17 @@ func (m *Module) TokensWithContext(ctx context.Context, input string) (AnyTokenS
 	}
 
 	if m.Combined != nil {
-		tsw, err = m.Combined.ProcessFlowController(ctx, tsw)
+		tsw, err = m.Combined.ProcessFlowController(ctx, CombinedMode, tsw)
 		if err != nil {
 			return &TknSliceWrapper{}, fmt.Errorf("combined processing failed: %w", err)
 		}
 	} else {
-		tsw, err = m.Tokenizer.ProcessFlowController(ctx, tsw)
+		tsw, err = m.Tokenizer.ProcessFlowController(ctx, TokenizerMode, tsw)
 		if err != nil {
 			return &TknSliceWrapper{}, fmt.Errorf("tokenization failed: %w", err)
 		}
 		if m.Transliterator != nil {
-			if tsw, err = m.Transliterator.ProcessFlowController(ctx, tsw); err != nil {
+			if tsw, err = m.Transliterator.ProcessFlowController(ctx, TransliteratorMode, tsw); err != nil {
 				return &TknSliceWrapper{}, fmt.Errorf("transliteration failed: %w", err)
 			}
 		}
@@ -365,7 +365,7 @@ func (m *Module) LexicalTokens(input string) (AnyTokenSliceWrapper, error) {
 //   - string: The romanized text
 //   - error: An error if processing fails, the context is canceled, or romanization isn't supported
 func (m *Module) RomanWithContext(ctx context.Context, input string) (string, error) {
-	if m.Transliterator == nil && m.ProviderType != CombinedType {
+	if m.Transliterator == nil && m.ProviderType != CombinedMode {
 		return "", fmt.Errorf("romanization requires either a transliterator or combined provider (got %s)", m.ProviderType)
 	}
 	tkns, err := m.TokensWithContext(ctx, input)
@@ -400,7 +400,7 @@ func (m *Module) Roman(input string) (string, error) {
 //   - []string: An array of romanized word parts
 //   - error: An error if processing fails, the context is canceled, or romanization isn't supported
 func (m *Module) RomanPartsWithContext(ctx context.Context, input string) ([]string, error) {
-	if m.Transliterator == nil && m.ProviderType != CombinedType {
+	if m.Transliterator == nil && m.ProviderType != CombinedMode {
 		return nil, fmt.Errorf("romanization requires either a transliterator or combined provider (got %s)", m.ProviderType)
 	}
 	tkns, err := m.LexicalTokensWithContext(ctx, input)
@@ -435,7 +435,7 @@ func (m *Module) RomanParts(input string) ([]string, error) {
 //   - string: The tokenized text
 //   - error: An error if processing fails, the context is canceled, or tokenization isn't supported
 func (m *Module) TokenizedWithContext(ctx context.Context, input string) (string, error) {
-	if m.Tokenizer == nil && m.ProviderType != CombinedType {
+	if m.Tokenizer == nil && m.ProviderType != CombinedMode {
 		return "", fmt.Errorf("tokenization requires either a tokenizer or combined provider (got %s)", m.ProviderType)
 	}
 	tkns, err := m.TokensWithContext(ctx, input)
@@ -470,7 +470,7 @@ func (m *Module) Tokenized(input string) (string, error) {
 //   - []string: An array of tokenized word parts
 //   - error: An error if processing fails, the context is canceled, or tokenization isn't supported
 func (m *Module) TokenizedPartsWithContext(ctx context.Context, input string) ([]string, error) {
-	if m.Tokenizer == nil && m.ProviderType != CombinedType {
+	if m.Tokenizer == nil && m.ProviderType != CombinedMode {
 		return nil, fmt.Errorf("tokenization requires either a tokenizer or combined provider (got %s)", m.ProviderType)
 	}
 	tkns, err := m.LexicalTokensWithContext(ctx, input)
@@ -592,7 +592,7 @@ func (m *Module) listProviders() (providers []ProviderEntry, err error) {
 		// For combined provider, return single entry
 		providers = append(providers, ProviderEntry{
 			Provider: m.Combined,
-			Type:     CombinedType,
+			Mode:     CombinedMode,
 		})
 		return providers, nil
 	}
@@ -601,14 +601,14 @@ func (m *Module) listProviders() (providers []ProviderEntry, err error) {
 	if m.Tokenizer != nil {
 		providers = append(providers, ProviderEntry{
 			Provider: m.Tokenizer,
-			Type:     TokenizerType,
+			Mode:     TokenizerMode,
 		})
 	}
 
 	if m.Transliterator != nil {
 		providers = append(providers, ProviderEntry{
 			Provider: m.Transliterator,
-			Type:     TransliteratorType,
+			Mode:     TransliteratorMode,
 		})
 	}
 

@@ -96,5 +96,5 @@ var russianSchemesToScript = map[string]*iuliia.Schema{
 }
 
 
-var uzbekScheme = common.TranslitScheme{ Name: "uz", Description: "Uzbekistan cyr-lat transliteration schema", Provider: "iuliia" }
+var uzbekScheme = common.TranslitScheme{ Name: "uz", Description: "Uzbekistan cyr-lat transliteration schema", Providers: []string{"iuliia"} }
 

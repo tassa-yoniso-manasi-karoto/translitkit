@@ -2,6 +2,7 @@
 package common
 
 import (
+	"context"
 	"fmt"
 	"sync"
 	"errors"
@@ -13,9 +14,9 @@ import (
 var ErrNoSchemesRegistered = errors.New("no transliteration schemes registered for provided language")
 
 type TranslitScheme struct {
-	Name         string // e.g., "IAST", "Harvard-Kyoto"
+	Name         string   // e.g., "IAST", "Harvard-Kyoto"
 	Description  string
-	Provider     string
+	Providers    []string // Provider names in order (tokenizer, transliterator)
 	NeedsDocker  bool
 	NeedsScraper bool
 }
@@ -105,45 +106,91 @@ func GetSchemeModule(languageCode, schemeName string) (*Module, error) {
 
 	module := &Module{
 		Lang: lang,
+		ctx:  context.Background(),
 	}
 
-	// Try to get a combined provider first.
-	if provider, err := getProvider(lang, CombinedType, targetScheme.Provider); err == nil {
-		module.Combined = provider
-		module.ProviderType = CombinedType
+	// Handle based on number of providers
+	switch len(targetScheme.Providers) {
+	case 0:
+		return nil, fmt.Errorf("scheme %s has no providers configured", schemeName)
+		
+	case 1:
+		// Single provider - try as combined first
+		providerName := targetScheme.Providers[0]
+		
+		// Try to get as combined provider
+		if provider, err := getProvider(lang, CombinedMode, providerName); err == nil {
+			module.Combined = provider
+			module.ProviderType = CombinedMode
+			module.chunkifier = NewChunkifier(module.getMaxQueryLen())
+			
+			// Save configuration
+			if err := provider.SaveConfig(map[string]interface{}{
+				"lang":   lang,
+				"scheme": schemeName,
+			}); err != nil {
+				return nil, fmt.Errorf("failed to save configuration for combined provider: %w", err)
+			}
+			return module, nil
+		}
+		
+		// Not found as combined, try as transliterator
+		if provider, err := getProvider(lang, TransliteratorMode, providerName); err == nil {
+			// Check if language needs tokenization
+			needsTokenization, _ := NeedsTokenization(lang)
+			if needsTokenization {
+				return nil, fmt.Errorf("language %s requires tokenization but scheme only specifies transliterator %s", lang, providerName)
+			}
+			
+			tokenizer, err := getProvider("mul", TokenizerMode, "uniseg")
+			if err != nil {
+				return nil, fmt.Errorf("failed to get uniseg tokenizer: %w", err)
+			}
+			
+			module.Tokenizer = tokenizer
+			module.Transliterator = provider
+			module.chunkifier = NewChunkifier(module.getMaxQueryLen())
+			
+			// Save configuration for transliterator
+			if err := provider.SaveConfig(map[string]interface{}{
+				"lang":   lang,
+				"scheme": schemeName,
+			}); err != nil {
+				return nil, fmt.Errorf("failed to save configuration: %w", err)
+			}
+			return module, nil
+		}
+		
+		return nil, fmt.Errorf("provider %s not found as combined or transliterator for language %s", providerName, lang)
+		
+	case 2:
+		// Two providers - first must be tokenizer, second transliterator
+		tokenizer, err := getProvider(lang, TokenizerMode, targetScheme.Providers[0])
+		if err != nil {
+			return nil, fmt.Errorf("first provider must be tokenizer, %s not found: %w", targetScheme.Providers[0], err)
+		}
+		
+		transliterator, err := getProvider(lang, TransliteratorMode, targetScheme.Providers[1])
+		if err != nil {
+			return nil, fmt.Errorf("second provider must be transliterator, %s not found: %w", targetScheme.Providers[1], err)
+		}
+		
+		module.Tokenizer = tokenizer
+		module.Transliterator = transliterator
 		module.chunkifier = NewChunkifier(module.getMaxQueryLen())
-		// Save configuration for later application during provider initialization.
-		if err := provider.SaveConfig(map[string]interface{}{
+		
+		// Save configuration for transliterator
+		if err := transliterator.SaveConfig(map[string]interface{}{
 			"lang":   lang,
 			"scheme": schemeName,
 		}); err != nil {
-			return nil, fmt.Errorf("failed to save configuration for combined provider: %w", err)
+			return nil, fmt.Errorf("failed to save configuration: %w", err)
 		}
-
 		return module, nil
+		
+	default:
+		return nil, fmt.Errorf("unsupported provider configuration: %d providers", len(targetScheme.Providers))
 	}
-
-	// If no combined provider, try separate providers.
-	tokenizer, err := getProvider(lang, TokenizerType, "uniseg")
-	if err != nil {
-		return nil, fmt.Errorf("failed to get tokenizer: %w", err)
-	}
-	module.Tokenizer = tokenizer
-
-	transliterator, err := getProvider(lang, TransliteratorType, targetScheme.Provider)
-	if err != nil {
-		return nil, fmt.Errorf("failed to get transliterator: %w", err)
-	}
-	module.Transliterator = transliterator
-
-	// Save configuration for the transliterator.
-	if err := transliterator.SaveConfig(map[string]interface{}{
-		"lang":   lang,
-		"scheme": schemeName,
-	}); err != nil {
-		return nil, fmt.Errorf("failed to save configuration for transliterator: %w", err)
-	}
-	module.chunkifier = NewChunkifier(module.getMaxQueryLen())
 	
 	return module, nil
 }

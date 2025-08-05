@@ -12,34 +12,20 @@ func init() {
 	th2enEntry := common.ProviderEntry{
 		Provider:     th2enProvider,
 		Capabilities: []string{"tokenization", "transliteration"},
-		Type:         common.CombinedType,
 	}
 
-	if err := common.Register(Lang, common.CombinedType, th2enProvider.Name(), th2enEntry); err != nil {
+	if err := common.Register(Lang, th2enEntry); err != nil {
 		panic(fmt.Sprintf("failed to register thai2english.com: %v", err))
 	}
 
-	// Register PyThaiNLP as tokenizer only
-	pythainlpTokenizer := &PyThaiNLPProvider{operatingMode: common.TokenizerType}
-	tokenizerEntry := common.ProviderEntry{
-		Provider:     pythainlpTokenizer,
-		Capabilities: []string{"tokenization"},
-		Type:         common.TokenizerType,
-	}
-
-	if err := common.Register(Lang, common.TokenizerType, pythainlpTokenizer.Name(), tokenizerEntry); err != nil {
-		panic(fmt.Sprintf("failed to register pythainlp-tokenizer: %v", err))
-	}
-
-	// Register PyThaiNLP as combined provider
-	pythainlpCombined := &PyThaiNLPProvider{operatingMode: common.CombinedType}
-	combinedEntry := common.ProviderEntry{
-		Provider:     pythainlpCombined,
+	// Register PyThaiNLP provider (supports both tokenizer and combined modes)
+	pythainlpProvider := NewPyThaiNLPProvider()
+	pythainlpEntry := common.ProviderEntry{
+		Provider:     pythainlpProvider,
 		Capabilities: []string{"tokenization", "transliteration"},
-		Type:         common.CombinedType,
 	}
 
-	if err := common.Register(Lang, common.CombinedType, pythainlpCombined.Name(), combinedEntry); err != nil {
+	if err := common.Register(Lang, pythainlpEntry); err != nil {
 		panic(fmt.Sprintf("failed to register pythainlp: %v", err))
 	}
 
@@ -53,17 +39,17 @@ func registerThaiSchemes() {
 		{
 			Name:        "royin",
 			Description: "Royal Thai General System of Transcription (RTGS)",
-			Provider:    "pythainlp",
+			Providers:   []string{"pythainlp"},
 		},
 		{
 			Name:        "tltk",
 			Description: "Thai Language Toolkit romanization",
-			Provider:    "pythainlp",
+			Providers:   []string{"pythainlp"},
 		},
 		{
 			Name:        "lookup",
 			Description: "Dictionary-based romanization with fallback",
-			Provider:    "pythainlp",
+			Providers:   []string{"pythainlp"},
 		},
 	}
 
@@ -80,31 +66,31 @@ func registerThaiSchemes() {
 		{
 			Name:         "paiboon",
 			Description:  "Paiboon-esque transliteration",
-			Provider:     "thai2english.com",
+			Providers:    []string{"thai2english.com"},
 			NeedsScraper: true,
 		},
 		{
 			Name:         "thai2english",
 			Description:  "thai2english's custom transliteration system",
-			Provider:     "thai2english.com",
+			Providers:    []string{"thai2english.com"},
 			NeedsScraper: true,
 		},
 		{
 			Name:         "rtgs",
 			Description:  "Royal Thai General System of transcription",
-			Provider:     "thai2english.com",
+			Providers:    []string{"thai2english.com"},
 			NeedsScraper: true,
 		},
 		{
 			Name:         "ipa",
 			Description:  "International Phonetic Alphabet representation",
-			Provider:     "thai2english.com",
+			Providers:    []string{"thai2english.com"},
 			NeedsScraper: true,
 		},
 		{
 			Name:         "simplified-ipa",
 			Description:  "Simplified phonetic notation",
-			Provider:     "thai2english.com",
+			Providers:    []string{"thai2english.com"},
 			NeedsScraper: true,
 		},
 	}
@@ -121,22 +107,12 @@ func registerThaiSchemes() {
 }
 
 func setDefaultProviders() {
-
-	// pythainlpTokenizer := &PyThaiNLPProvider{operatingMode: common.TokenizerType}
-	// tokenizerEntry := common.ProviderEntry{
-	// 	Provider:     pythainlpTokenizer,
-	// 	Capabilities: []string{"tokenization"},
-	// 	Type:         common.TokenizerType,
-	// }
-
-	// Note: We need to check if thai2english.com is registerable as a transliterator
-	// It's currently only registered as CombinedType, but we want to use it as transliterator
-
-	pythainlpCombined := &PyThaiNLPProvider{operatingMode: common.CombinedType}
+	// Create a new provider instance for default
+	pythainlpProvider := NewPyThaiNLPProvider()
 	combinedEntry := common.ProviderEntry{
-		Provider:     pythainlpCombined,
+		Provider:     pythainlpProvider,
 		Capabilities: []string{"tokenization", "transliteration"},
-		Type:         common.CombinedType,
+		Mode:         common.CombinedMode,
 	}
 
 	// Set PyThaiNLP combined as default

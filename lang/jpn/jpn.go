@@ -50,7 +50,7 @@ type Tkn struct {
 
 // Returns a tokenized string of Hiragana readings
 func (m *Module) Kana(input string) (string, error) {
-	if m.Transliterator == nil && m.ProviderType != common.CombinedType {
+	if m.Transliterator == nil && m.ProviderType != common.CombinedMode {
 		return "", fmt.Errorf("Kana requires either a transliterator or combined provider (got %s)", m.ProviderType)
 	}
 	tkns, err := m.Tokens(input)
@@ -62,7 +62,7 @@ func (m *Module) Kana(input string) (string, error) {
 
 // Returns a slice of string of Hiragana readings
 func (m *Module) KanaParts(input string) ([]string, error) {
-	if m.Transliterator == nil && m.ProviderType != common.CombinedType {
+	if m.Transliterator == nil && m.ProviderType != common.CombinedMode {
 		return []string{}, fmt.Errorf("KanaParts requires either a transliterator or combined provider (got %s)", m.ProviderType)
 	}
 	tkns, err := m.LexicalTokens(input)

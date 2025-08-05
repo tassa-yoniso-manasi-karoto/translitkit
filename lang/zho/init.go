@@ -17,16 +17,16 @@ func init() {
 	gojiebaProv := &GoJiebaProvider{}
 	gojiebaEntry := common.ProviderEntry{
 		Provider:     gojiebaProv,
-		Type:         common.TokenizerType,
 		Capabilities: []string{"tokenization"},
+		Mode:         common.TokenizerMode,
 	}
 
 	// B) Transliterator: GoPinyin
 	gopinyinProv := &GoPinyinProvider{}
 	gopinyinEntry := common.ProviderEntry{
 		Provider:     gopinyinProv,
-		Type:         common.TransliteratorType,
 		Capabilities: []string{"transliteration"},
+		Mode:         common.TransliteratorMode,
 	}
 
 	///////////////////////////////////
@@ -34,12 +34,12 @@ func init() {
 	///////////////////////////////////
 
 	// Register gojieba as the tokenizer
-	if err := common.Register("zho", common.TokenizerType, "gojieba", gojiebaEntry); err != nil {
+	if err := common.Register("zho", gojiebaEntry); err != nil {
 		panic(fmt.Sprintf("failed to register gojieba: %v", err))
 	}
 
 	// Register gopinyin as the transliterator
-	if err := common.Register("zho", common.TransliteratorType, "gopinyin", gopinyinEntry); err != nil {
+	if err := common.Register("zho", gopinyinEntry); err != nil {
 		panic(fmt.Sprintf("failed to register gopinyin: %v", err))
 	}
 
@@ -71,52 +71,52 @@ func init() {
 		{
 			Name:        "normal",
 			Description: "Chinese pinyin without tone marks (pinyin.Normal)",
-			Provider:    "gopinyin", 
+			Providers:   []string{"gojieba", "gopinyin"}, 
 		},
 		{
 			Name:        "tone",
 			Description: "Chinese pinyin with diacritic tone marks (pinyin.Tone)",
-			Provider:    "gopinyin",
+			Providers:   []string{"gojieba", "gopinyin"},
 		},
 		{
 			Name:        "tone2",
 			Description: "Chinese pinyin with numeric tone (pinyin.Tone2)",
-			Provider:    "gopinyin",
+			Providers:   []string{"gojieba", "gopinyin"},
 		},
 		{
 			Name:        "tone3",
 			Description: "Chinese pinyin with numeric tone variant (pinyin.Tone3)",
-			Provider:    "gopinyin",
+			Providers:   []string{"gojieba", "gopinyin"},
 		},
 		{
 			Name:        "initials",
 			Description: "Chinese pinyin initials only (pinyin.Initials)",
-			Provider:    "gopinyin",
+			Providers:   []string{"gojieba", "gopinyin"},
 		},
 		{
 			Name:        "firstletter",
 			Description: "Chinese pinyin first letter only (pinyin.FirstLetter)",
-			Provider:    "gopinyin",
+			Providers:   []string{"gojieba", "gopinyin"},
 		},
 		{
 			Name:        "finals",
 			Description: "Chinese pinyin finals only (pinyin.Finals)",
-			Provider:    "gopinyin",
+			Providers:   []string{"gojieba", "gopinyin"},
 		},
 		{
 			Name:        "finalstone",
 			Description: "Chinese pinyin finals with tone marks (pinyin.FinalsTone)",
-			Provider:    "gopinyin",
+			Providers:   []string{"gojieba", "gopinyin"},
 		},
 		{
 			Name:        "finalstone2",
 			Description: "Chinese pinyin finals with numeric tone (pinyin.FinalsTone2)",
-			Provider:    "gopinyin",
+			Providers:   []string{"gojieba", "gopinyin"},
 		},
 		{
 			Name:        "finalstone3",
 			Description: "Chinese pinyin finals with numeric tone variant (pinyin.FinalsTone3)",
-			Provider:    "gopinyin",
+			Providers:   []string{"gojieba", "gopinyin"},
 		},
 	}
 

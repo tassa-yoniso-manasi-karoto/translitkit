@@ -6,12 +6,12 @@ import (
 	"context"
 )
 
-type ProviderType string
+type OperatingMode string
 
 const (
-	TokenizerType      ProviderType = "tokenizer"
-	TransliteratorType ProviderType = "transliterator"
-	CombinedType       ProviderType = "combined"
+	TokenizerMode      OperatingMode = "tokenizer"
+	TransliteratorMode OperatingMode = "transliterator"
+	CombinedMode       OperatingMode = "combined"
 )
 
 // ProgressCallback is a function that reports the progress of a processing operation
@@ -63,12 +63,12 @@ type Provider[In AnyTokenSliceWrapper, Out AnyTokenSliceWrapper] interface {
 	// Returns an error if closing fails or the context is canceled.
 	CloseWithContext(ctx context.Context) error
 	
-	// ProcessFlowController processes the input tokens using the specified context.
+	// ProcessFlowController processes the input tokens using the specified context and mode.
 	// This is the core processing method of the provider. It handles either raw input
-	// chunks or pre-tokenized content based on the provider type.
+	// chunks or pre-tokenized content based on the specified operating mode.
 	// The context can be used to cancel processing or set deadlines.
 	// Returns processed tokens and an error if processing fails or the context is canceled.
-	ProcessFlowController(ctx context.Context, input In) (Out, error)
+	ProcessFlowController(ctx context.Context, mode OperatingMode, input In) (Out, error)
 	
 	// WithProgressCallback sets a callback function to report processing progress.
 	// The callback will be called with the current chunk index and total chunks
@@ -80,9 +80,9 @@ type Provider[In AnyTokenSliceWrapper, Out AnyTokenSliceWrapper] interface {
 	// This is used for registration and lookup in the provider registry.
 	Name() string
 	
-	// GetType returns the type of the provider (TokenizerType, TransliteratorType, or CombinedType).
-	// This is used to determine the provider's capabilities and role in processing.
-	GetType() ProviderType
+	// SupportedModes returns all operating modes this provider supports.
+	// A provider can support multiple modes (e.g., both tokenizer and combined).
+	SupportedModes() []OperatingMode
 	
 	// GetMaxQueryLen returns the maximum input length the provider can handle in a single operation.
 	// This is used to determine chunking strategies for large inputs.
@@ -91,26 +91,24 @@ type Provider[In AnyTokenSliceWrapper, Out AnyTokenSliceWrapper] interface {
 }
 
 type LanguageProviders struct {
-	Defaults        []ProviderEntry
-	Tokenizers      map[string]ProviderEntry
-	Transliterators map[string]ProviderEntry
-	Combined        map[string]ProviderEntry
+	Defaults  []ProviderEntry
+	Providers []ProviderEntry
 }
 
 type ProviderEntry struct {
 	Provider     Provider[AnyTokenSliceWrapper, AnyTokenSliceWrapper]
 	Capabilities []string
-	Type         ProviderType
+	Mode         OperatingMode  // The mode context when this entry was retrieved
 }
 
 
-func getProvider(lang string, provType ProviderType, name string) (Provider[AnyTokenSliceWrapper, AnyTokenSliceWrapper], error) {
+func getProvider(lang string, mode OperatingMode, name string) (Provider[AnyTokenSliceWrapper, AnyTokenSliceWrapper], error) {
 	GlobalRegistry.mu.RLock()
 	defer GlobalRegistry.mu.RUnlock()
 
-	entry, ok := findProvider(lang, provType, name)
+	entry, ok := findProvider(lang, mode, name)
 	if !ok {
-		return nil, fmt.Errorf("provider not found: %s (%s) for language %s or mul", name, provType, lang)
+		return nil, fmt.Errorf("provider not found: %s (mode: %s) for language %s or mul", name, mode, lang)
 	}
 
 	return entry.Provider, nil
@@ -119,44 +117,46 @@ func getProvider(lang string, provType ProviderType, name string) (Provider[AnyT
 
 // findProvider looks for a provider first in the specified language's registry,
 // then falls back to multilingual providers if not found
-func findProvider(lang string, provType ProviderType, name string) (ProviderEntry, bool) {
+func findProvider(lang string, mode OperatingMode, name string) (ProviderEntry, bool) {
 	// Try language-specific provider first
 	if langProviders, exists := GlobalRegistry.Providers[lang]; exists {
-		if entry, ok := getProviderFromMap(langProviders, provType, name); ok {
-			return entry, true
+		for _, entry := range langProviders.Providers {
+			if entry.Provider.Name() == name {
+				// Check if provider supports the requested mode
+				for _, supportedMode := range entry.Provider.SupportedModes() {
+					if supportedMode == mode {
+						entry.Mode = mode // Set the context mode
+						return entry, true
+					}
+				}
+			}
 		}
 	}
 
 	// Fallback to multilingual provider if not found and not already looking for mul
 	if lang != "mul" {
 		if mulProviders, exists := GlobalRegistry.Providers["mul"]; exists {
-			return getProviderFromMap(mulProviders, provType, name)
+			for _, entry := range mulProviders.Providers {
+				if entry.Provider.Name() == name {
+					// Check if provider supports the requested mode
+					for _, supportedMode := range entry.Provider.SupportedModes() {
+						if supportedMode == mode {
+							entry.Mode = mode // Set the context mode
+							return entry, true
+						}
+					}
+				}
+			}
 		}
 	}
 
 	return ProviderEntry{}, false
 }
 
-// getProviderFromMap retrieves a provider entry from the appropriate map based on type
-func getProviderFromMap(providers LanguageProviders, provType ProviderType, name string) (ProviderEntry, bool) {
-	switch provType {
-	case TokenizerType:
-		entry, ok := providers.Tokenizers[name]
-		return entry, ok
-	case TransliteratorType:
-		entry, ok := providers.Transliterators[name]
-		return entry, ok
-	case CombinedType:
-		entry, ok := providers.Combined[name]
-		return entry, ok
-	default:
-		return ProviderEntry{}, false
-	}
-}
 
 // checkCapabilities validates if providers have required capabilities for a language
 // and issues warnings if capabilities are missing
-func checkCapabilities(lang string, entries []ProviderEntry, provType ProviderType, name string) {
+func checkCapabilities(lang string, entries []ProviderEntry, mode OperatingMode, name string) {
 	mustTokenize, _ := NeedsTokenization(lang)
 	mustTransliterate, _ := NeedsTransliteration(lang)
 
@@ -178,17 +178,17 @@ func checkCapabilities(lang string, entries []ProviderEntry, provType ProviderTy
 			}
 		}
 
-		if mustTokenize && !hasTokenization && (provType == TokenizerType || provType == CombinedType) {
+		if mustTokenize && !hasTokenization && (mode == TokenizerMode || mode == CombinedMode) {
 			Log.Warn().
 				Str("provider", name).
 				Str("lang", lang).
-				Msg("Registering provider which requires tokenization but providerType doesn't declare this capability")
+				Msg("Registering provider which requires tokenization but provider doesn't declare this capability")
 		}
-		if mustTransliterate && !hasTransliteration && (provType == TransliteratorType || provType == CombinedType) {
+		if mustTransliterate && !hasTransliteration && (mode == TransliteratorMode || mode == CombinedMode) {
 			Log.Warn().
 				Str("provider", name).
 				Str("lang", lang).
-				Msg("Registering provider which requires transliteration but providerType doesn't declare this capability")
+				Msg("Registering provider which requires transliteration but provider doesn't declare this capability")
 		}
 		return
 	}

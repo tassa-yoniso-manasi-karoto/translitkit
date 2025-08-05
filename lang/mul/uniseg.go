@@ -85,8 +85,8 @@ func (p *UnisegProvider) Name() string {
 	return "uniseg"
 }
 
-func (p *UnisegProvider) GetType() common.ProviderType {
-	return common.TokenizerType
+func (p *UnisegProvider) SupportedModes() []common.OperatingMode {
+	return []common.OperatingMode{common.TokenizerMode}
 }
 
 func (p *UnisegProvider) GetMaxQueryLen() int {
@@ -120,7 +120,7 @@ func (p *UnisegProvider) Close() error {
 // Returns:
 //   - AnyTokenSliceWrapper: A wrapper containing the processed tokens
 //   - error: An error if processing fails, the context is canceled, or input format is invalid
-func (p *UnisegProvider) ProcessFlowController(ctx context.Context, input common.AnyTokenSliceWrapper) (common.AnyTokenSliceWrapper, error) {
+func (p *UnisegProvider) ProcessFlowController(ctx context.Context, mode common.OperatingMode, input common.AnyTokenSliceWrapper) (common.AnyTokenSliceWrapper, error) {
 	// Check for context cancellation
 	if err := ctx.Err(); err != nil {
 		return nil, fmt.Errorf("uniseg: context canceled during processing: %w", err)

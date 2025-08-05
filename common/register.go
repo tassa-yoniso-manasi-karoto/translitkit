@@ -26,7 +26,7 @@ var BrowserAccessURL = ""
 // Register adds a new Provider to the global registry for the specified language.
 // It performs capability validation and warns if the Provider's capabilities
 // don't match the language requirements.
-func Register(languageCode string, provType ProviderType, name string, entry ProviderEntry) error {
+func Register(languageCode string, entry ProviderEntry) error {
 	lang, ok := IsValidISO639(languageCode)
 	if !ok {
 		return fmt.Errorf(errNotISO639, languageCode)
@@ -34,21 +34,18 @@ func Register(languageCode string, provType ProviderType, name string, entry Pro
 	GlobalRegistry.mu.Lock()
 	defer GlobalRegistry.mu.Unlock()
 
-	checkCapabilities(lang, []ProviderEntry{entry}, provType, name)
+	// Check capabilities based on supported modes
+	modes := entry.Provider.SupportedModes()
+	if len(modes) > 0 {
+		checkCapabilities(lang, []ProviderEntry{entry}, modes[0], entry.Provider.Name())
+	}
 
 	// Initialize language Providers if not exists
 	if _, exists := GlobalRegistry.Providers[lang]; !exists {
 		GlobalRegistry.Providers[lang] = LanguageProviders{
-			Tokenizers:      make(map[string]ProviderEntry),
-			Transliterators: make(map[string]ProviderEntry),
-			Combined:        make(map[string]ProviderEntry),
-			Defaults:        make([]ProviderEntry, 0),
+			Providers: make([]ProviderEntry, 0),
+			Defaults:  make([]ProviderEntry, 0),
 		}
-	}
-
-	// Verify entry type matches provType
-	if entry.Type != provType {
-		return fmt.Errorf("provider type mismatch: expected %s, got %s", provType, entry.Type)
 	}
 
 	// Verify Provider interface is implemented
@@ -56,15 +53,20 @@ func Register(languageCode string, provType ProviderType, name string, entry Pro
 		return fmt.Errorf("provider cannot be nil")
 	}
 
-	// Register the provider
-	switch provType {
-	case TokenizerType:
-		GlobalRegistry.Providers[lang].Tokenizers[name] = entry
-	case TransliteratorType:
-		GlobalRegistry.Providers[lang].Transliterators[name] = entry
-	case CombinedType:
-		GlobalRegistry.Providers[lang].Combined[name] = entry
+	// Check if provider already registered (avoid duplicates)
+	providers := GlobalRegistry.Providers[lang]
+	for i, existing := range providers.Providers {
+		if existing.Provider.Name() == entry.Provider.Name() {
+			// Update existing entry
+			providers.Providers[i] = entry
+			GlobalRegistry.Providers[lang] = providers
+			return nil
+		}
 	}
+
+	// Add new provider
+	providers.Providers = append(providers.Providers, entry)
+	GlobalRegistry.Providers[lang] = providers
 
 	return nil
 }
@@ -123,10 +125,8 @@ func SetDefault(languageCode string, providers []ProviderEntry) error {
 	// Initialize language providers if not exists
 	if _, exists := GlobalRegistry.Providers[lang]; !exists {
 		GlobalRegistry.Providers[lang] = LanguageProviders{
-			Tokenizers:      make(map[string]ProviderEntry),
-			Transliterators: make(map[string]ProviderEntry),
-			Combined:        make(map[string]ProviderEntry),
-			Defaults:        make([]ProviderEntry, 0),
+			Providers: make([]ProviderEntry, 0),
+			Defaults:  make([]ProviderEntry, 0),
 		}
 	}
 
@@ -136,30 +136,30 @@ func SetDefault(languageCode string, providers []ProviderEntry) error {
 
 	// Validate providers
 	name := providers[0].Provider.Name()
-	if providers[0].Type == CombinedType {
+	if providers[0].Mode == CombinedMode {
 		if len(providers) > 1 {
 			return fmt.Errorf("combined provider cannot be used with other providers")
 		}
 		// Verify the provider exists
-		if _, ok := findProvider(lang, CombinedType, providers[0].Provider.Name()); !ok {
+		if _, ok := findProvider(lang, CombinedMode, providers[0].Provider.Name()); !ok {
 			return fmt.Errorf("combined provider \"%s\" not found in registered providers", name)
 		}
 	} else {
 		// Require tokenizer but make transliterator optional
-		if providers[0].Type != TokenizerType {
+		if providers[0].Mode != TokenizerMode {
 			return fmt.Errorf("first provider must be a tokenizer")
 		}
-		if _, ok := findProvider(lang, TokenizerType, name); !ok {
+		if _, ok := findProvider(lang, TokenizerMode, name); !ok {
 			return fmt.Errorf("tokenizer \"%s\" not found in registered providers", name)
 		}
 
 		// Check transliterator if provided
 		if len(providers) > 1 {
 			name := providers[1].Provider.Name()
-			if providers[1].Type != TransliteratorType {
+			if providers[1].Mode != TransliteratorMode {
 				return fmt.Errorf("second provider must be a transliterator")
 			}
-			if _, ok := findProvider(lang, TransliteratorType, name); !ok {
+			if _, ok := findProvider(lang, TransliteratorMode, name); !ok {
 				return fmt.Errorf("transliterator \"%s\" not found in registered providers", name)
 			}
 		}

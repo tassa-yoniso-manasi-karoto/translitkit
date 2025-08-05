@@ -119,8 +119,8 @@ func (p *AksharamukhaProvider) Name() string {
 	return "aksharamukha"
 }
 
-func (p *AksharamukhaProvider) GetType() common.ProviderType {
-	return common.TransliteratorType
+func (p *AksharamukhaProvider) SupportedModes() []common.OperatingMode {
+	return []common.OperatingMode{common.TransliteratorMode}
 }
 
 func (p *AksharamukhaProvider) GetMaxQueryLen() int {
@@ -162,29 +162,28 @@ func (p *AksharamukhaProvider) WithProgressCallback(callback common.ProgressCall
 // Returns:
 //   - AnyTokenSliceWrapper: A wrapper containing the processed tokens
 //   - error: An error if processing fails, the context is canceled, or input format is invalid
-func (p *AksharamukhaProvider) ProcessFlowController(ctx context.Context, input common.AnyTokenSliceWrapper) (results common.AnyTokenSliceWrapper, err error) {
+func (p *AksharamukhaProvider) ProcessFlowController(ctx context.Context, mode common.OperatingMode, input common.AnyTokenSliceWrapper) (results common.AnyTokenSliceWrapper, err error) {
 	raw := input.GetRaw()
 	if input.Len() == 0 && len(raw) == 0 {
 		return nil, fmt.Errorf("empty input was passed to processor")
 	}
-	providerType := p.GetType()
 	if len(raw) != 0 {
-		//switch providerType {
-		//case common.TransliteratorType:
+		//switch mode {
+		//case common.TransliteratorMode:
 		//	return p.process(ctx, raw)
 		//default:
-		return nil, fmt.Errorf("provider type %s not supported", providerType)
+		return nil, fmt.Errorf("operating mode %s not supported", mode)
 		//}
 		input.ClearRaw()
 	} else {
-		switch providerType {
-		case common.TransliteratorType:
+		switch mode {
+		case common.TransliteratorMode:
 			return p.processTokens(ctx, input)
 		default:
-			return nil, fmt.Errorf("provider type %s not supported", providerType)
+			return nil, fmt.Errorf("operating mode %s not supported", mode)
 		}
 	}
-	return nil, fmt.Errorf("handling not implemented for '%s' with ProviderType '%s'", p.Name(), providerType)
+	return nil, fmt.Errorf("handling not implemented for '%s' with OperatingMode '%s'", p.Name(), mode)
 }
 
 // processTokens handles pre-tokenized input, adding romanization to tokens.

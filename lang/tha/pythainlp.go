@@ -11,21 +11,20 @@ import (
 
 // PyThaiNLPProvider implements the Provider interface using go-pythainlp
 // It can operate in two modes:
-// - TokenizerType: Only tokenization
-// - CombinedType: Tokenization + romanization
+// - TokenizerMode: Only tokenization
+// - CombinedMode: Tokenization + romanization
 type PyThaiNLPProvider struct {
 	manager          *pythainlp.PyThaiNLPManager
 	config           map[string]interface{}
-	operatingMode    common.ProviderType
 	romanEngine      string
 	progressCallback common.ProgressCallback
 }
 
-// NewPyThaiNLPProvider creates a new provider with specified operating mode
-func NewPyThaiNLPProvider(mode common.ProviderType) *PyThaiNLPProvider {
+// NewPyThaiNLPProvider creates a new provider
+func NewPyThaiNLPProvider() *PyThaiNLPProvider {
 	return &PyThaiNLPProvider{
-		operatingMode: mode,
-		romanEngine:   pythainlp.EngineRoyin, // default
+		romanEngine: pythainlp.EngineRoyin, // default
+		config:      make(map[string]interface{}),
 	}
 }
 
@@ -127,7 +126,7 @@ func (p *PyThaiNLPProvider) Close() error {
 }
 
 // ProcessFlowController processes input based on operating mode
-func (p *PyThaiNLPProvider) ProcessFlowController(ctx context.Context, input common.AnyTokenSliceWrapper) (common.AnyTokenSliceWrapper, error) {
+func (p *PyThaiNLPProvider) ProcessFlowController(ctx context.Context, mode common.OperatingMode, input common.AnyTokenSliceWrapper) (common.AnyTokenSliceWrapper, error) {
 	raw := input.GetRaw()
 	if input.Len() == 0 && len(raw) == 0 {
 		return nil, fmt.Errorf("empty input")
@@ -155,9 +154,10 @@ func (p *PyThaiNLPProvider) ProcessFlowController(ctx context.Context, input com
 		var tokens []*Tkn
 		var err error
 		
-		if p.operatingMode == common.TokenizerType {
+		// Process based on the specified mode
+		if mode == common.TokenizerMode {
 			tokens, err = p.tokenizeOnly(ctx, chunk)
-		} else { // CombinedType
+		} else { // CombinedMode
 			tokens, err = p.analyzeText(ctx, chunk)
 		}
 		
@@ -240,17 +240,14 @@ func (p *PyThaiNLPProvider) WithProgressCallback(callback common.ProgressCallbac
 	p.progressCallback = callback
 }
 
-// Name returns the provider name based on operating mode
+// Name returns the provider name
 func (p *PyThaiNLPProvider) Name() string {
-	if p.operatingMode == common.TokenizerType {
-		return "pythainlp-tokenizer"
-	}
 	return "pythainlp"
 }
 
-// GetType returns the provider type
-func (p *PyThaiNLPProvider) GetType() common.ProviderType {
-	return p.operatingMode
+// SupportedModes returns the operating modes this provider supports
+func (p *PyThaiNLPProvider) SupportedModes() []common.OperatingMode {
+	return []common.OperatingMode{common.TokenizerMode, common.CombinedMode}
 }
 
 // GetMaxQueryLen returns the maximum query length

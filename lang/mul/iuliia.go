@@ -113,8 +113,8 @@ func (p *IuliiaProvider) Name() string {
 	return "iuliia"
 }
 
-func (p *IuliiaProvider) GetType() common.ProviderType {
-	return common.TransliteratorType
+func (p *IuliiaProvider) SupportedModes() []common.OperatingMode {
+	return []common.OperatingMode{common.TransliteratorMode}
 }
 
 func (p *IuliiaProvider) GetMaxQueryLen() int {
@@ -148,7 +148,7 @@ func (p *IuliiaProvider) Close() error {
 // Returns:
 //   - AnyTokenSliceWrapper: A wrapper containing the processed tokens
 //   - error: An error if processing fails, the context is canceled, or input format is invalid
-func (p *IuliiaProvider) ProcessFlowController(ctx context.Context, input common.AnyTokenSliceWrapper) (results common.AnyTokenSliceWrapper, err error) {
+func (p *IuliiaProvider) ProcessFlowController(ctx context.Context, mode common.OperatingMode, input common.AnyTokenSliceWrapper) (results common.AnyTokenSliceWrapper, err error) {
 	// Check for context cancellation
 	if err := ctx.Err(); err != nil {
 		return nil, fmt.Errorf("iuliia: context canceled during processing: %w", err)
@@ -159,24 +159,23 @@ func (p *IuliiaProvider) ProcessFlowController(ctx context.Context, input common
 		return nil, fmt.Errorf("empty input was passed to processor")
 	}
 
-	providerType := p.GetType()
 	if len(raw) != 0 {
-		// switch providerType {
-		// case common.TransliteratorType:
+		// switch mode {
+		// case common.TransliteratorMode:
 		// 	return p.process(ctx, raw)
 		// default:
-		return nil, fmt.Errorf("provider type %s not supported", providerType)
+		return nil, fmt.Errorf("operating mode %s not supported", mode)
 		// }
 		input.ClearRaw()
 	} else {
-		switch providerType {
-		case common.TransliteratorType:
+		switch mode {
+		case common.TransliteratorMode:
 			return p.processTokens(ctx, input)
 		default:
-			return nil, fmt.Errorf("provider type %s not supported", providerType)
+			return nil, fmt.Errorf("operating mode %s not supported", mode)
 		}
 	}
-	return nil, fmt.Errorf("handling not implemented for '%s' with ProviderType '%s'", p.Name(), providerType)
+	return nil, fmt.Errorf("handling not implemented for '%s' with OperatingMode '%s'", p.Name(), mode)
 }
 
 // process handles raw input strings, converting them to tokens with romanization. // FIXME see aksharamukha remark on processing raw with no tokenization

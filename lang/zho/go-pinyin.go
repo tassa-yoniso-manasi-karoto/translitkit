@@ -137,7 +137,7 @@ func (p *GoPinyinProvider) InitRecreate(noCache bool) error {
 // Returns:
 //   - AnyTokenSliceWrapper: A wrapper containing the processed tokens
 //   - error: An error if processing fails, the context is canceled, or initialization fails
-func (p *GoPinyinProvider) ProcessFlowController(ctx context.Context, input common.AnyTokenSliceWrapper) (common.AnyTokenSliceWrapper, error) {
+func (p *GoPinyinProvider) ProcessFlowController(ctx context.Context, mode common.OperatingMode, input common.AnyTokenSliceWrapper) (common.AnyTokenSliceWrapper, error) {
 	// Check for context cancellation
 	if err := ctx.Err(); err != nil {
 		return nil, fmt.Errorf("gopinyin: context canceled during processing: %w", err)
@@ -236,8 +236,8 @@ func (p *GoPinyinProvider) Name() string {
 	return "gopinyin"
 }
 
-func (p *GoPinyinProvider) GetType() common.ProviderType {
-	return common.TransliteratorType
+func (p *GoPinyinProvider) SupportedModes() []common.OperatingMode {
+	return []common.OperatingMode{common.TransliteratorMode}
 }
 
 func (p *GoPinyinProvider) GetMaxQueryLen() int {

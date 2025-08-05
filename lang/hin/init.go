@@ -14,12 +14,10 @@ func init() {
 		{
 			Provider:     &mul.UnisegProvider{},
 			Capabilities: []string{"tokenization"},
-			Type:        common.TokenizerType,
 		},
 		{
 			Provider:     mul.NewAksharamukhaProvider(Lang),
 			Capabilities: []string{"transliteration"},
-			Type:        common.TransliteratorType,
 		},
 	}
 

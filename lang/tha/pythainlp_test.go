@@ -18,7 +18,7 @@ func TestPyThaiNLPProvider(t *testing.T) {
 	ctx := context.Background()
 
 	t.Run("TokenizerMode", func(t *testing.T) {
-		provider := &PyThaiNLPProvider{operatingMode: common.TokenizerType}
+		provider := NewPyThaiNLPProvider()
 		
 		// Initialize
 		err := provider.InitWithContext(ctx)
@@ -32,7 +32,7 @@ func TestPyThaiNLPProvider(t *testing.T) {
 			},
 		}
 		
-		result, err := provider.ProcessFlowController(ctx, input)
+		result, err := provider.ProcessFlowController(ctx, common.TokenizerMode, input)
 		assert.NoError(t, err, "Failed to process text")
 		
 		// Check results
@@ -56,7 +56,7 @@ func TestPyThaiNLPProvider(t *testing.T) {
 	})
 
 	t.Run("CombinedMode", func(t *testing.T) {
-		provider := &PyThaiNLPProvider{operatingMode: common.CombinedType}
+		provider := NewPyThaiNLPProvider()
 		
 		// Initialize
 		err := provider.InitWithContext(ctx)
@@ -70,7 +70,7 @@ func TestPyThaiNLPProvider(t *testing.T) {
 			},
 		}
 		
-		result, err := provider.ProcessFlowController(ctx, input)
+		result, err := provider.ProcessFlowController(ctx, common.CombinedMode, input)
 		assert.NoError(t, err, "Failed to process text")
 		
 		// Check results
@@ -95,7 +95,7 @@ func TestPyThaiNLPProvider(t *testing.T) {
 	})
 
 	t.Run("ProgressCallback", func(t *testing.T) {
-		provider := &PyThaiNLPProvider{operatingMode: common.TokenizerType}
+		provider := NewPyThaiNLPProvider()
 		
 		// Initialize
 		err := provider.InitWithContext(ctx)
@@ -122,7 +122,7 @@ func TestPyThaiNLPProvider(t *testing.T) {
 	})
 
 	t.Run("EmptyInput", func(t *testing.T) {
-		provider := &PyThaiNLPProvider{operatingMode: common.TokenizerType}
+		provider := NewPyThaiNLPProvider()
 		
 		err := provider.InitWithContext(ctx)
 		assert.NoError(t, err)
@@ -135,7 +135,7 @@ func TestPyThaiNLPProvider(t *testing.T) {
 	})
 
 	t.Run("ContextCancellation", func(t *testing.T) {
-		provider := &PyThaiNLPProvider{operatingMode: common.TokenizerType}
+		provider := NewPyThaiNLPProvider()
 		
 		err := provider.InitWithContext(ctx)
 		assert.NoError(t, err)
@@ -210,7 +210,7 @@ func BenchmarkPyThaiNLP(b *testing.B) {
 	testText := "ภาษาไทยเป็นภาษาที่มีเอกลักษณ์เฉพาะตัว มีระบบการเขียนและการออกเสียงที่แตกต่างจากภาษาอื่นๆ"
 	
 	b.Run("TokenizerMode", func(b *testing.B) {
-		provider := &PyThaiNLPProvider{operatingMode: common.TokenizerType}
+		provider := NewPyThaiNLPProvider()
 		provider.InitWithContext(ctx)
 		defer provider.Close()
 		
@@ -221,12 +221,12 @@ func BenchmarkPyThaiNLP(b *testing.B) {
 					Raw: []string{testText},
 				},
 			}
-			provider.ProcessFlowController(ctx, input)
+			provider.ProcessFlowController(ctx, common.TokenizerMode, input)
 		}
 	})
 	
 	b.Run("CombinedMode", func(b *testing.B) {
-		provider := &PyThaiNLPProvider{operatingMode: common.CombinedType}
+		provider := NewPyThaiNLPProvider()
 		provider.InitWithContext(ctx)
 		defer provider.Close()
 		
@@ -237,7 +237,7 @@ func BenchmarkPyThaiNLP(b *testing.B) {
 					Raw: []string{testText},
 				},
 			}
-			provider.ProcessFlowController(ctx, input)
+			provider.ProcessFlowController(ctx, common.CombinedMode, input)
 		}
 	})
 }
