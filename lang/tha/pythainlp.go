@@ -96,12 +96,15 @@ func (p *PyThaiNLPProvider) InitWithContext(ctx context.Context) error {
 	if err != nil {
 		return fmt.Errorf("failed to create PyThaiNLP manager: %w", err)
 	}
-	
-	// Initialize the manager
-	if err := manager.Init(ctx); err != nil {
+
+	// Use InitRecreate instead of Init to handle port mismatches
+	// Each NewManager allocates a new port, but an existing stopped container
+	// has the old port mapping. InitRecreate removes and recreates the container
+	// with the correct port binding.
+	if err := manager.InitRecreate(ctx, false); err != nil {
 		return fmt.Errorf("failed to initialize PyThaiNLP: %w", err)
 	}
-	
+
 	p.manager = manager
 	return nil
 }
