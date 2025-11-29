@@ -19,6 +19,7 @@ func init() {
 	}
 
 	// Register PyThaiNLP provider (supports both tokenizer and combined modes)
+	// NOTE: PyThaiNLPProvider OWNS the Docker container lifecycle - see pythainlp.go
 	pythainlpProvider := NewPyThaiNLPProvider()
 	pythainlpEntry := common.ProviderEntry{
 		Provider:     pythainlpProvider,
@@ -29,28 +30,67 @@ func init() {
 		panic(fmt.Sprintf("failed to register pythainlp: %v", err))
 	}
 
+	// Register Paiboonizer provider (transliterator only, ~83% accuracy, experimental)
+	// NOTE: PaiboonizerProvider does NOT own any Docker container - it reuses
+	// the container started by PyThaiNLPProvider via package-level functions.
+	// See paiboonizer.go for lifecycle details.
+	paiboonizerProvider := NewPaiboonizerProvider()
+	paiboonizerEntry := common.ProviderEntry{
+		Provider:     paiboonizerProvider,
+		Capabilities: []string{"transliteration"},
+	}
+
+	if err := common.Register(Lang, paiboonizerEntry); err != nil {
+		panic(fmt.Sprintf("failed to register paiboonizer: %v", err))
+	}
+
 	registerThaiSchemes()
 	setDefaultProviders()
 }
 
 func registerThaiSchemes() {
+	// ==========================================================================
+	// HYBRID SCHEME: PyThaiNLP tokenizer + Paiboonizer transliterator
+	// ==========================================================================
+	// This scheme uses pythainlp for word tokenization, then paiboonizer for
+	// Paiboon-style romanization. It's experimental with ~83% accuracy but
+	// runs fully locally without external API dependencies.
+	//
+	// LIFECYCLE: pythainlp provider MUST be initialized first (starts Docker
+	// container). Paiboonizer then reuses the same container via package-level
+	// go-pythainlp functions. See pythainlp.go and paiboonizer.go for details.
+	// ==========================================================================
+	hybridScheme := common.TranslitScheme{
+		Name:        "paiboon-hybrid",
+		Description: "Paiboon (exp.🧪, accuracy ≥85%, local & very fast)",
+		Providers:   []string{"pythainlp", "paiboonizer"},
+		NeedsDocker: true,
+	}
+
+	if err := common.RegisterScheme(Lang, hybridScheme); err != nil {
+		common.Log.Warn().
+			Str("pkg", Lang).
+			Str("scheme", hybridScheme.Name).
+			Msg("Failed to register hybrid paiboonizer scheme")
+	}
+
 	// PyThaiNLP (lightweight mode only)
 	pythainlpSchemes := []common.TranslitScheme{
 		{
 			Name:        "royin",
-			Description: "Royal Thai General System of Transcription (RTGS)",
+			Description: "Royal Thai General System of Transcription (pythainlp)",
 			Providers:   []string{"pythainlp"},
 			NeedsDocker: true,
 		},
 		{
 			Name:        "tltk",
-			Description: "Thai Language Toolkit romanization",
+			Description: "Thai Language Toolkit romanization (pythainlp)",
 			Providers:   []string{"pythainlp"},
 			NeedsDocker: true,
 		},
 		{
 			Name:        "lookup",
-			Description: "Dictionary-based romanization with fallback",
+			Description: "Dictionary-based romanization with fallback (pythainlp)",
 			Providers:   []string{"pythainlp"},
 			NeedsDocker: true,
 		},
@@ -68,7 +108,7 @@ func registerThaiSchemes() {
 	thai2englishSchemes := []common.TranslitScheme{
 		{
 			Name:         "paiboon",
-			Description:  "Paiboon-esque transliteration",
+			Description:  "Paiboon-esque transliteration (thai2english.com)",
 			Providers:    []string{"thai2english.com"},
 			NeedsScraper: true,
 		},
@@ -80,19 +120,19 @@ func registerThaiSchemes() {
 		},
 		{
 			Name:         "rtgs",
-			Description:  "Royal Thai General System of transcription",
+			Description:  "Royal Thai General System of Transcription (thai2english.com)",
 			Providers:    []string{"thai2english.com"},
 			NeedsScraper: true,
 		},
 		{
 			Name:         "ipa",
-			Description:  "International Phonetic Alphabet representation",
+			Description:  "International Phonetic Alphabet representation (thai2english.com)",
 			Providers:    []string{"thai2english.com"},
 			NeedsScraper: true,
 		},
 		{
 			Name:         "simplified-ipa",
-			Description:  "Simplified phonetic notation",
+			Description:  "Simplified phonetic notation (thai2english.com)",
 			Providers:    []string{"thai2english.com"},
 			NeedsScraper: true,
 		},
@@ -106,19 +146,25 @@ func registerThaiSchemes() {
 				Msg("Failed to register thai2english.com scheme")
 		}
 	}
-
 }
 
 func setDefaultProviders() {
-	// Create a new provider instance for default
+	// Use paiboon-hybrid as default: pythainlp for tokenization, paiboonizer for transliteration
+	// Even if not 100% accurate, it is faster than th2en's paiboon and produces more learner-friendly output than pythainlp's RTGS
 	pythainlpProvider := NewPyThaiNLPProvider()
-	combinedEntry := common.ProviderEntry{
+	tokenizerEntry := common.ProviderEntry{
 		Provider:     pythainlpProvider,
-		Capabilities: []string{"tokenization", "transliteration"},
+		Capabilities: []string{"tokenization"},
 	}
 
-	// Set PyThaiNLP combined as default
-	if err := common.SetDefault(Lang, []common.ProviderEntry{combinedEntry}); err != nil {
+	paiboonizerProvider := NewPaiboonizerProvider()
+	transliteratorEntry := common.ProviderEntry{
+		Provider:     paiboonizerProvider,
+		Capabilities: []string{"transliteration"},
+	}
+
+	// Set paiboon-hybrid (pythainlp + paiboonizer) as default
+	if err := common.SetDefault(Lang, []common.ProviderEntry{tokenizerEntry, transliteratorEntry}); err != nil {
 		common.Log.Error().
 			Err(err).
 			Msg("Failed to set default provider")
@@ -126,6 +172,6 @@ func setDefaultProviders() {
 
 	common.Log.Info().
 		Str("lang", Lang).
-		Str("provider", "pythainlp").
-		Msg("Set PyThaiNLP as default Thai provider.")
+		Str("scheme", "paiboon-hybrid").
+		Msg("Set paiboon-hybrid as default Thai provider.")
 }

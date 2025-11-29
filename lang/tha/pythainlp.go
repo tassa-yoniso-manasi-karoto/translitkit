@@ -9,6 +9,32 @@ import (
 	"github.com/tassa-yoniso-manasi-karoto/translitkit/common"
 )
 
+// =============================================================================
+// DOCKER CONTAINER LIFECYCLE - IMPORTANT FOR FUTURE DEVELOPERS/LLMs
+// =============================================================================
+//
+// PyThaiNLPProvider is the OWNER of the pythainlp Docker container lifecycle.
+// When this provider initializes, it starts the Docker container. When it closes,
+// the container is stopped.
+//
+// OTHER PROVIDERS (like PaiboonizerProvider) that depend on pythainlp MUST NOT
+// create their own pythainlp.PyThaiNLPManager. Instead, they should:
+//   1. Use go-pythainlp's package-level functions (e.g., pythainlp.SyllableTokenize())
+//      which use a default manager that reuses any existing container
+//   2. Rely on this provider being initialized first in hybrid schemes
+//
+// This design prevents:
+//   - Multiple managers fighting over the same Docker container
+//   - Race conditions during container startup/shutdown
+//   - Resource leaks from orphaned containers
+//
+// In hybrid schemes like "paiboon-hybrid" (pythainlp → paiboonizer):
+//   - pythainlp provider starts the container (for word tokenization)
+//   - paiboonizer reuses the same container (for syllable tokenization via package-level funcs)
+//   - When pythainlp provider closes, the container shuts down
+//
+// =============================================================================
+
 // PyThaiNLPProvider implements the Provider interface using go-pythainlp
 // It can operate in two modes:
 // - TokenizerMode: Only tokenization

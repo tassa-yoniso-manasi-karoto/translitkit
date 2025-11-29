@@ -14,7 +14,8 @@ require (
 	github.com/stretchr/testify v1.10.0
 	github.com/tassa-yoniso-manasi-karoto/go-aksharamukha v0.0.0-20250321133057-249cfd96068f
 	github.com/tassa-yoniso-manasi-karoto/go-ichiran v1.0.3-beta
-	github.com/tassa-yoniso-manasi-karoto/go-pythainlp v0.0.0-20250804103846-41e15f3047cd
+	github.com/tassa-yoniso-manasi-karoto/go-pythainlp v0.0.0-20250805205043-7595f20e9979
+	github.com/tassa-yoniso-manasi-karoto/paiboonizer v0.0.0-20251129070943-98cdf8dbf54d
 	github.com/yanyiwu/gojieba v1.4.5
 	gopkg.in/yaml.v2 v2.4.0
 )
@@ -199,10 +200,10 @@ require (
 	golang.org/x/exp v0.0.0-20240909161429-701f63a606c0 // indirect
 	golang.org/x/net v0.39.0 // indirect
 	golang.org/x/oauth2 v0.23.0 // indirect
-	golang.org/x/sync v0.13.0 // indirect
+	golang.org/x/sync v0.16.0 // indirect
 	golang.org/x/sys v0.32.0 // indirect
 	golang.org/x/term v0.31.0 // indirect
-	golang.org/x/text v0.24.0 // indirect
+	golang.org/x/text v0.27.0 // indirect
 	golang.org/x/time v0.8.0 // indirect
 	google.golang.org/genproto v0.0.0-20240123012728-ef4313101c80 // indirect
 	google.golang.org/genproto/googleapis/api v0.0.0-20241104194629-dd2ea8efbc28 // indirect
