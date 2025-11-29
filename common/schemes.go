@@ -2,11 +2,10 @@
 package common
 
 import (
-	"context"
 	"fmt"
 	"sync"
 	"errors"
-	
+
 	"github.com/k0kubun/pp"
 	"github.com/gookit/color"
 )
@@ -104,10 +103,8 @@ func GetSchemeModule(languageCode, schemeName string) (*Module, error) {
 		return nil, fmt.Errorf("scheme %s not found for language %s", schemeName, lang)
 	}
 
-	module := &Module{
-		Lang: lang,
-		ctx:  context.Background(),
-	}
+	module := newModule()
+	module.Lang = lang
 
 	// Handle based on number of providers
 	switch len(targetScheme.Providers) {
