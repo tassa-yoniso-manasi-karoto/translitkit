@@ -106,6 +106,12 @@ func (p *PyThaiNLPProvider) InitWithContext(ctx context.Context) error {
 	}
 
 	p.manager = manager
+
+	// Set as the default manager so package-level functions work.
+	// This is critical for PaiboonizerProvider which uses pythainlp.SyllableTokenize()
+	// (a package-level function) to reuse this container instead of creating a new one.
+	pythainlp.SetDefaultManager(manager)
+
 	return nil
 }
 
@@ -117,9 +123,10 @@ func (p *PyThaiNLPProvider) Init() error {
 // InitRecreateWithContext reinitializes the provider
 func (p *PyThaiNLPProvider) InitRecreateWithContext(ctx context.Context, noCache bool) error {
 	if p.manager != nil {
+		pythainlp.ClearDefaultManager()
 		p.manager.Close()
 	}
-	
+
 	// Always use lightweight mode for translitkit
 	manager, err := pythainlp.NewManager(ctx,
 		pythainlp.WithQueryTimeout(30*time.Second),
@@ -127,12 +134,13 @@ func (p *PyThaiNLPProvider) InitRecreateWithContext(ctx context.Context, noCache
 	if err != nil {
 		return fmt.Errorf("failed to create PyThaiNLP manager: %w", err)
 	}
-	
+
 	if err := manager.InitRecreate(ctx, noCache); err != nil {
 		return fmt.Errorf("failed to recreate PyThaiNLP: %w", err)
 	}
-	
+
 	p.manager = manager
+	pythainlp.SetDefaultManager(manager)
 	return nil
 }
 
@@ -144,6 +152,8 @@ func (p *PyThaiNLPProvider) InitRecreate(noCache bool) error {
 // CloseWithContext releases resources
 func (p *PyThaiNLPProvider) CloseWithContext(ctx context.Context) error {
 	if p.manager != nil {
+		// Clear default manager reference before closing to prevent stale references
+		pythainlp.ClearDefaultManager()
 		return p.manager.Close()
 	}
 	return nil
