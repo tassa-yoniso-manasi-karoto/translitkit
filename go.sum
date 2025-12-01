@@ -531,6 +531,8 @@ github.com/tassa-yoniso-manasi-karoto/paiboonizer v0.0.0-20251129151638-7f6b18db
 github.com/tassa-yoniso-manasi-karoto/paiboonizer v0.0.0-20251129151638-7f6b18db78c2/go.mod h1:DrXQ/PQiyN6J56KMhMKuSHQs6kt4n2GDaL4ukgE/q8A=
 github.com/tassa-yoniso-manasi-karoto/paiboonizer v0.0.0-20251201000807-d2ccb5b90e9f h1:L3YQwK/4odlf9iOUVhjCK3rvRkYbvoryKL0+MOsbTVM=
 github.com/tassa-yoniso-manasi-karoto/paiboonizer v0.0.0-20251201000807-d2ccb5b90e9f/go.mod h1:+dzC8bW5Y5yTPHd54KGaa9oBhJj0VqhYg9BwlpHmZB8=
+github.com/tassa-yoniso-manasi-karoto/paiboonizer v0.0.0-20251201104743-8b387e6c7b7d h1:oHY4es+WJg7WFA5g7HUxnA9aBlDYFji7v2rXbw8BAAQ=
+github.com/tassa-yoniso-manasi-karoto/paiboonizer v0.0.0-20251201104743-8b387e6c7b7d/go.mod h1:6bE2kJg1HSATbTgJt3BSHvu/XfIKuJvTg0m1NkbpOqs=
 github.com/theupdateframework/notary v0.7.0 h1:QyagRZ7wlSpjT5N2qQAh/pN+DVqgekv4DzbAiAiEL3c=
 github.com/theupdateframework/notary v0.7.0/go.mod h1:c9DRxcmhHmVLDay4/2fUYdISnHqbFDGRSlXPO0AhYWw=
 github.com/tidwall/pretty v1.2.1 h1:qjsOFOWWQl+N3RsoF5/ssm1pHmJJwhjlSbZ51I6wMl4=
