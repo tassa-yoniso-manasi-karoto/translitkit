@@ -79,7 +79,9 @@ See docs of sub package "common" for the basic methods set available across lang
 
 ### Thai
 
- - [thai2english.com](https://www.thai2english.com) scraper **[combined]** *(may be obsoleted in the future but currently is the best option since the docker image of pythainlp is broken, and the devs aren't too much in a hurry to fix it: issue [#1049](https://github.com/PyThaiNLP/pythainlp/issues/1049))*
+- [pythainlp](https://github.com/PyThaiNLP/pythainlp) **[tokenizer]**
+- [paiboonizer](https://github.com/tassa-yoniso-manasi-karoto/paiboonizer) **[transliterator]**
+- [thai2english.com](https://www.thai2english.com) scraper **[combined]**
 
 ### Multilingual
 

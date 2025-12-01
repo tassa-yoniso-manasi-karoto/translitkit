@@ -62,7 +62,7 @@ func registerThaiSchemes() {
 	// ==========================================================================
 	hybridScheme := common.TranslitScheme{
 		Name:        "paiboon-hybrid",
-		Description: "Paiboon (exp.🧪, accuracy ≥85%, local & very fast)",
+		Description: "Paiboon (exp.🧪, accuracy ~95%, local, fast)",
 		Providers:   []string{"pythainlp", "paiboonizer"},
 		NeedsDocker: true,
 	}

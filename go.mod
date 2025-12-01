@@ -15,7 +15,7 @@ require (
 	github.com/tassa-yoniso-manasi-karoto/go-aksharamukha v0.0.0-20250321133057-249cfd96068f
 	github.com/tassa-yoniso-manasi-karoto/go-ichiran v1.0.3-beta
 	github.com/tassa-yoniso-manasi-karoto/go-pythainlp v0.0.0-20251130000229-7c43b6a9aeef
-	github.com/tassa-yoniso-manasi-karoto/paiboonizer v0.0.0-20251129151638-7f6b18db78c2
+	github.com/tassa-yoniso-manasi-karoto/paiboonizer v0.0.0-20251201000807-d2ccb5b90e9f
 	github.com/yanyiwu/gojieba v1.4.5
 	gopkg.in/yaml.v2 v2.4.0
 )
