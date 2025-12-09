@@ -52,6 +52,11 @@ func (p *AksharamukhaProvider) InitWithContext(ctx context.Context) (err error) 
 		return fmt.Errorf("language code must be set before initialization")
 	}
 
+	// Pre-pull images with retry logic for slow/unreliable connections
+	if err = aksharamukha.PullImagesWithContext(ctx); err != nil {
+		return fmt.Errorf("failed to pull aksharamukha images: %w", err)
+	}
+
 	// Now using the context-aware version
 	if err = aksharamukha.InitWithContext(ctx); err != nil {
 		return fmt.Errorf("failed to initialize aksharamukha: %w", err)
