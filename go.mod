@@ -8,15 +8,15 @@ require (
 	github.com/gookit/color v1.5.4
 	github.com/k0kubun/pp v3.0.1+incompatible
 	github.com/mehanizm/iuliia-go v1.0.3-0.20250108063731-2a2e9aba9125
-	github.com/mozillazg/go-pinyin v0.20.0
+	github.com/mozillazg/go-pinyin v0.21.0
 	github.com/rivo/uniseg v0.4.7
-	github.com/rs/zerolog v1.33.0
+	github.com/rs/zerolog v1.34.0
 	github.com/stretchr/testify v1.11.0
-	github.com/tassa-yoniso-manasi-karoto/go-aksharamukha v0.0.0-20251212113807-e0ff4f83dd53
+	github.com/tassa-yoniso-manasi-karoto/go-aksharamukha v0.0.0-20251212121558-e221cc38ac75
 	github.com/tassa-yoniso-manasi-karoto/go-ichiran v1.0.3-beta.0.20251212114111-54a2c697b8b0
 	github.com/tassa-yoniso-manasi-karoto/go-pythainlp v0.0.0-20251212114257-655697b929b7
-	github.com/tassa-yoniso-manasi-karoto/paiboonizer v0.0.0-20251201104743-8b387e6c7b7d
-	github.com/yanyiwu/gojieba v1.4.5
+	github.com/tassa-yoniso-manasi-karoto/paiboonizer v0.0.0-20251212123418-32fa6762ed68
+	github.com/yanyiwu/gojieba v1.4.6
 	gopkg.in/yaml.v2 v2.4.0
 )
 

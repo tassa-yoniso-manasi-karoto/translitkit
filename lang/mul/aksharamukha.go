@@ -14,6 +14,7 @@ import (
 
 // AksharamukhaProvider satisfies the Provider interface
 type AksharamukhaProvider struct {
+	manager                  *aksharamukha.AksharamukhaManager
 	config                   map[string]interface{}
 	Lang                     string // ISO 639-3 language code
 	targetScheme             aksharamukha.Script
@@ -53,21 +54,31 @@ func (p *AksharamukhaProvider) InitWithContext(ctx context.Context) (err error) 
 		return fmt.Errorf("language code must be set before initialization")
 	}
 
-	// Set download progress callback before pulling images
+	// Build manager options
+	opts := []aksharamukha.ManagerOption{}
+
+	// Add download progress callback if set
 	if p.downloadProgressCallback != nil {
-		aksharamukha.SetDownloadProgressCallback(p.downloadProgressCallback)
-		defer aksharamukha.ClearDownloadProgressCallback()
+		opts = append(opts, aksharamukha.WithDownloadProgressCallback(p.downloadProgressCallback))
+	}
+
+	// Create aksharamukha manager
+	manager, err := aksharamukha.NewManager(ctx, opts...)
+	if err != nil {
+		return fmt.Errorf("failed to create aksharamukha manager: %w", err)
 	}
 
 	// Pre-pull images with retry logic for slow/unreliable connections
-	if err = aksharamukha.PullImagesWithContext(ctx); err != nil {
+	if err = manager.PullImages(ctx); err != nil {
 		return fmt.Errorf("failed to pull aksharamukha images: %w", err)
 	}
 
-	// Now using the context-aware version
-	if err = aksharamukha.InitWithContext(ctx); err != nil {
+	// Initialize the Docker containers
+	if err = manager.Init(ctx); err != nil {
 		return fmt.Errorf("failed to initialize aksharamukha: %w", err)
 	}
+
+	p.manager = manager
 	p.applyConfig()
 	return
 }
@@ -90,9 +101,22 @@ func (p *AksharamukhaProvider) InitRecreateWithContext(ctx context.Context, noCa
 		return fmt.Errorf("language code must be set before initialization")
 	}
 
-	// Now using the context-aware version
-	if err = aksharamukha.InitRecreateWithContext(ctx, noCache); err != nil {
-		return fmt.Errorf("failed to initialize aksharamukha: %w", err)
+	// If we don't have a manager yet, create one
+	if p.manager == nil {
+		opts := []aksharamukha.ManagerOption{}
+		if p.downloadProgressCallback != nil {
+			opts = append(opts, aksharamukha.WithDownloadProgressCallback(p.downloadProgressCallback))
+		}
+		manager, err := aksharamukha.NewManager(ctx, opts...)
+		if err != nil {
+			return fmt.Errorf("failed to create aksharamukha manager: %w", err)
+		}
+		p.manager = manager
+	}
+
+	// Reinitialize the Docker containers
+	if err = p.manager.InitRecreate(ctx, noCache); err != nil {
+		return fmt.Errorf("failed to reinitialize aksharamukha: %w", err)
 	}
 	p.applyConfig()
 	return
@@ -144,9 +168,10 @@ func (p *AksharamukhaProvider) GetMaxQueryLen() int {
 //
 // Returns an error if closing fails or the context is canceled.
 func (p *AksharamukhaProvider) CloseWithContext(ctx context.Context) error {
-	// Using the normal Close() for now as there's no context-aware version in the API yet
-	// When aksharamukha adds CloseWithContext, we can use that instead
-	return aksharamukha.Close()
+	if p.manager != nil {
+		return p.manager.Close()
+	}
+	return nil
 }
 
 // Close releases resources used by the provider with a background context.
