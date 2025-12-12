@@ -17,9 +17,15 @@ const (
 // ProgressCallback is a function that reports the progress of a processing operation
 // current is the index of the chunk currently being processed (0-based)
 // total is the total number of chunks to process
-// If a provider returns 0 or math.MaxInt32 (or greater) from GetMaxQueryLen(), 
+// If a provider returns 0 or math.MaxInt32 (or greater) from GetMaxQueryLen(),
 // the progress cannot be accurately tracked.
 type ProgressCallback func(current, total int)
+
+// DownloadProgressCallback reports download progress for Docker image pulls.
+// current: bytes downloaded so far
+// total: estimated total bytes (0 if unknown)
+// status: current operation (e.g., "Downloading...", "Extracting...")
+type DownloadProgressCallback func(current, total int64, status string)
 
 // Provider is a unified interface for all providers of any type in the library.
 // It handles tokenization, transliteration, or both combined, for specific languages.
@@ -75,7 +81,12 @@ type Provider[In AnyTokenSliceWrapper, Out AnyTokenSliceWrapper] interface {
 	// during processing operations. This can be used for status reporting or
 	// progress bars in user interfaces.
 	WithProgressCallback(callback ProgressCallback)
-	
+
+	// WithDownloadProgressCallback sets a callback function to report download progress.
+	// This is called during Docker image pulls with current bytes, total bytes,
+	// and status string. Used for displaying download progress bars in user interfaces.
+	WithDownloadProgressCallback(callback DownloadProgressCallback)
+
 	// Name returns the unique identifier of the provider.
 	// This is used for registration and lookup in the provider registry.
 	Name() string

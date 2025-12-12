@@ -27,6 +27,11 @@ func (p *UnisegProvider) WithProgressCallback(callback common.ProgressCallback) 
 	p.progressCallback = callback
 }
 
+// WithDownloadProgressCallback sets a callback for download progress (no-op for Uniseg).
+func (p *UnisegProvider) WithDownloadProgressCallback(callback common.DownloadProgressCallback) {
+	// No-op: Uniseg doesn't require Docker downloads
+}
+
 // SaveConfig stores the configuration for later application during initialization.
 // It extracts the language code and retrieves the expected Unicode script ranges for that language.
 //

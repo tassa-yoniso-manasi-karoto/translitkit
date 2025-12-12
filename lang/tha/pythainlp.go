@@ -40,10 +40,11 @@ import (
 // - TokenizerMode: Only tokenization
 // - CombinedMode: Tokenization + romanization
 type PyThaiNLPProvider struct {
-	manager          *pythainlp.PyThaiNLPManager
-	config           map[string]interface{}
-	romanEngine      string
-	progressCallback common.ProgressCallback
+	manager                  *pythainlp.PyThaiNLPManager
+	config                   map[string]interface{}
+	romanEngine              string
+	progressCallback         common.ProgressCallback
+	downloadProgressCallback common.DownloadProgressCallback
 }
 
 // NewPyThaiNLPProvider creates a new provider
@@ -89,10 +90,19 @@ func (p *PyThaiNLPProvider) SaveConfig(cfg map[string]interface{}) error {
 
 // InitWithContext initializes the provider with context
 func (p *PyThaiNLPProvider) InitWithContext(ctx context.Context) error {
+	// Build manager options
+	opts := []pythainlp.ManagerOption{
+		pythainlp.WithQueryTimeout(30 * time.Second),
+		pythainlp.WithLightweightMode(true),
+	}
+
+	// Add download progress callback if set
+	if p.downloadProgressCallback != nil {
+		opts = append(opts, pythainlp.WithDownloadProgressCallback(p.downloadProgressCallback))
+	}
+
 	// Create PyThaiNLP manager - always use lightweight mode for translitkit
-	manager, err := pythainlp.NewManager(ctx,
-		pythainlp.WithQueryTimeout(30*time.Second),
-		pythainlp.WithLightweightMode(true))
+	manager, err := pythainlp.NewManager(ctx, opts...)
 	if err != nil {
 		return fmt.Errorf("failed to create PyThaiNLP manager: %w", err)
 	}
@@ -277,6 +287,12 @@ func (p *PyThaiNLPProvider) analyzeText(ctx context.Context, text string) ([]*Tk
 // WithProgressCallback sets the progress callback
 func (p *PyThaiNLPProvider) WithProgressCallback(callback common.ProgressCallback) {
 	p.progressCallback = callback
+}
+
+// WithDownloadProgressCallback sets a callback for download progress.
+// This callback is used during Docker image pull to report progress.
+func (p *PyThaiNLPProvider) WithDownloadProgressCallback(callback common.DownloadProgressCallback) {
+	p.downloadProgressCallback = callback
 }
 
 // Name returns the provider name

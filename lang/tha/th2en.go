@@ -187,6 +187,11 @@ func (p *TH2ENProvider) WithProgressCallback(callback common.ProgressCallback) {
 	p.progressCallback = callback
 }
 
+// WithDownloadProgressCallback sets a callback for download progress (no-op for TH2EN).
+func (p *TH2ENProvider) WithDownloadProgressCallback(callback common.DownloadProgressCallback) {
+	// No-op: TH2EN uses web scraping, doesn't require Docker downloads
+}
+
 // selectTranslitScheme selects the transliteration scheme with provided context
 func (p *TH2ENProvider) selectTranslitScheme(ctx context.Context, scheme string) error {
 	// Protect against nil browser

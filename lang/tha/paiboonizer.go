@@ -349,6 +349,11 @@ func (p *PaiboonizerProvider) WithProgressCallback(callback common.ProgressCallb
 	p.progressCallback = callback
 }
 
+// WithDownloadProgressCallback sets a callback for download progress (no-op for Paiboonizer).
+func (p *PaiboonizerProvider) WithDownloadProgressCallback(callback common.DownloadProgressCallback) {
+	// No-op: Paiboonizer is a pure Go implementation, doesn't require Docker downloads
+}
+
 // Name returns the provider name
 func (p *PaiboonizerProvider) Name() string {
 	return "paiboonizer"

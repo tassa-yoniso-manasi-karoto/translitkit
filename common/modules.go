@@ -35,12 +35,13 @@ type anyModule interface {
 // It contains both Tokenization+Transliteration components.
 
 type Module struct {
-	ctx              context.Context
-	Lang             string // ISO-639 Part 3: i.e. "eng", "zho", "jpn"...
-	Providers        []Provider[AnyTokenSliceWrapper, AnyTokenSliceWrapper]
-	ProviderRoles    map[OperatingMode]Provider[AnyTokenSliceWrapper, AnyTokenSliceWrapper]
-	progressCallback ProgressCallback
-	chunkifier       *Chunkifier
+	ctx                      context.Context
+	Lang                     string // ISO-639 Part 3: i.e. "eng", "zho", "jpn"...
+	Providers                []Provider[AnyTokenSliceWrapper, AnyTokenSliceWrapper]
+	ProviderRoles            map[OperatingMode]Provider[AnyTokenSliceWrapper, AnyTokenSliceWrapper]
+	progressCallback         ProgressCallback
+	downloadProgressCallback DownloadProgressCallback
+	chunkifier               *Chunkifier
 }
 
 // NewModule creates a Module for the specified language using either default Providers
@@ -158,12 +159,28 @@ func (m *Module) ProviderNames() string {
 // Returns the module for method chaining.
 func (m *Module) WithProgressCallback(callback ProgressCallback) *Module {
 	m.progressCallback = callback
-	
+
 	// Pass the callback to all providers
 	for _, provider := range m.Providers {
 		provider.WithProgressCallback(callback)
 	}
-	
+
+	return m
+}
+
+// WithDownloadProgressCallback sets a callback function to track download progress.
+// This is called during Docker image pulls with current bytes, total bytes, and status.
+// Useful for displaying download progress bars in user interfaces.
+//
+// Returns the module for method chaining.
+func (m *Module) WithDownloadProgressCallback(callback DownloadProgressCallback) *Module {
+	m.downloadProgressCallback = callback
+
+	// Pass the callback to all providers
+	for _, provider := range m.Providers {
+		provider.WithDownloadProgressCallback(callback)
+	}
+
 	return m
 }
 
@@ -199,6 +216,13 @@ func (m *Module) InitWithContext(ctx context.Context) error {
 		}
 	}
 
+	// Pass download progress callback if set
+	if m.downloadProgressCallback != nil {
+		for _, provider := range m.Providers {
+			provider.WithDownloadProgressCallback(m.downloadProgressCallback)
+		}
+	}
+
 	// Initialize all providers
 	for _, provider := range m.Providers {
 		if err := provider.InitWithContext(ctx); err != nil {
@@ -227,6 +251,13 @@ func (m *Module) InitRecreateWithContext(ctx context.Context, noCache bool) erro
 	if m.progressCallback != nil {
 		for _, provider := range m.Providers {
 			provider.WithProgressCallback(m.progressCallback)
+		}
+	}
+
+	// Pass download progress callback if set
+	if m.downloadProgressCallback != nil {
+		for _, provider := range m.Providers {
+			provider.WithDownloadProgressCallback(m.downloadProgressCallback)
 		}
 	}
 

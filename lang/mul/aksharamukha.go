@@ -14,10 +14,11 @@ import (
 
 // AksharamukhaProvider satisfies the Provider interface
 type AksharamukhaProvider struct {
-	config		    map[string]interface{}
-	Lang		    string // ISO 639-3 language code
-	targetScheme	aksharamukha.Script
-	progressCallback common.ProgressCallback
+	config                   map[string]interface{}
+	Lang                     string // ISO 639-3 language code
+	targetScheme             aksharamukha.Script
+	progressCallback         common.ProgressCallback
+	downloadProgressCallback common.DownloadProgressCallback
 }
 
 
@@ -50,6 +51,12 @@ func (p *AksharamukhaProvider) SaveConfig(cfg map[string]interface{}) error {
 func (p *AksharamukhaProvider) InitWithContext(ctx context.Context) (err error) {
 	if p.Lang == "" {
 		return fmt.Errorf("language code must be set before initialization")
+	}
+
+	// Set download progress callback before pulling images
+	if p.downloadProgressCallback != nil {
+		aksharamukha.SetDownloadProgressCallback(p.downloadProgressCallback)
+		defer aksharamukha.ClearDownloadProgressCallback()
 	}
 
 	// Pre-pull images with retry logic for slow/unreliable connections
@@ -154,6 +161,12 @@ func (p *AksharamukhaProvider) Close() error {
 // The callback will be invoked with the current chunk index and total number of chunks.
 func (p *AksharamukhaProvider) WithProgressCallback(callback common.ProgressCallback) {
 	p.progressCallback = callback
+}
+
+// WithDownloadProgressCallback sets a callback for download progress during Docker image pulls.
+// This callback is used to report progress when pulling aksharamukha Docker images.
+func (p *AksharamukhaProvider) WithDownloadProgressCallback(callback common.DownloadProgressCallback) {
+	p.downloadProgressCallback = callback
 }
 
 // ProcessFlowController processes input tokens using the specified context.

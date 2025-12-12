@@ -31,6 +31,11 @@ func (p *IuliiaProvider) WithProgressCallback(callback common.ProgressCallback) 
 	p.progressCallback = callback
 }
 
+// WithDownloadProgressCallback sets a callback for download progress (no-op for Iuliia).
+func (p *IuliiaProvider) WithDownloadProgressCallback(callback common.DownloadProgressCallback) {
+	// No-op: Iuliia doesn't require Docker downloads
+}
+
 // SaveConfig stores the configuration for later application during initialization.
 // This allows the provider to be configured before being initialized.
 //

@@ -24,6 +24,13 @@ func (p *IchiranProvider) WithProgressCallback(callback common.ProgressCallback)
 	p.progressCallback = callback
 }
 
+// WithDownloadProgressCallback sets a callback for download progress.
+// Note: Actual download progress is handled separately by go-ichiran's PullImages.
+func (p *IchiranProvider) WithDownloadProgressCallback(callback common.DownloadProgressCallback) {
+	// Stored but not used directly - ichiran's Docker downloads are handled
+	// separately through go-ichiran package when used from langkit
+}
+
 
 // SaveConfig merely stores the config to apply after init
 func (p *IchiranProvider) SaveConfig(cfg map[string]interface{}) error {
