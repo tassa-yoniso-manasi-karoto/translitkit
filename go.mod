@@ -14,7 +14,7 @@ require (
 	github.com/stretchr/testify v1.10.0
 	github.com/tassa-yoniso-manasi-karoto/go-aksharamukha v0.0.0-20251212015019-9898cc75278a
 	github.com/tassa-yoniso-manasi-karoto/go-ichiran v1.0.3-beta
-	github.com/tassa-yoniso-manasi-karoto/go-pythainlp v0.0.0-20251130000229-7c43b6a9aeef
+	github.com/tassa-yoniso-manasi-karoto/go-pythainlp v0.0.0-20251212022627-a242d5c91381
 	github.com/tassa-yoniso-manasi-karoto/paiboonizer v0.0.0-20251201104743-8b387e6c7b7d
 	github.com/yanyiwu/gojieba v1.4.5
 	gopkg.in/yaml.v2 v2.4.0
