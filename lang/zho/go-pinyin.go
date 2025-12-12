@@ -11,21 +11,17 @@ import (
 	"github.com/tassa-yoniso-manasi-karoto/translitkit/common"
 )
 
-// DEV NOTE: I personally didn't need to add chinese to translitkit but since Go
-// is popular in China the go-native NLP libraries are solid so I figured it'd
-// be easy to add chinese support. All the code and comments here were generated
-// by a LLM with the GoPinyin's docs, translitkit's docs and a reference
-// implementation of provider I made myself for another language.
-// Hence I have left the LLM's comment as is.
-
+// toneNumberRegex extracts the tone number from numeric pinyin notation like "hao3"
+var toneNumberRegex = regexp.MustCompile(`(\d)$`)
 
 // GoPinyinProvider implements the Provider interface for Chinese Pinyin transliteration.
 // It uses the go-pinyin library to convert Chinese characters to Pinyin romanization.
 // This provider chooses the "most frequent" reading for Tkn.Pinyin while also storing
 // all alternative readings in Tkn.PinyinAll and Tkn.PinyinNumAll.
 type GoPinyinProvider struct {
-	config map[string]interface{}
+	config           map[string]interface{}
 	progressCallback common.ProgressCallback
+	initialized      bool
 
 	chosenScheme string
 	mainStyle    int
@@ -65,9 +61,8 @@ func (p *GoPinyinProvider) InitWithContext(ctx context.Context) error {
 	if err := ctx.Err(); err != nil {
 		return fmt.Errorf("gopinyin: context canceled during initialization: %w", err)
 	}
-	
-	// If mainArgs.Style != 0, we've done it once already
-	if p.mainArgs.Style != 0 {
+
+	if p.initialized {
 		return nil
 	}
 
@@ -94,6 +89,7 @@ func (p *GoPinyinProvider) InitWithContext(ctx context.Context) error {
 	p.numArgs.Style = p.numStyle
 	p.numArgs.Heteronym = true // also gather multiple numeric variants
 
+	p.initialized = true
 	return nil
 }
 
@@ -115,7 +111,8 @@ func (p *GoPinyinProvider) InitRecreateWithContext(ctx context.Context, noCache 
 	if err := ctx.Err(); err != nil {
 		return fmt.Errorf("gopinyin: context canceled during reinitialization: %w", err)
 	}
-	
+
+	p.initialized = false
 	p.mainArgs = pinyin.Args{}
 	p.numArgs = pinyin.Args{}
 	p.mainStyle = 0
@@ -289,8 +286,7 @@ var PinyinSchemes = map[string]int{
 // Returns:
 //   - int: The tone number (1-5), or 0 if no valid tone number is found
 func parseToneNumber(s string) int {
-	re := regexp.MustCompile(`(\d)$`)
-	match := re.FindStringSubmatch(s)
+	match := toneNumberRegex.FindStringSubmatch(s)
 	if len(match) < 2 {
 		return 0
 	}

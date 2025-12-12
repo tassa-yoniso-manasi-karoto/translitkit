@@ -3,6 +3,7 @@ module github.com/tassa-yoniso-manasi-karoto/translitkit
 go 1.23.12
 
 require (
+	github.com/adrg/xdg v0.5.3
 	github.com/barbashov/iso639-3 v1.0.0
 	github.com/go-rod/rod v0.116.2
 	github.com/gookit/color v1.5.4
@@ -30,7 +31,6 @@ require (
 	github.com/Microsoft/go-winio v0.6.2 // indirect
 	github.com/ProtonMail/go-crypto v1.1.6 // indirect
 	github.com/acarl005/stripansi v0.0.0-20180116102854-5a71ef0e047d // indirect
-	github.com/adrg/xdg v0.5.3 // indirect
 	github.com/apparentlymart/go-textseg/v15 v15.0.0 // indirect
 	github.com/aws/aws-sdk-go-v2 v1.30.3 // indirect
 	github.com/aws/aws-sdk-go-v2/config v1.27.27 // indirect

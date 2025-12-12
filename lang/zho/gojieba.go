@@ -3,28 +3,40 @@ package zho
 import (
 	"context"
 	"fmt"
+	"io"
 	"math"
+	"net/http"
+	"os"
+	"path/filepath"
 
+	"github.com/adrg/xdg"
 	"github.com/tassa-yoniso-manasi-karoto/translitkit/common"
 	"github.com/yanyiwu/gojieba"
 )
 
-// DEV NOTE: I personally didn't need to add chinese to translitkit but since Go
-// is popular in China the go-native NLP libraries are solid so I figured it'd
-// be easy to add chinese support. All the code and comments here were generated
-// by a LLM with the GoJieba's docs, translitkit's docs and a reference
-// implementation of provider I made myself for another language.
-// Hence I have left the LLM's comment as is.
+// Dictionary files required by gojieba with their expected sizes for progress tracking
+var dictFiles = []struct {
+	name string
+	size int64
+}{
+	{"jieba.dict.utf8", 5079385},
+	{"hmm_model.utf8", 519568},
+	{"user.dict.utf8", 49},
+	{"idf.utf8", 6083765},
+	{"stop_words.utf8", 8987},
+}
 
-
+// dictBaseURL is the base URL for downloading dictionary files from gojieba's GitHub repo
+const dictBaseURL = "https://raw.githubusercontent.com/yanyiwu/gojieba/v1.4.6/deps/cppjieba/dict/"
 
 // GoJiebaProvider implements the Provider interface for Chinese text segmentation.
 // It uses the gojieba library to tokenize Chinese text with word boundaries and
 // part-of-speech tagging, while preserving non-lexical tokens like punctuation.
 type GoJiebaProvider struct {
-	config map[string]interface{}
-	progressCallback common.ProgressCallback
-	jieba  *gojieba.Jieba
+	config                   map[string]interface{}
+	progressCallback         common.ProgressCallback
+	downloadProgressCallback common.DownloadProgressCallback
+	jieba                    *gojieba.Jieba
 }
 
 // WithProgressCallback sets a callback function for reporting progress during processing.
@@ -33,9 +45,9 @@ func (p *GoJiebaProvider) WithProgressCallback(callback common.ProgressCallback)
 	p.progressCallback = callback
 }
 
-// WithDownloadProgressCallback sets a callback for download progress (no-op for GoJieba).
+// WithDownloadProgressCallback sets a callback for download progress during dictionary downloads.
 func (p *GoJiebaProvider) WithDownloadProgressCallback(callback common.DownloadProgressCallback) {
-	// No-op: GoJieba doesn't require Docker downloads
+	p.downloadProgressCallback = callback
 }
 
 // SaveConfig stores the configuration for later application during initialization.
@@ -49,22 +61,39 @@ func (p *GoJiebaProvider) SaveConfig(cfg map[string]interface{}) error {
 
 // InitWithContext initializes the gojieba engine with the given context.
 // This is called automatically before processing if the engine is not already initialized.
-// The context can be used for cancellation, though initialization is typically quick.
+// On first run, it downloads the required dictionary files (~14MB) to the user's data directory.
+// The context can be used for cancellation during initialization or download.
 //
-// Returns an error if initialization fails or the context is canceled.
+// Returns an error if initialization fails, download fails, or the context is canceled.
 func (p *GoJiebaProvider) InitWithContext(ctx context.Context) error {
 	// Check for context cancellation
 	if err := ctx.Err(); err != nil {
 		return fmt.Errorf("gojieba: context canceled during initialization: %w", err)
 	}
-	
+
 	if p.jieba != nil {
 		return nil
 	}
-	// If your config includes dictPaths, parse them here, e.g.:
-	//   dictPaths, _ := p.config["dictPaths"].([]string)
-	//   p.jieba = gojieba.NewJieba(dictPaths...)
-	p.jieba = gojieba.NewJieba()
+
+	// Get/create dictionary directory
+	dictDir, err := ensureDictDir()
+	if err != nil {
+		return fmt.Errorf("gojieba: failed to create dictionary directory: %w", err)
+	}
+
+	// Download dictionaries if needed
+	if err := p.ensureDictionaries(ctx, dictDir); err != nil {
+		return fmt.Errorf("gojieba: failed to download dictionaries: %w", err)
+	}
+
+	// Pass explicit paths to NewJieba to avoid runtime.Caller path issues
+	p.jieba = gojieba.NewJieba(
+		filepath.Join(dictDir, "jieba.dict.utf8"),
+		filepath.Join(dictDir, "hmm_model.utf8"),
+		filepath.Join(dictDir, "user.dict.utf8"),
+		filepath.Join(dictDir, "idf.utf8"),
+		filepath.Join(dictDir, "stop_words.utf8"),
+	)
 	return nil
 }
 
@@ -137,7 +166,7 @@ func (p *GoJiebaProvider) ProcessFlowController(ctx context.Context, mode common
 	for idx, chunk := range rawChunks {
 		// Check for context cancellation
 		if err := ctx.Err(); err != nil {
-			return nil, fmt.Errorf("gojieba: context canceled while processing chunk %d: %w", idx, ctx.Err())
+			return nil, fmt.Errorf("gojieba: context canceled while processing chunk %d: %w", idx, err)
 		}
 		
 		// Report progress if callback is set
@@ -256,4 +285,117 @@ func (p *GoJiebaProvider) CloseWithContext(ctx context.Context) error {
 // Returns an error if closing fails.
 func (p *GoJiebaProvider) Close() error {
 	return p.CloseWithContext(context.Background())
+}
+
+// ensureDictDir creates and returns the dictionary directory path.
+// Uses XDG base directory specification for cross-platform support:
+// - Linux: ~/.local/share/langkit/gojieba/dict/
+// - macOS: ~/Library/Application Support/langkit/gojieba/dict/
+// - Windows: %APPDATA%\langkit\gojieba\dict\
+func ensureDictDir() (string, error) {
+	dictDir := filepath.Join(xdg.DataHome, "langkit", "gojieba", "dict")
+	return dictDir, os.MkdirAll(dictDir, 0755)
+}
+
+// ensureDictionaries checks if all dictionary files exist, and downloads any missing ones.
+func (p *GoJiebaProvider) ensureDictionaries(ctx context.Context, dictDir string) error {
+	// Check if all files already exist
+	allExist := true
+	for _, df := range dictFiles {
+		if _, err := os.Stat(filepath.Join(dictDir, df.name)); os.IsNotExist(err) {
+			allExist = false
+			break
+		}
+	}
+	if allExist {
+		return nil
+	}
+
+	// Calculate total size for progress tracking
+	var totalSize int64
+	for _, df := range dictFiles {
+		totalSize += df.size
+	}
+
+	// Download each file with progress
+	var downloaded int64
+	for _, df := range dictFiles {
+		if err := ctx.Err(); err != nil {
+			return fmt.Errorf("context canceled: %w", err)
+		}
+
+		destPath := filepath.Join(dictDir, df.name)
+		if _, err := os.Stat(destPath); err == nil {
+			// File already exists, count it as downloaded for progress
+			downloaded += df.size
+			continue
+		}
+
+		if err := p.downloadFile(ctx, dictBaseURL+df.name, destPath, &downloaded, totalSize); err != nil {
+			return fmt.Errorf("failed to download %s: %w", df.name, err)
+		}
+	}
+	return nil
+}
+
+// downloadFile downloads a single file from url to destPath, updating progress.
+func (p *GoJiebaProvider) downloadFile(ctx context.Context, url, destPath string, downloaded *int64, totalSize int64) error {
+	req, err := http.NewRequestWithContext(ctx, "GET", url, nil)
+	if err != nil {
+		return fmt.Errorf("failed to create request: %w", err)
+	}
+
+	resp, err := http.DefaultClient.Do(req)
+	if err != nil {
+		return fmt.Errorf("failed to download: %w", err)
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode != http.StatusOK {
+		return fmt.Errorf("HTTP %d: %s", resp.StatusCode, resp.Status)
+	}
+
+	// Create temp file first, then rename for atomicity
+	tmpPath := destPath + ".tmp"
+	out, err := os.Create(tmpPath)
+	if err != nil {
+		return fmt.Errorf("failed to create file: %w", err)
+	}
+	defer func() {
+		out.Close()
+		os.Remove(tmpPath) // Clean up temp file on error
+	}()
+
+	// Copy with progress tracking
+	buf := make([]byte, 32*1024)
+	for {
+		n, readErr := resp.Body.Read(buf)
+		if n > 0 {
+			if _, writeErr := out.Write(buf[:n]); writeErr != nil {
+				return fmt.Errorf("failed to write: %w", writeErr)
+			}
+			*downloaded += int64(n)
+			if p.downloadProgressCallback != nil {
+				p.downloadProgressCallback(*downloaded, totalSize, "Downloading GoJieba dictionaries...")
+			}
+		}
+		if readErr == io.EOF {
+			break
+		}
+		if readErr != nil {
+			return fmt.Errorf("failed to read: %w", readErr)
+		}
+	}
+
+	// Close before rename
+	if err := out.Close(); err != nil {
+		return fmt.Errorf("failed to close file: %w", err)
+	}
+
+	// Atomic rename
+	if err := os.Rename(tmpPath, destPath); err != nil {
+		return fmt.Errorf("failed to rename: %w", err)
+	}
+
+	return nil
 }
