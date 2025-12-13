@@ -156,8 +156,8 @@ func (p *GoPinyinProvider) ProcessFlowController(ctx context.Context, mode commo
 			return nil, fmt.Errorf("gopinyin: context canceled while processing token %d: %w", i, ctx.Err())
 		}
 		
-		// Report progress if callback is set
-		if p.progressCallback != nil && i%100 == 0 {
+		// Report progress if callback is set (throttler handles batching)
+		if p.progressCallback != nil {
 			p.progressCallback(i, tokens)
 		}
 		

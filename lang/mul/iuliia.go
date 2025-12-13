@@ -249,8 +249,8 @@ func (p *IuliiaProvider) processTokens(ctx context.Context, input common.AnyToke
 			return nil, fmt.Errorf("iuliia: context canceled while processing token %d: %w", idx, err)
 		}
 		
-		// Report progress if callback is set
-		if p.progressCallback != nil && idx%20 == 0 { // Report every 20 tokens to avoid excessive callbacks
+		// Report progress if callback is set (throttler handles batching)
+		if p.progressCallback != nil {
 			p.progressCallback(idx, totalTokens)
 		}
 		

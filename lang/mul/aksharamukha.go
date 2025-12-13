@@ -254,8 +254,8 @@ func (p *AksharamukhaProvider) processTokens(ctx context.Context, input common.A
 			return nil, fmt.Errorf("aksharamukha: context canceled while processing token %d: %w", idx, err)
 		}
 		
-		// Report progress if callback is set
-		if p.progressCallback != nil && idx%10 == 0 { // Report every 10 tokens to avoid excessive callbacks
+		// Report progress if callback is set (throttler handles batching)
+		if p.progressCallback != nil {
 			p.progressCallback(idx, totalTokens)
 		}
 		
