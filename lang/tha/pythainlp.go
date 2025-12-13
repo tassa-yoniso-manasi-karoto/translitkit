@@ -96,9 +96,11 @@ func (p *PyThaiNLPProvider) InitWithContext(ctx context.Context) error {
 		pythainlp.WithLightweightMode(true),
 	}
 
-	// Add download progress callback if set
+	// Add download progress callback if set, wrapping to inject provider name
 	if p.downloadProgressCallback != nil {
-		opts = append(opts, pythainlp.WithDownloadProgressCallback(p.downloadProgressCallback))
+		opts = append(opts, pythainlp.WithDownloadProgressCallback(func(current, total int64, status string) {
+			p.downloadProgressCallback(p.Name(), current, total, status)
+		}))
 	}
 
 	// Create PyThaiNLP manager - always use lightweight mode for translitkit
@@ -137,10 +139,20 @@ func (p *PyThaiNLPProvider) InitRecreateWithContext(ctx context.Context, noCache
 		p.manager.Close()
 	}
 
-	// Always use lightweight mode for translitkit
-	manager, err := pythainlp.NewManager(ctx,
-		pythainlp.WithQueryTimeout(30*time.Second),
-		pythainlp.WithLightweightMode(true))
+	// Build manager options
+	opts := []pythainlp.ManagerOption{
+		pythainlp.WithQueryTimeout(30 * time.Second),
+		pythainlp.WithLightweightMode(true),
+	}
+
+	// Add download progress callback if set, wrapping to inject provider name
+	if p.downloadProgressCallback != nil {
+		opts = append(opts, pythainlp.WithDownloadProgressCallback(func(current, total int64, status string) {
+			p.downloadProgressCallback(p.Name(), current, total, status)
+		}))
+	}
+
+	manager, err := pythainlp.NewManager(ctx, opts...)
 	if err != nil {
 		return fmt.Errorf("failed to create PyThaiNLP manager: %w", err)
 	}

@@ -376,7 +376,7 @@ func (p *GoJiebaProvider) downloadFile(ctx context.Context, url, destPath string
 			}
 			*downloaded += int64(n)
 			if p.downloadProgressCallback != nil {
-				p.downloadProgressCallback(*downloaded, totalSize, "Downloading GoJieba dictionaries...")
+				p.downloadProgressCallback(p.Name(), *downloaded, totalSize, "Downloading GoJieba dictionaries...")
 			}
 		}
 		if readErr == io.EOF {

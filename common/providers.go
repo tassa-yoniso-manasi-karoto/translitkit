@@ -22,10 +22,11 @@ const (
 type ProgressCallback func(current, total int)
 
 // DownloadProgressCallback reports download progress for Docker image pulls.
+// providerName: name of the provider reporting progress (e.g., "pythainlp", "aksharamukha")
 // current: bytes downloaded so far
 // total: estimated total bytes (0 if unknown)
 // status: current operation (e.g., "Downloading...", "Extracting...")
-type DownloadProgressCallback func(current, total int64, status string)
+type DownloadProgressCallback func(providerName string, current, total int64, status string)
 
 // Provider is a unified interface for all providers of any type in the library.
 // It handles tokenization, transliteration, or both combined, for specific languages.

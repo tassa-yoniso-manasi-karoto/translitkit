@@ -57,9 +57,11 @@ func (p *AksharamukhaProvider) InitWithContext(ctx context.Context) (err error) 
 	// Build manager options
 	opts := []aksharamukha.ManagerOption{}
 
-	// Add download progress callback if set
+	// Add download progress callback if set, wrapping to inject provider name
 	if p.downloadProgressCallback != nil {
-		opts = append(opts, aksharamukha.WithDownloadProgressCallback(p.downloadProgressCallback))
+		opts = append(opts, aksharamukha.WithDownloadProgressCallback(func(current, total int64, status string) {
+			p.downloadProgressCallback(p.Name(), current, total, status)
+		}))
 	}
 
 	// Create aksharamukha manager
@@ -104,8 +106,11 @@ func (p *AksharamukhaProvider) InitRecreateWithContext(ctx context.Context, noCa
 	// If we don't have a manager yet, create one
 	if p.manager == nil {
 		opts := []aksharamukha.ManagerOption{}
+		// Add download progress callback if set, wrapping to inject provider name
 		if p.downloadProgressCallback != nil {
-			opts = append(opts, aksharamukha.WithDownloadProgressCallback(p.downloadProgressCallback))
+			opts = append(opts, aksharamukha.WithDownloadProgressCallback(func(current, total int64, status string) {
+				p.downloadProgressCallback(p.Name(), current, total, status)
+			}))
 		}
 		manager, err := aksharamukha.NewManager(ctx, opts...)
 		if err != nil {
