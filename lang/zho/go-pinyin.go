@@ -151,9 +151,9 @@ func (p *GoPinyinProvider) ProcessFlowController(ctx context.Context, mode commo
 
 	tokens := input.Len()
 	for i := 0; i < tokens; i++ {
-		// Periodically check for context cancellation
-		if i%100 == 0 && ctx.Err() != nil {
-			return nil, fmt.Errorf("gopinyin: context canceled while processing token %d: %w", i, ctx.Err())
+		// Check for context cancellation
+		if err := ctx.Err(); err != nil {
+			return nil, fmt.Errorf("gopinyin: context canceled while processing token %d: %w", i, err)
 		}
 		
 		// Report progress if callback is set (throttler handles batching)
