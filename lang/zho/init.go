@@ -67,53 +67,23 @@ func init() {
 
 	zhoSchemes := []common.TranslitScheme{
 		{
-			Name:        "normal",
-			Description: "Chinese pinyin without tone marks (pinyin.Normal)",
-			Providers:   []string{"gojieba", "gopinyin"}, 
+			Name:        "tone",
+			Description: "Pinyin with diacritic tone marks (mā má mǎ mà)",
+			Providers:   []string{"gojieba", "gopinyin"},
 		},
 		{
-			Name:        "tone",
-			Description: "Chinese pinyin with diacritic tone marks (pinyin.Tone)",
+			Name:        "normal",
+			Description: "Pinyin without tone marks",
 			Providers:   []string{"gojieba", "gopinyin"},
 		},
 		{
 			Name:        "tone2",
-			Description: "Chinese pinyin with numeric tone (pinyin.Tone2)",
+			Description: "Pinyin with trailing numeric tone (ma1 ma2 ma3 ma4)",
 			Providers:   []string{"gojieba", "gopinyin"},
 		},
 		{
 			Name:        "tone3",
-			Description: "Chinese pinyin with numeric tone variant (pinyin.Tone3)",
-			Providers:   []string{"gojieba", "gopinyin"},
-		},
-		{
-			Name:        "initials",
-			Description: "Chinese pinyin initials only (pinyin.Initials)",
-			Providers:   []string{"gojieba", "gopinyin"},
-		},
-		{
-			Name:        "firstletter",
-			Description: "Chinese pinyin first letter only (pinyin.FirstLetter)",
-			Providers:   []string{"gojieba", "gopinyin"},
-		},
-		{
-			Name:        "finals",
-			Description: "Chinese pinyin finals only (pinyin.Finals)",
-			Providers:   []string{"gojieba", "gopinyin"},
-		},
-		{
-			Name:        "finalstone",
-			Description: "Chinese pinyin finals with tone marks (pinyin.FinalsTone)",
-			Providers:   []string{"gojieba", "gopinyin"},
-		},
-		{
-			Name:        "finalstone2",
-			Description: "Chinese pinyin finals with numeric tone (pinyin.FinalsTone2)",
-			Providers:   []string{"gojieba", "gopinyin"},
-		},
-		{
-			Name:        "finalstone3",
-			Description: "Chinese pinyin finals with numeric tone variant (pinyin.FinalsTone3)",
+			Description: "Pinyin with inline numeric tone",
 			Providers:   []string{"gojieba", "gopinyin"},
 		},
 	}
