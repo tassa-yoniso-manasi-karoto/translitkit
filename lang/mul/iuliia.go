@@ -220,11 +220,6 @@ func (p *IuliiaProvider) ProcessFlowController(ctx context.Context, mode common.
 		}
 		tsw.Append(&token)
 	}
-	
-	// Report completion if callback is set
-	if p.progressCallback != nil {
-		p.progressCallback(totalChunks, totalChunks)
-	}
 
 	return tsw, nil
 }*/
@@ -259,11 +254,6 @@ func (p *IuliiaProvider) processTokens(ctx context.Context, input common.AnyToke
 			continue
 		}
 		tkn.SetRoman(p.romanize(s))
-	}
-	
-	// Report completion if callback is set
-	if p.progressCallback != nil {
-		p.progressCallback(totalTokens, totalTokens)
 	}
 
 	return input, nil

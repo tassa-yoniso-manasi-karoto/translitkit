@@ -234,11 +234,6 @@ func (p *GoJiebaProvider) ProcessFlowController(ctx context.Context, mode common
 			outWrapper.Append(zhoTkn)
 		}
 	}
-	
-	// Report completion if callback is set
-	if p.progressCallback != nil {
-		p.progressCallback(totalChunks, totalChunks)
-	}
 
 	// Clear raw chunks to mark they've been processed
 	input.ClearRaw()

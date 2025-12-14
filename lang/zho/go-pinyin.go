@@ -223,11 +223,6 @@ func (p *GoPinyinProvider) ProcessFlowController(ctx context.Context, mode commo
 		// 5) Put the final reading in Tkn.Romanization
 		zhoTkn.SetRoman(zhoTkn.Pinyin)
 	}
-	
-	// Report completion if callback is set
-	if p.progressCallback != nil {
-		p.progressCallback(tokens, tokens)
-	}
 
 	return input, nil
 }

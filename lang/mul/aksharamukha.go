@@ -269,12 +269,7 @@ func (p *AksharamukhaProvider) processTokens(ctx context.Context, input common.A
 		}
 		tkn.SetRoman(romanized)
 	}
-	
-	// Report completion if callback is set
-	if p.progressCallback != nil {
-		p.progressCallback(totalTokens, totalTokens)
-	}
-	
+
 	return input, nil
 }
 

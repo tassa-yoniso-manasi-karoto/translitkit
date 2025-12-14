@@ -208,12 +208,7 @@ func (p *UnisegProvider) process(ctx context.Context, chunks []string) (common.A
 			state = newState
 		}
 	}
-	
-	// Report completion if callback is set
-	if p.progressCallback != nil {
-		p.progressCallback(totalChunks, totalChunks)
-	}
-	
+
 	return tsw, nil
 }
 
