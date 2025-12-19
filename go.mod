@@ -13,10 +13,10 @@ require (
 	github.com/rivo/uniseg v0.4.7
 	github.com/rs/zerolog v1.34.0
 	github.com/stretchr/testify v1.11.0
-	github.com/tassa-yoniso-manasi-karoto/go-aksharamukha v0.0.0-20251214043805-36a5586fb9f2
-	github.com/tassa-yoniso-manasi-karoto/go-ichiran v1.0.3-beta.0.20251214042735-03c83c499ffa
-	github.com/tassa-yoniso-manasi-karoto/go-pythainlp v0.0.0-20251214043307-6259648b9d0d
-	github.com/tassa-yoniso-manasi-karoto/paiboonizer v0.0.0-20251214043442-4130a1eeb7ca
+	github.com/tassa-yoniso-manasi-karoto/go-aksharamukha v0.0.0-20251219122304-3311ccf39650
+	github.com/tassa-yoniso-manasi-karoto/go-ichiran v1.0.3-beta.0.20251219122339-8997bbf64d5a
+	github.com/tassa-yoniso-manasi-karoto/go-pythainlp v0.0.0-20251219122136-063165ab0170
+	github.com/tassa-yoniso-manasi-karoto/paiboonizer v0.0.0-20251219122236-6b2d2b470805
 	github.com/yanyiwu/gojieba v1.4.6
 	gopkg.in/yaml.v2 v2.4.0
 )
@@ -157,7 +157,7 @@ require (
 	github.com/skratchdot/open-golang v0.0.0-20200116055534-eef842397966 // indirect
 	github.com/spf13/cobra v1.9.1 // indirect
 	github.com/spf13/pflag v1.0.7 // indirect
-	github.com/tassa-yoniso-manasi-karoto/dockerutil v0.0.0-20251214042449-2f026c45c028 // indirect
+	github.com/tassa-yoniso-manasi-karoto/dockerutil v0.0.0-20251219114917-92ee7ec684b1 // indirect
 	github.com/theupdateframework/notary v0.7.0 // indirect
 	github.com/tidwall/pretty v1.2.1 // indirect
 	github.com/tilt-dev/fsnotify v1.4.8-0.20220602155310-fff9c274a375 // indirect
