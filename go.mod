@@ -13,10 +13,10 @@ require (
 	github.com/rivo/uniseg v0.4.7
 	github.com/rs/zerolog v1.34.0
 	github.com/stretchr/testify v1.11.1
-	github.com/tassa-yoniso-manasi-karoto/go-aksharamukha v0.0.0-20260312030058-e8e87f4c90a3
-	github.com/tassa-yoniso-manasi-karoto/go-ichiran v1.1.0-beta
-	github.com/tassa-yoniso-manasi-karoto/go-pythainlp v0.0.0-20260312024642-9a0fab8f34a1
-	github.com/tassa-yoniso-manasi-karoto/paiboonizer v0.0.0-20251219122236-6b2d2b470805
+	github.com/tassa-yoniso-manasi-karoto/go-aksharamukha v0.0.0-20260816083254-5084207ff0db
+	github.com/tassa-yoniso-manasi-karoto/go-ichiran v1.1.0-beta.0.20260816083214-1e34865c7369
+	github.com/tassa-yoniso-manasi-karoto/go-pythainlp v0.0.0-20260816083106-90b582bcda02
+	github.com/tassa-yoniso-manasi-karoto/paiboonizer v0.0.0-20260816083410-6bc86bc7b898
 	github.com/yanyiwu/gojieba v1.4.7
 	gopkg.in/yaml.v2 v2.4.0
 )
@@ -71,7 +71,6 @@ require (
 	github.com/google/uuid v1.6.0 // indirect
 	github.com/grpc-ecosystem/grpc-gateway/v2 v2.28.0 // indirect
 	github.com/hashicorp/errwrap v1.1.0 // indirect
-	github.com/hashicorp/go-cleanhttp v0.5.2 // indirect
 	github.com/hashicorp/go-multierror v1.1.1 // indirect
 	github.com/hashicorp/go-version v1.8.0 // indirect
 	github.com/in-toto/attestation v1.1.2 // indirect
@@ -109,6 +108,7 @@ require (
 	github.com/pkg/errors v0.9.1 // indirect
 	github.com/planetscale/vtprotobuf v0.6.1-0.20240319094008-0393e58bdf10 // indirect
 	github.com/pmezard/go-difflib v1.0.1-0.20181226105442-5d4384ee4fb2 // indirect
+	github.com/robpike/nihongo v0.0.0-20230705220025-ab7f6184a918 // indirect
 	github.com/santhosh-tekuri/jsonschema/v6 v6.0.2 // indirect
 	github.com/secure-systems-lab/go-securesystemslib v0.10.0 // indirect
 	github.com/shibumi/go-pathspec v1.3.0 // indirect
@@ -118,7 +118,7 @@ require (
 	github.com/skratchdot/open-golang v0.0.0-20200116055534-eef842397966 // indirect
 	github.com/spf13/cobra v1.10.2 // indirect
 	github.com/spf13/pflag v1.0.10 // indirect
-	github.com/tassa-yoniso-manasi-karoto/dockerutil v0.0.0-20260312023325-2253830d6704 // indirect
+	github.com/tassa-yoniso-manasi-karoto/dockerutil v0.0.0-20260816082843-7b61cea3e0a2 // indirect
 	github.com/tidwall/pretty v1.2.1 // indirect
 	github.com/tilt-dev/fsnotify v1.4.8-0.20220602155310-fff9c274a375 // indirect
 	github.com/tonistiigi/dchapes-mode v0.0.0-20250318174251-73d941a28323 // indirect

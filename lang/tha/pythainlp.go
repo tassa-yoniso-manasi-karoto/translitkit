@@ -109,11 +109,8 @@ func (p *PyThaiNLPProvider) InitWithContext(ctx context.Context) error {
 		return fmt.Errorf("failed to create PyThaiNLP manager: %w", err)
 	}
 
-	// Use InitRecreate instead of Init to handle port mismatches
-	// Each NewManager allocates a new port, but an existing stopped container
-	// has the old port mapping. InitRecreate removes and recreates the container
-	// with the correct port binding.
-	if err := manager.InitRecreate(ctx, false); err != nil {
+	if err := manager.Init(ctx); err != nil {
+		_ = manager.CloseWithContext(ctx)
 		return fmt.Errorf("failed to initialize PyThaiNLP: %w", err)
 	}
 
@@ -136,7 +133,7 @@ func (p *PyThaiNLPProvider) Init() error {
 func (p *PyThaiNLPProvider) InitRecreateWithContext(ctx context.Context, noCache bool) error {
 	if p.manager != nil {
 		pythainlp.ClearDefaultManager()
-		p.manager.Close()
+		_ = p.manager.CloseWithContext(ctx)
 	}
 
 	// Build manager options
@@ -158,6 +155,7 @@ func (p *PyThaiNLPProvider) InitRecreateWithContext(ctx context.Context, noCache
 	}
 
 	if err := manager.InitRecreate(ctx, noCache); err != nil {
+		_ = manager.CloseWithContext(ctx)
 		return fmt.Errorf("failed to recreate PyThaiNLP: %w", err)
 	}
 
@@ -176,7 +174,7 @@ func (p *PyThaiNLPProvider) CloseWithContext(ctx context.Context) error {
 	if p.manager != nil {
 		// Clear default manager reference before closing to prevent stale references
 		pythainlp.ClearDefaultManager()
-		return p.manager.Close()
+		return p.manager.CloseWithContext(ctx)
 	}
 	return nil
 }

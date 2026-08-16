@@ -72,11 +72,13 @@ func (p *AksharamukhaProvider) InitWithContext(ctx context.Context) (err error) 
 
 	// Pre-pull images with retry logic for slow/unreliable connections
 	if err = manager.PullImages(ctx); err != nil {
+		_ = manager.CloseWithContext(ctx)
 		return fmt.Errorf("failed to pull aksharamukha images: %w", err)
 	}
 
 	// Initialize the Docker containers
 	if err = manager.Init(ctx); err != nil {
+		_ = manager.CloseWithContext(ctx)
 		return fmt.Errorf("failed to initialize aksharamukha: %w", err)
 	}
 
@@ -174,7 +176,7 @@ func (p *AksharamukhaProvider) GetMaxQueryLen() int {
 // Returns an error if closing fails or the context is canceled.
 func (p *AksharamukhaProvider) CloseWithContext(ctx context.Context) error {
 	if p.manager != nil {
-		return p.manager.Close()
+		return p.manager.CloseWithContext(ctx)
 	}
 	return nil
 }

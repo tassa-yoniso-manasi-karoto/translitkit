@@ -41,6 +41,7 @@ func (p *IchiranProvider) SaveConfig(cfg map[string]interface{}) error {
 // InitWithContext initializes the provider with the given context
 func (p *IchiranProvider) InitWithContext(ctx context.Context) (err error) {
 	if err = ichiran.InitWithContext(ctx); err != nil {
+		_ = ichiran.CloseWithContext(ctx)
 		return fmt.Errorf("failed to initialize ichiran: %w", err)
 	}
 	p.applyConfig()
@@ -55,6 +56,7 @@ func (p *IchiranProvider) Init() (err error) {
 // InitRecreateWithContext reinitializes the provider with the given context
 func (p *IchiranProvider) InitRecreateWithContext(ctx context.Context, noCache bool) (err error) {
 	if err = ichiran.InitRecreateWithContext(ctx, noCache); err != nil {
+		_ = ichiran.CloseWithContext(ctx)
 		return fmt.Errorf("failed to initialize ichiran: %w", err)
 	}
 	p.applyConfig()
@@ -87,7 +89,7 @@ func (p *IchiranProvider) GetMaxQueryLen() int {
 
 // CloseWithContext closes the provider with the given context
 func (p *IchiranProvider) CloseWithContext(ctx context.Context) error {
-	return ichiran.Close()
+	return ichiran.CloseWithContext(ctx)
 }
 
 // Close closes the provider with a background context
