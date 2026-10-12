@@ -81,7 +81,6 @@ See docs of sub package "common" for the basic methods set available across lang
 
 - [pythainlp](https://github.com/PyThaiNLP/pythainlp) **[tokenizer]**
 - [paiboonizer](https://github.com/tassa-yoniso-manasi-karoto/paiboonizer) **[transliterator]**
-- [thai2english.com](https://www.thai2english.com) scraper **[combined]**
 
 ### Multilingual
 

@@ -7,17 +7,6 @@ import (
 )
 
 func init() {
-	// Register thai2english.com provider
-	th2enProvider := &TH2ENProvider{}
-	th2enEntry := common.ProviderEntry{
-		Provider:     th2enProvider,
-		Capabilities: []string{"tokenization", "transliteration"},
-	}
-
-	if err := common.Register(Lang, th2enEntry); err != nil {
-		panic(fmt.Sprintf("failed to register thai2english.com: %v", err))
-	}
-
 	// Register PyThaiNLP provider (supports both tokenizer and combined modes)
 	// NOTE: PyThaiNLPProvider OWNS the Docker container lifecycle - see pythainlp.go
 	pythainlpProvider := NewPyThaiNLPProvider()
@@ -104,53 +93,11 @@ func registerThaiSchemes() {
 				Msg("Failed to register PyThaiNLP scheme")
 		}
 	}
-
-	thai2englishSchemes := []common.TranslitScheme{
-		{
-			Name:         "paiboon",
-			Description:  "Paiboon-esque transliteration (thai2english.com)",
-			Providers:    []string{"thai2english.com"},
-			NeedsScraper: true,
-		},
-		{
-			Name:         "thai2english",
-			Description:  "thai2english's custom transliteration system",
-			Providers:    []string{"thai2english.com"},
-			NeedsScraper: true,
-		},
-		{
-			Name:         "rtgs",
-			Description:  "Royal Thai General System of Transcription (thai2english.com)",
-			Providers:    []string{"thai2english.com"},
-			NeedsScraper: true,
-		},
-		{
-			Name:         "ipa",
-			Description:  "International Phonetic Alphabet representation (thai2english.com)",
-			Providers:    []string{"thai2english.com"},
-			NeedsScraper: true,
-		},
-		{
-			Name:         "simplified-ipa",
-			Description:  "Simplified phonetic notation (thai2english.com)",
-			Providers:    []string{"thai2english.com"},
-			NeedsScraper: true,
-		},
-	}
-
-	for _, scheme := range thai2englishSchemes {
-		if err := common.RegisterScheme(Lang, scheme); err != nil {
-			common.Log.Warn().
-				Str("pkg", Lang).
-				Str("scheme", scheme.Name).
-				Msg("Failed to register thai2english.com scheme")
-		}
-	}
 }
 
 func setDefaultProviders() {
 	// Use paiboon-hybrid as default: pythainlp for tokenization, paiboonizer for transliteration
-	// Even if not 100% accurate, it is faster than th2en's paiboon and produces more learner-friendly output than pythainlp's RTGS
+	// Even if not 100% accurate, it produces more learner-friendly output than pythainlp's RTGS
 	pythainlpProvider := NewPyThaiNLPProvider()
 	tokenizerEntry := common.ProviderEntry{
 		Provider:     pythainlpProvider,

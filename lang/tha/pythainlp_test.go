@@ -176,16 +176,6 @@ func TestProviderRegistration(t *testing.T) {
 			providerNames: []string{"pythainlp-tokenizer"},
 			expectError:   true, // Will error because it needs a transliterator
 		},
-		{
-			name:          "Thai2English Combined",
-			providerNames: []string{"thai2english.com"},
-			expectError:   false,
-		},
-		{
-			name:          "Hybrid Mode",
-			providerNames: []string{"pythainlp-tokenizer", "thai2english.com"},
-			expectError:   true, // Will error because thai2english is not registered as transliterator
-		},
 	}
 	
 	for _, tc := range testCases {
