@@ -287,21 +287,24 @@ func (p *AksharamukhaProvider) processTokens(ctx context.Context, input common.A
 //   - string: The romanized text
 //   - error: An error if romanization fails
 func (p *AksharamukhaProvider) romanize(ctx context.Context, text string) (string, error) {
+	// Through the provider's own manager: the package functions use
+	// go-aksharamukha's default instance, which this provider never starts.
+	if p.manager == nil {
+		return "", fmt.Errorf("aksharamukha provider is not initialized")
+	}
 	if p.targetScheme != "" {
 		script, err := aksharamukha.DefaultScriptFor(p.Lang)
 		if err != nil {
 			return "", fmt.Errorf("DefaultScriptFor failed for lang \"%s\": %w", p.Lang, err)
 		}
-		
-		// Use the context-aware version
-		romanized, err := aksharamukha.TranslitWithContext(ctx, text, script, p.targetScheme, aksharamukha.DefaultOptions())
+
+		romanized, err := p.manager.Translit(ctx, text, script, p.targetScheme, aksharamukha.DefaultOptions())
 		if err != nil {
 			return "", fmt.Errorf("romanization failed for token \"%s\" with scheme %s: %w", text, p.targetScheme, err)
 		}
 		return romanized, err
 	}
-	// Use the context-aware version for default romanization
-	return aksharamukha.RomanWithContext(ctx, text, p.Lang, aksharamukha.DefaultOptions())
+	return p.manager.Roman(ctx, text, p.Lang, aksharamukha.DefaultOptions())
 }
 
 
