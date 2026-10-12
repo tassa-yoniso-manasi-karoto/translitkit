@@ -13,11 +13,10 @@ import (
 var ErrNoSchemesRegistered = errors.New("no transliteration schemes registered for provided language")
 
 type TranslitScheme struct {
-	Name         string   // e.g., "IAST", "Harvard-Kyoto"
-	Description  string
-	Providers    []string // Provider names in order (tokenizer, transliterator)
-	NeedsDocker  bool
-	NeedsScraper bool
+	Name        string   // e.g., "IAST", "Harvard-Kyoto"
+	Description string
+	Providers   []string // Provider names in order (tokenizer, transliterator)
+	NeedsDocker bool
 }
 
 // SchemeRegistry manages available transliteration schemes for languages
