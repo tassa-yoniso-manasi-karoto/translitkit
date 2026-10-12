@@ -5,7 +5,6 @@ go 1.26
 require (
 	github.com/adrg/xdg v0.5.3
 	github.com/barbashov/iso639-3 v1.0.0
-	github.com/go-rod/rod v0.116.2
 	github.com/gookit/color v1.6.0
 	github.com/k0kubun/pp v3.0.1+incompatible
 	github.com/mehanizm/iuliia-go v1.0.3-0.20250108063731-2a2e9aba9125
@@ -13,16 +12,15 @@ require (
 	github.com/rivo/uniseg v0.4.7
 	github.com/rs/zerolog v1.34.0
 	github.com/stretchr/testify v1.11.1
-	github.com/tassa-yoniso-manasi-karoto/go-aksharamukha v0.0.0-20260816083254-5084207ff0db
-	github.com/tassa-yoniso-manasi-karoto/go-ichiran v1.1.0-beta.0.20260816083214-1e34865c7369
-	github.com/tassa-yoniso-manasi-karoto/go-pythainlp v0.0.0-20260816224626-7116306ed7c1
-	github.com/tassa-yoniso-manasi-karoto/paiboonizer v0.0.0-20260816224726-f6b5ffa516fb
+	github.com/tassa-yoniso-manasi-karoto/go-aksharamukha v0.0.0-20261012074651-a79d56671265
+	github.com/tassa-yoniso-manasi-karoto/go-ichiran v1.2.0
+	github.com/tassa-yoniso-manasi-karoto/go-pythainlp v1.0.0
+	github.com/tassa-yoniso-manasi-karoto/paiboonizer v1.0.1
 	github.com/yanyiwu/gojieba v1.4.7
 	gopkg.in/yaml.v2 v2.4.0
 )
 
 require (
-	al.essio.dev/pkg/shellescape v1.6.0 // indirect
 	github.com/Azure/go-ansiterm v0.0.0-20250102033503-faa5f7b0171c // indirect
 	github.com/DefangLabs/secret-detector v0.0.0-20250811234530-d4b4214cd679 // indirect
 	github.com/Microsoft/go-winio v0.6.2 // indirect
@@ -118,7 +116,7 @@ require (
 	github.com/skratchdot/open-golang v0.0.0-20200116055534-eef842397966 // indirect
 	github.com/spf13/cobra v1.10.2 // indirect
 	github.com/spf13/pflag v1.0.10 // indirect
-	github.com/tassa-yoniso-manasi-karoto/dockerutil v0.0.0-20260816224127-f041ae4bfec7 // indirect
+	github.com/tassa-yoniso-manasi-karoto/dockerutil v0.0.0-20261006145505-dd3122cf9875 // indirect
 	github.com/tidwall/pretty v1.2.1 // indirect
 	github.com/tilt-dev/fsnotify v1.4.8-0.20220602155310-fff9c274a375 // indirect
 	github.com/tonistiigi/dchapes-mode v0.0.0-20250318174251-73d941a28323 // indirect
@@ -129,11 +127,6 @@ require (
 	github.com/vbatts/tar-split v0.12.2 // indirect
 	github.com/xhit/go-str2duration/v2 v2.1.0 // indirect
 	github.com/xo/terminfo v0.0.0-20220910002029-abceb7e1c41e // indirect
-	github.com/ysmood/fetchup v0.5.3 // indirect
-	github.com/ysmood/goob v0.4.0 // indirect
-	github.com/ysmood/got v0.42.3 // indirect
-	github.com/ysmood/gson v0.7.3 // indirect
-	github.com/ysmood/leakless v0.9.0 // indirect
 	go.opentelemetry.io/auto/sdk v1.2.1 // indirect
 	go.opentelemetry.io/contrib/instrumentation/google.golang.org/grpc/otelgrpc v0.67.0 // indirect
 	go.opentelemetry.io/contrib/instrumentation/net/http/httptrace/otelhttptrace v0.67.0 // indirect
@@ -150,12 +143,12 @@ require (
 	go.opentelemetry.io/otel/trace v1.42.0 // indirect
 	go.opentelemetry.io/proto/otlp v1.10.0 // indirect
 	go.yaml.in/yaml/v4 v4.0.0-rc.4 // indirect
-	golang.org/x/crypto v0.49.0 // indirect
-	golang.org/x/net v0.52.0 // indirect
-	golang.org/x/sync v0.20.0 // indirect
-	golang.org/x/sys v0.42.0 // indirect
-	golang.org/x/term v0.41.0 // indirect
-	golang.org/x/text v0.35.0 // indirect
+	golang.org/x/crypto v0.55.0 // indirect
+	golang.org/x/net v0.58.0 // indirect
+	golang.org/x/sync v0.22.0 // indirect
+	golang.org/x/sys v0.47.0 // indirect
+	golang.org/x/term v0.45.0 // indirect
+	golang.org/x/text v0.41.0 // indirect
 	golang.org/x/time v0.15.0 // indirect
 	google.golang.org/genproto/googleapis/api v0.0.0-20260311181403-84a4fc48630c // indirect
 	google.golang.org/genproto/googleapis/rpc v0.0.0-20260311181403-84a4fc48630c // indirect
